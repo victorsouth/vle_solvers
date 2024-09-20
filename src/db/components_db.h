@@ -2,8 +2,6 @@
 #ifndef __COMPONENTS_DB__
 #define __COMPONENTS_DB__
 
-//#include "vlelib_cmn.h"
-
 #include <fixed/fixed.h>
 #include "common_db.h"
 #include <limits>
