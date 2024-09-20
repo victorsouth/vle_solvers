@@ -142,6 +142,7 @@
     <ClInclude Include="src\db\components_db.h" />
     <ClInclude Include="src\db\tdb_serialize_2024_05_24.h" />
     <ClInclude Include="src\db\tdb_serialize_common.h" />
+    <ClInclude Include="src\vle_solvers.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\db\components_db.cpp" />
