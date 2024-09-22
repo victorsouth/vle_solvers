@@ -138,6 +138,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="components_db_data.h" />
+    <ClInclude Include="components_db_init.h" />
     <ClInclude Include="src\db\common_db.h" />
     <ClInclude Include="src\db\components_db.h" />
     <ClInclude Include="src\db\tdb_serialize_2024_05_24.h" />
@@ -147,7 +149,6 @@
   <ItemGroup>
     <ClCompile Include="src\db\components_db.cpp" />
     <ClCompile Include="src\db\components_db_data.cpp" />
-    <ClCompile Include="src\db\components_db_init.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

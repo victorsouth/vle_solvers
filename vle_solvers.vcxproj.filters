@@ -27,15 +27,21 @@
     <ClInclude Include="src\db\tdb_serialize_common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\vle_solvers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components_db_data.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components_db_init.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\db\components_db.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\db\components_db_data.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\db\components_db_init.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

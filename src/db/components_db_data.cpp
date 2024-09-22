@@ -1,3 +1,5 @@
+#include "components_db_data.h"
+
 namespace vle_solvers
 {
 ;
