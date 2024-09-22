@@ -274,25 +274,25 @@ double component_properties_t::get_saturated_pressure_extrapolation(double tempe
 
 double component_properties_t::estimate_antoine_exptraploation_coeff() const
 {
-    throw std::runtime_error("Not impl");
-    //size_t point_count = 20;
+    //throw std::runtime_error("Not impl");
+    size_t point_count = 20;
 
-    //VectorXd Y(point_count);
-    //MatrixXd X(point_count, 1);
+    VectorXd Y(point_count);
+    MatrixXd X(point_count, 1);
 
-    //double dT = (antoine_model.max_bound - antoine_model.min_bound) / (point_count - 1);
-    //for (size_t index = 0; index < point_count; ++index) {
-    //    double T = antoine_model.min_bound + index * dT;
+    double dT = (antoine_model.max_bound - antoine_model.min_bound) / (point_count - 1);
+    for (size_t index = 0; index < point_count; ++index) {
+        double T = antoine_model.min_bound + index * dT;
 
-    //    double Psat = get_saturated_pressure(T);
-    //    Y(index) = log(Psat / critical_pressure);
+        double Psat = get_saturated_pressure(T);
+        Y(index) = log(Psat / critical_pressure);
 
-    //    X(index, 0) = (1 + acentric_factor) * (1 - critical_temperature / T);
+        X(index, 0) = (1 + acentric_factor) * (1 - critical_temperature / T);
 
-    //}
+    }
 
-    //VectorXd alpha = (X.transpose() * X).inverse() * X.transpose() * Y;
-    //return alpha(0);
+    VectorXd alpha = (X.transpose() * X).inverse() * X.transpose() * Y;
+    return alpha(0);
 }
 
 double component_properties_t::get_saturated_pressure_derivative(double temperature) const
