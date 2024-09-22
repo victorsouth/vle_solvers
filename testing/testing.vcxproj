@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{d3449dd5-7a2b-45ff-acfe-bf23e843d1d3}</ProjectGuid>
-    <RootNamespace>vlesolvers</RootNamespace>
+    <ProjectGuid>{1701b910-9511-4b8b-be91-aa24dc7fc9a5}</ProjectGuid>
+    <RootNamespace>testing</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -40,13 +40,13 @@
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -72,13 +72,13 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(ProjectDir)..\bin\</OutDir>
-    <IntDir>$(ProjectDir)..\build\$(Configuration)_vle_solvers\$(PlatformTarget)\</IntDir>
-    <TargetName>vle_solvers64d</TargetName>
+    <IntDir>$(ProjectDir)..\build\$(Configuration)_$(ProjectName)\$(PlatformTarget)\</IntDir>
+    <TargetName>$(ProjectName)_$(PlatformTarget)_$(Configuration)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(ProjectDir)..\bin\</OutDir>
-    <IntDir>$(ProjectDir)..\build\$(Configuration)_vle_solvers\$(PlatformTarget)\</IntDir>
-    <TargetName>vle_solvers64</TargetName>
+    <IntDir>$(ProjectDir)..\build\$(Configuration)_$(ProjectName)\$(PlatformTarget)\</IntDir>
+    <TargetName>$(ProjectName)_$(PlatformTarget)_$(Configuration)</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -139,17 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="src\db\common_db.h" />
-    <ClInclude Include="src\db\components_db.h" />
-    <ClInclude Include="src\db\components_db_data.h" />
-    <ClInclude Include="src\db\components_db_init.h" />
-    <ClInclude Include="src\db\tdb_serialize_2024_05_24.h" />
-    <ClInclude Include="src\db\tdb_serialize_common.h" />
-    <ClInclude Include="src\vle_solvers.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="src\db\components_db.cpp" />
-    <ClCompile Include="src\db\components_db_data.cpp" />
+    <ClCompile Include="test.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
