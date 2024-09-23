@@ -7,10 +7,6 @@ using namespace vle_solvers;
 
 int main()
 {
-	// Создает переменную, которая будет содержать базу данных компонентов и инициализируем ее
-	components_database_t components_database;
-	db_initializer_t db(components_database);
-
 	// Выбираем любой компонент, для которого необходимо определить свойства
 	wstring component = L"CO2";
 
