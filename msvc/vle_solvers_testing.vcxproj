@@ -21,6 +21,9 @@
   <ItemGroup>
     <ClCompile Include="..\testing\testing_main.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\testing\test_database.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>

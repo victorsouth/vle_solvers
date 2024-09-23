@@ -5,6 +5,7 @@
 #include "gtest/gtest.h"
 
 #include <src/vle_solvers.h>
+#include "test_database.h"
 
 #include <iostream>
 
