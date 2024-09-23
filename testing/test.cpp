@@ -17,6 +17,5 @@ int main()
 	// Возвращаем свойства компонента
 	component_properties_t component_properties = components_database.at(component);
 
-
 	return 1;
 }

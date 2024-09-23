@@ -30,10 +30,10 @@
     <ClInclude Include="src\vle_solvers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="components_db_data.h">
+    <ClInclude Include="src\db\components_db_data.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="components_db_init.h">
+    <ClInclude Include="src\db\components_db_init.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
