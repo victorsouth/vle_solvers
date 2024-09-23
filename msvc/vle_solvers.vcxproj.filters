@@ -15,19 +15,19 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\db\common_db.h">
+    <ClInclude Include="..\src\db\common_db.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\db\components_db.h">
+    <ClInclude Include="..\src\db\components_db.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\db\tdb_serialize_2024_05_24.h">
+    <ClInclude Include="..\src\db\tdb_serialize_2024_05_24.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\db\tdb_serialize_common.h">
+    <ClInclude Include="..\src\db\tdb_serialize_common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\vle_solvers.h">
+    <ClInclude Include="..\src\vle_solvers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
