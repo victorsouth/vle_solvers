@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #ifndef VLE_SOLVER_H
 #define VLE_SOLVER_H

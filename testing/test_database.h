@@ -1,17 +1,17 @@
-#pragma once
+п»ї#pragma once
 
 using namespace vle_solvers;
 
-/// @brief Тест для примера того, как работать с базой данных
+/// @brief РўРµСЃС‚ РґР»СЏ РїСЂРёРјРµСЂР° С‚РѕРіРѕ, РєР°Рє СЂР°Р±РѕС‚Р°С‚СЊ СЃ Р±Р°Р·РѕР№ РґР°РЅРЅС‹С…
 TEST(DataBase, ComponentPropertiesInitialization)
 {
-	// Инициализируем компонент
+	// РРЅРёС†РёР°Р»РёР·РёСЂСѓРµРј РєРѕРјРїРѕРЅРµРЅС‚
 	wstring component_name = L"CO2";
 
-	// Объявляем переменную со свойствами компонентов
+	// РћР±СЉСЏРІР»СЏРµРј РїРµСЂРµРјРµРЅРЅСѓСЋ СЃРѕ СЃРІРѕР№СЃС‚РІР°РјРё РєРѕРјРїРѕРЅРµРЅС‚РѕРІ
 	component_properties_t component_properties;
 
-	// Инициализируем свойства для заданного компонента
+	// РРЅРёС†РёР°Р»РёР·РёСЂСѓРµРј СЃРІРѕР№СЃС‚РІР° РґР»СЏ Р·Р°РґР°РЅРЅРѕРіРѕ РєРѕРјРїРѕРЅРµРЅС‚Р°
 	component_properties = components_database.at(component_name);
 
 	ASSERT_FALSE(std::isnan(component_properties.molar_mass));

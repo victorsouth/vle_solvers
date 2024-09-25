@@ -1,4 +1,4 @@
-#pragma once
+п»ї#pragma once
 
 #include <vector>
 #include <algorithm>
@@ -25,8 +25,8 @@ inline double kelvin2celcium(double kelvin_value) {
 template <typename Coefficients>
 double polyval(const Coefficients& poly_coeffs, double x)
 {
-    // НЕ используется формат Matlab! 
-    // индекс коэффициента является показателем степени
+    // РќР• РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ С„РѕСЂРјР°С‚ Matlab! 
+    // РёРЅРґРµРєСЃ РєРѕСЌС„С„РёС†РёРµРЅС‚Р° СЏРІР»СЏРµС‚СЃСЏ РїРѕРєР°Р·Р°С‚РµР»РµРј СЃС‚РµРїРµРЅРё
 
     const size_t n = poly_coeffs.size();
 
@@ -68,9 +68,9 @@ inline void string_replace(std::string& str, const std::string& from, const std:
 inline std::vector<double> solve_realpoly3_vieta(std::vector<double> poly_coeffs)
 {
     using std::pow;
-    // https://ru.wikipedia.org/wiki/Тригонометрическая_формула_Виета
+    // https://ru.wikipedia.org/wiki/РўСЂРёРіРѕРЅРѕРјРµС‚СЂРёС‡РµСЃРєР°СЏ_С„РѕСЂРјСѓР»Р°_Р’РёРµС‚Р°
 
-    // 1. Делаем коэффициент при старшей степени единичным 
+    // 1. Р”РµР»Р°РµРј РєРѕСЌС„С„РёС†РёРµРЅС‚ РїСЂРё СЃС‚Р°СЂС€РµР№ СЃС‚РµРїРµРЅРё РµРґРёРЅРёС‡РЅС‹Рј 
     // c + b*x + a*x^2 + x^3 = 0
     double higher_order_coeff = poly_coeffs.back();
     for (double& coeff : poly_coeffs) {
@@ -80,15 +80,15 @@ inline std::vector<double> solve_realpoly3_vieta(std::vector<double> poly_coeffs
     double b = poly_coeffs[1];
     double c = poly_coeffs[0];
 
-    // 2. Определение количества действительных корней
+    // 2. РћРїСЂРµРґРµР»РµРЅРёРµ РєРѕР»РёС‡РµСЃС‚РІР° РґРµР№СЃС‚РІРёС‚РµР»СЊРЅС‹С… РєРѕСЂРЅРµР№
     double Q = (a * a - 3 * b) / 9;
     double R = (2 * pow(a, 3) - 9 * a * b + 27 * c) / 54;
     double S = pow(Q, 3) - R * R;
 
-    // 3. Расчет корней
+    // 3. Р Р°СЃС‡РµС‚ РєРѕСЂРЅРµР№
     if (fabs(S) < std::numeric_limits<double>::epsilon())//epsilon_S)
     {
-        //Ю.П. 2022.05.26
+        //Р®.Рџ. 2022.05.26
         //if(0)std::cerr<<"two roots:"<<-2.*cbrt(R) - a/3.<<'\t'<<cbrt(R) - a/3.<<std::endl;
         return {
             -2. * cbrt(R) - a / 3.,
@@ -98,8 +98,8 @@ inline std::vector<double> solve_realpoly3_vieta(std::vector<double> poly_coeffs
     }
     else if (S > 0)
     {
-        // проверено, работает 27.12.2018
-        // 3 действительных корня
+        // РїСЂРѕРІРµСЂРµРЅРѕ, СЂР°Р±РѕС‚Р°РµС‚ 27.12.2018
+        // 3 РґРµР№СЃС‚РІРёС‚РµР»СЊРЅС‹С… РєРѕСЂРЅСЏ
         double phi = 1.0 / 3.0 * acos(R / pow(Q, 1.5));
         return {
             -2 * sqrt(Q) * cos(phi) - a / 3,
@@ -109,23 +109,23 @@ inline std::vector<double> solve_realpoly3_vieta(std::vector<double> poly_coeffs
     }
     else // S < 0
     {
-        // 1 действительный корень, 2 комплексных
+        // 1 РґРµР№СЃС‚РІРёС‚РµР»СЊРЅС‹Р№ РєРѕСЂРµРЅСЊ, 2 РєРѕРјРїР»РµРєСЃРЅС‹С…
         if (fabs(Q) < std::numeric_limits<double>::epsilon()) {
-            //Ю.П. 2022.05.26
+            //Р®.Рџ. 2022.05.26
             return{ -cbrt(c - (a * a * a) / 27.) - a / 3. };
             //throw logic_error("3rd order polynom singular case (Q = 0), not implemented");
         }
         else if (Q > 0)
         {
-            // проверено, работает 27.12.2018
-            double phi = 1.0 / 3.0 * acosh(fabs(R) / pow(Q, 1.5)); // квадратный корень из Q в кубе!
+            // РїСЂРѕРІРµСЂРµРЅРѕ, СЂР°Р±РѕС‚Р°РµС‚ 27.12.2018
+            double phi = 1.0 / 3.0 * acosh(fabs(R) / pow(Q, 1.5)); // РєРІР°РґСЂР°С‚РЅС‹Р№ РєРѕСЂРµРЅСЊ РёР· Q РІ РєСѓР±Рµ!
             return {
                 -2.0 * pseudo_sgn(R) * sqrt(Q) * cosh(phi) - a / 3
             };
         }
         else // Q < 0
         {
-            // проверено, работает 6.02.2019
+            // РїСЂРѕРІРµСЂРµРЅРѕ, СЂР°Р±РѕС‚Р°РµС‚ 6.02.2019
             double phi = 1.0 / 3.0 * asinh(fabs(R) / pow(fabs(Q), 1.5));
             return {
                 -2.0 * pseudo_sgn(R) * sqrt(fabs(Q)) * sinh(phi) - a / 3
@@ -145,8 +145,8 @@ inline std::string wide2string(const std::wstring& str)
 template <typename Coefficients>
 std::vector<double> poly_integral_coefficients(const Coefficients& poly_coeffs)
 {
-    // НЕ используется формат Matlab! в отличие от функции 
-    // индекс коэффициента является показателем степени
+    // РќР• РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ С„РѕСЂРјР°С‚ Matlab! РІ РѕС‚Р»РёС‡РёРµ РѕС‚ С„СѓРЅРєС†РёРё 
+    // РёРЅРґРµРєСЃ РєРѕСЌС„С„РёС†РёРµРЅС‚Р° СЏРІР»СЏРµС‚СЃСЏ РїРѕРєР°Р·Р°С‚РµР»РµРј СЃС‚РµРїРµРЅРё
 
     const size_t n = poly_coeffs.size();
     std::vector<double> result(n + 1);
@@ -220,8 +220,8 @@ public:
     }
     size_t get_range_index(double x) const
     {
-        // find_if ищет первый элемент, удовлетворяющий условию 
-        // (проверил по хелпу https://en.cppreference.com/w/cpp/algorithm/find)
+        // find_if РёС‰РµС‚ РїРµСЂРІС‹Р№ СЌР»РµРјРµРЅС‚, СѓРґРѕРІР»РµС‚РІРѕСЂСЏСЋС‰РёР№ СѓСЃР»РѕРІРёСЋ 
+        // (РїСЂРѕРІРµСЂРёР» РїРѕ С…РµР»РїСѓ https://en.cppreference.com/w/cpp/algorithm/find)
         auto range_coefficients = std::find_if(ranges.begin(), ranges.end(),
             [&](const function_range_t<Coeffs>& r) {
                 return x < r.range_end;
@@ -236,16 +236,16 @@ public:
 
         return range_coefficients - ranges.begin();
     }
-    /// @brief Геттер для ranges
+    /// @brief Р“РµС‚С‚РµСЂ РґР»СЏ ranges
     const std::vector<function_range_t<Coeffs>>& get_ranges() const {
         return ranges;
     }
-    /// @brief Возвращает полный диапазон - от начала младшего диапазона до конца старшего
+    /// @brief Р’РѕР·РІСЂР°С‰Р°РµС‚ РїРѕР»РЅС‹Р№ РґРёР°РїР°Р·РѕРЅ - РѕС‚ РЅР°С‡Р°Р»Р° РјР»Р°РґС€РµРіРѕ РґРёР°РїР°Р·РѕРЅР° РґРѕ РєРѕРЅС†Р° СЃС‚Р°СЂС€РµРіРѕ
     std::pair<double, double> get_whole_range() const {
         if (ranges.empty())
             throw std::runtime_error("cannot get whole range for empty range list");
         
-        // пользуемся тем, что диапазоны отсортированы в конструкторе
+        // РїРѕР»СЊР·СѓРµРјСЃСЏ С‚РµРј, С‡С‚Рѕ РґРёР°РїР°Р·РѕРЅС‹ РѕС‚СЃРѕСЂС‚РёСЂРѕРІР°РЅС‹ РІ РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂРµ
         return std::make_pair(
             ranges.front().range_start,
             ranges.back().range_end
@@ -263,7 +263,7 @@ protected:
     double gain, offset;
     std::vector<std::vector<double>> polynom_integral;
 
-    // граничные значения
+    // РіСЂР°РЅРёС‡РЅС‹Рµ Р·РЅР°С‡РµРЅРёСЏ
     std::vector<std::pair<double, double>> boundary_values;
 public:
     ranged_polynom_t() = default;
@@ -286,7 +286,7 @@ public:
                 return result;
             });
 
-        // проверка отсутствия разрыва на границах
+        // РїСЂРѕРІРµСЂРєР° РѕС‚СЃСѓС‚СЃС‚РІРёСЏ СЂР°Р·СЂС‹РІР° РЅР° РіСЂР°РЅРёС†Р°С…
         for (size_t index = 0; index < boundary_values.size() - 1; ++index) {
             double y_prev = boundary_values[index].second;
             double y_next = boundary_values[index + 1].first;
@@ -328,7 +328,7 @@ public:
 
         return result;
     };
-    // поиск диапазон по значению функции
+    // РїРѕРёСЃРє РґРёР°РїР°Р·РѕРЅ РїРѕ Р·РЅР°С‡РµРЅРёСЋ С„СѓРЅРєС†РёРё
     size_t get_inv_range_index(double y) const
     {
         for (size_t index = 0; index < boundary_values.size(); ++index) {
@@ -356,7 +356,7 @@ public:
         {
             const auto& c = range.coefficients;
             double result = (y - c[0]) / c[1];
-            return result;  // поскольку корень единственный, можно дальше не фильтровать roots
+            return result;  // РїРѕСЃРєРѕР»СЊРєСѓ РєРѕСЂРµРЅСЊ РµРґРёРЅСЃС‚РІРµРЅРЅС‹Р№, РјРѕР¶РЅРѕ РґР°Р»СЊС€Рµ РЅРµ С„РёР»СЊС‚СЂРѕРІР°С‚СЊ roots
         }
         case 2:
             throw std::logic_error("inv polynom order 2 not implemented");
@@ -364,7 +364,7 @@ public:
         case 3:
         {
             auto equation = range.coefficients;
-            equation[0] -= y; // слева полином с коэффициентами, а справа значение y
+            equation[0] -= y; // СЃР»РµРІР° РїРѕР»РёРЅРѕРј СЃ РєРѕСЌС„С„РёС†РёРµРЅС‚Р°РјРё, Р° СЃРїСЂР°РІР° Р·РЅР°С‡РµРЅРёРµ y
             roots = solve_realpoly3_vieta(equation);
             break;
         }
