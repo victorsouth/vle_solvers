@@ -167,6 +167,19 @@ double component_properties_t::get_enthalpy_liquid(double pressure, double tempe
     //return enthalpy;
 }
 
+
+template <AmountType amount_type>
+double component_properties_t::get_enthalpy_gas(double temperature) const
+{
+    if constexpr (amount_type == AmountType::Mass) {
+        return functions.get_enthalpy_gas_molar(temperature) / molar_mass;
+    }
+    else {
+        return functions.get_enthalpy_gas_molar(temperature);
+    }
+}
+
+
 template<AmountType amount_type>
 double component_properties_t::get_inner_energy_gas(double temperature) const
 {
@@ -305,6 +318,9 @@ double component_properties_t::get_saturated_pressure_derivative(double temperat
 
     return (Psat_plus - Psat_minus) / (2 * dT);
 }
+
+template double component_properties_t::get_enthalpy_gas<AmountType::Molar>(double) const;
+template double component_properties_t::get_enthalpy_gas<AmountType::Mass>(double) const;
 
 template double component_properties_t::get_enthalpy_liquid<AmountType::Molar>(double, double) const;
 template double component_properties_t::get_enthalpy_liquid<AmountType::Mass>(double, double) const;

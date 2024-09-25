@@ -127,15 +127,7 @@ struct component_properties_t {
 
     /// @brief удельная массовая энтальпия вещества в газообразном состоянии
     template <AmountType amount_type>
-    double get_enthalpy_gas(double temperature) const
-    {
-        if constexpr (amount_type == AmountType::Mass) {
-            return functions.get_enthalpy_gas_molar(temperature) / molar_mass;
-        }
-        else {
-            return functions.get_enthalpy_gas_molar(temperature);
-        }
-    }
+    double get_enthalpy_gas(double temperature) const;
 
     /// @brief удельная внутренняя энергия вещества в газовом фазовом состоянии
     template <AmountType amount_type>
