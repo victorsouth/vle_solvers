@@ -1,0 +1,181 @@
+cmake_minimum_required(VERSION 3.10)
+
+project(vle_solvers)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+message("CXX standard: " ${CMAKE_CXX_STANDARD})
+
+if(MSVC)
+    cmake_policy(SET CMP0167 NEW)
+    add_compile_options("/MP")     # включает многопроцессорную компиляцию
+    add_compile_options("/bigobj")
+endif()
+if(MINGW)
+    cmake_policy(SET CMP0167 NEW)
+    add_compile_options("-Wa,-mbig-obj")
+endif()
+
+find_package(fixed_solvers REQUIRED)
+find_package(Boost REQUIRED COMPONENTS serialization)
+
+# Установка путей к файлам в папках в переменные
+set(HEADER
+    vle/vle_solvers.h
+    vle/components_db.h
+    vle/physical_constants.h
+)
+
+set(HEADER_DB
+    vle/db/tdb_serialize_common.h
+    vle/db/tdb_serialize_2024_09_24.h
+)
+
+set(SOURCE_DB
+    vle/db/components_db.cpp
+    vle/db/components_db_data.cpp
+    vle/db/components_db_init.cpp
+)
+
+set(HEADER_FLUID
+    vle/fluid/fluid_base.h
+    vle/fluid/fluid_common.h
+    vle/fluid/fluid_equations.h
+    vle/fluid/fluid_raoult_dalton.h
+)
+
+set(SOURCE_FLUID
+    vle/fluid/fluid_base.cpp
+    vle/fluid/fluid_common.cpp
+    vle/fluid/fluid_equations.cpp
+    vle/fluid/fluid_raoult_dalton.cpp
+)
+
+set(HEADER_FLUID_SOLVERS
+    vle/fluid/solvers/ph_flash.h
+    vle/fluid/solvers/rachford_rice.h
+    vle/fluid/solvers/uv_flash.h
+    vle/fluid/solvers/phase_boundaries.h
+)
+
+set(SOURCE_FLUID_SOLVERS
+    vle/fluid/solvers/ph_flash.cpp
+    vle/fluid/solvers/rachford_rice.cpp
+    vle/fluid/solvers/uv_flash.cpp
+)
+
+set(HEADER_HELPERS
+    vle/helpers/physical_helpers.h
+)
+
+# Организация папок с исходниками в сгенерированном проекте VS
+source_group("Header Files" FILES ${HEADER})
+source_group("Header Files/DB" FILES ${HEADER_DB})
+source_group("Header Files/Fluid" FILES ${HEADER_FLUID})
+source_group("Header Files/Fluid/Solvers" FILES ${HEADER_FLUID_SOLVERS})
+source_group("Header Files/Helpers" FILES ${HEADER_HELPERS})
+
+source_group("Source Files/DB" FILES ${SOURCE_DB})
+source_group("Source Files/Fluid" FILES ${SOURCE_FLUID})
+source_group("Source Files/Fluid/Solvers" FILES ${SOURCE_FLUID_SOLVERS})
+
+# Создание библиотеки
+add_library(${PROJECT_NAME} 
+    STATIC
+    ${HEADER}
+    ${HEADER_DB}
+    ${HEADER_FLUID}
+    ${HEADER_FLUID_SOLVERS}
+    ${HEADER_HELPERS}
+    ${SOURCE_DB}
+    ${SOURCE_FLUID}
+    ${SOURCE_FLUID_SOLVERS}
+)
+
+# Линковка с требуемыми библиотеками
+target_link_libraries(${PROJECT_NAME} 
+    PUBLIC 
+    fixed_solvers::fixed_solvers
+    Boost::boost
+    Boost::serialization
+)
+   
+# include директории
+target_include_directories(${PROJECT_NAME}
+    PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/vle>
+    $<INSTALL_INTERFACE:include>
+    $<INSTALL_INTERFACE:include/vle_solvers>
+)
+add_library(vle_solvers::vle_solvers ALIAS vle_solvers)
+
+option(VLE_SOLVERS_INSTALL "" ON)
+
+# установка
+if(VLE_SOLVERS_INSTALL)
+    include(CMakePackageConfigHelpers)
+    include(GNUInstallDirs)
+    install(TARGETS vle_solvers
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        EXPORT vle_solversTargets
+    )
+    install(EXPORT vle_solversTargets NAMESPACE vle_solvers::
+    FILE vle_solversTargets.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/vle_solvers
+    )
+
+    # generate the config file that is includes the exports
+    configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
+    "${CMAKE_CURRENT_BINARY_DIR}/vle_solversConfig.cmake"
+    INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/vle_solvers"
+    NO_SET_AND_CHECK_MACRO
+    NO_CHECK_REQUIRED_COMPONENTS_MACRO
+    )
+    install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/vle_solversConfig.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/vle_solvers
+    )
+
+    # Установка заголовочных файлов (headers)
+    install(FILES ${HEADER} DESTINATION include/vle_solvers/)
+    install(FILES ${HEADER_DB} DESTINATION include/vle_solvers/db)
+    install(FILES ${HEADER_FLUID} DESTINATION include/vle_solvers/fluid)
+    install(FILES ${HEADER_FLUID_SOLVERS} DESTINATION include/vle_solvers/fluid/solvers)
+    install(FILES ${HEADER_HELPERS} DESTINATION include/vle_solvers/helpers)
+
+endif()
+
+option(VLE_SOLVERS_BUILD_TESTS "" ON)
+# Сборка тестов
+if(VLE_SOLVERS_BUILD_TESTS)
+
+    find_package(Threads)
+    find_package(GTest REQUIRED)
+
+    set(TESTING_SOURCE
+        testing/testing_main.cpp
+    )
+
+    set(TESTING_HEADERS
+        testing/test_database.h
+        testing/test_fluid.h
+        testing/test_components.h
+    )
+
+    source_group("Header Files" FILES ${TESTING_HEADERS})
+    source_group("Source Files" FILES ${TESTING_SOURCE})
+
+    add_executable(testing_vle_solvers 
+        ${TESTING_SOURCE}
+        ${TESTING_HEADERS}
+    )
+    target_link_libraries(testing_vle_solvers vle_solvers::vle_solvers GTest::gtest)
+    target_include_directories(testing_vle_solvers
+        PRIVATE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/testing>
+    )
+    install(TARGETS testing_vle_solvers DESTINATION bin)
+
+endif()
+

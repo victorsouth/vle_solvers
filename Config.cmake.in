@@ -1,0 +1,8 @@
+@PACKAGE_INIT@
+include(CMakeFindDependencyMacro)
+find_dependency(fixed_solvers REQUIRED)
+find_dependency(Boost REQUIRED)
+
+include ( "${CMAKE_CURRENT_LIST_DIR}/vle_solversTargets.cmake" )
+
+

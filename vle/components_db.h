@@ -1,17 +1,14 @@
-﻿#pragma once
+#pragma once
 #ifndef __COMPONENTS_DB__
 #define __COMPONENTS_DB__
 
-#include <fixed/fixed.h>
-#include "common_db.h"
 #include <limits>
 #include <array>
 #include <map>
 #include <unordered_map>
-
-namespace vle_solvers
-{
-;
+#include <mutex>
+#include "vle_solvers.h"
+//using namespace std;
 
 /// @brief Используемые единицы количества вещества (мольные, массовые)
 enum class AmountType { Molar, Mass };
@@ -33,7 +30,7 @@ enum class antoine_formula {
     LgMmHgCelcium = 3,
     /// @brief натуральный логарифм, мм. рт. ст., кельвины
     LnMmHgKelvin = 1,
-    /// @brief натуаальный логарифм, кПа, кельвины
+    /// @brief натуральный логарифм, кПа, кельвины
     ExtLnKPaKelvin = 4
 };
 
@@ -57,30 +54,46 @@ struct antoine_model_t {
 
 /// @brief Коэффициенты термодинамических функций (теплоемкость Cp, энтропия, энтальпия)
 struct thermodynamic_functions_coefficients_t {
-    heat_capacity_coefficients_t heat_capacity; /// @brief полиномиальная зависимость теплоемкости Cp от температуры
-    double enthalpy; /// @brief для формулы энтальпии
-    double entropy; /// @brief для формулы энтропии
+    /// @brief полиномиальная зависимость теплоемкости Cp от температуры
+    heat_capacity_coefficients_t heat_capacity;
+    /// @brief для формулы энтальпии
+    double enthalpy;
+    /// @brief для формулы энтропии
+    double entropy;
+    // далее фикс для энтропии (что за "фикс"?)
+    /// @brief Должен использоваться дефолтный конструктор.
+    thermodynamic_functions_coefficients_t() = default;
+    /// @brief Должен использоваться дефолтный конструктор копии.
+    thermodynamic_functions_coefficients_t(const thermodynamic_functions_coefficients_t&) = default;
 };
 
 struct component_properties_t;
 
 /// @brief термодинамические функции (теплоемкость Cp, энтропия, энтальпия)
-class thermodynamic_functions_t : public ranged_function_t<thermodynamic_functions_coefficients_t>
+class thermodynamic_functions_t 
+    : public fixed_solvers::ranged_function_t<thermodynamic_functions_coefficients_t>
 {
     friend component_properties_t;
 public:
+    /// @brief Возвращает размерную идеальногазовую теплоемкость индивидуального компонента.
     double get_Cp_molar(double temperature) const;
+    /// @brief Возвращает размерную идеальногазовую энтальпию индивидуального компонента.
     double get_enthalpy_gas_molar(double temperature) const;
+    /// @brief Возвращает размерную идеальногазовую стандартную энтропию индивидуального компонента.
     double get_entropy_molar(double temperature) const;
-    thermodynamic_functions_t() = default; // для инициализации, там где нет RAII
-    thermodynamic_functions_t(const std::vector<function_range_t<thermodynamic_functions_coefficients_t>>& ranges);
+    /// @brief Должен использоваться дефолтный конструктор для инициализации. (там где нет RAII)
+    thermodynamic_functions_t() = default; 
+    /// @brief Должен использоваться дефолтный конструктор копии.
+    thermodynamic_functions_t(const std::vector<fixed_solvers::function_range_t<thermodynamic_functions_coefficients_t>>& ranges);
 };
 
 /// @brief Корреляция Ван-Вельцена для вязкости
 struct van_velzen_viscosity_correlation
 {
-    double B; /// @brief коэффициент эмпирической зависимости am[20]
-    double T0; /// @brief коэффициент эмпирической зависимости am[21]
+    /// @brief коэффициент эмпирической зависимости am[20] -1 при отсутствии в данных вместо мусора
+    double B{std::numeric_limits<double>::quiet_NaN()};
+    /// @brief коэффициент эмпирической зависимости am[21] -1 при отсутствии в данных вместо мусора
+    double T0{std::numeric_limits<double>::quiet_NaN()}; 
 };
 
 /// @brief Параметры чистого вещества
@@ -105,10 +118,10 @@ struct component_properties_t {
     double acentric_factor; 
     /// @brief теплота конденсации
     double condensation_heat_molar; 
-    /// @brief газокинетический диаметр am[18]
-    double gas_kinetic_diameter; 
-    /// @brief равновесная энергия      am[19]
-    double equilibrium_energy; 
+    /// @brief газокинетический диаметр am[18] -1 при отсутствии в данных вместо мусора
+    double gas_kinetic_diameter{std::numeric_limits<double>::quiet_NaN()};
+    /// @brief равновесная энергия      am[19] -1 при отсутствии в данных вместо мусора
+    double equilibrium_energy{std::numeric_limits<double>::quiet_NaN()};
 
     /// @brief Корреляция Ван-Вельцена для вязкости am[20,21]
     van_velzen_viscosity_correlation viscosity_correlation;
@@ -119,7 +132,7 @@ struct component_properties_t {
     thermodynamic_functions_t functions;
     /// @brief коэффициенты теплоемкости жидкой фазы 
     /// (теплоемкость мольная, проверено по воде и википедии 27.09.2022)
-    ranged_polynom_t<heat_capacity_coefficients_t> heat_capacity_liquid;
+    fixed_solvers::ranged_polynom_t<heat_capacity_coefficients_t> heat_capacity_liquid;
 
     /// @brief удельная энтальпия вещества в жидком состоянии
     template <AmountType amount_type>
@@ -127,7 +140,15 @@ struct component_properties_t {
 
     /// @brief удельная массовая энтальпия вещества в газообразном состоянии
     template <AmountType amount_type>
-    double get_enthalpy_gas(double temperature) const;
+    double get_enthalpy_gas(double temperature) const
+    {
+        if constexpr (amount_type == AmountType::Mass) {
+            return functions.get_enthalpy_gas_molar(temperature) / molar_mass;
+        }
+        else {
+            return functions.get_enthalpy_gas_molar(temperature);
+        }
+    }
 
     /// @brief удельная внутренняя энергия вещества в газовом фазовом состоянии
     template <AmountType amount_type>
@@ -154,15 +175,13 @@ struct component_properties_t {
     /// @brief расчет давления насыщенных паров по формуле экстраполяции
     double get_saturated_pressure_extrapolation(double temperature) const;
     /// @brief Оценка коэффициента экстраполяции давления насыщенных паров
-    double estimate_antoine_exptraploation_coeff() const;
+    double estimate_antoine_extrapolation_coeff() const;
 };
 
 typedef std::unordered_map<std::wstring, component_properties_t> components_database_t;
 typedef std::map<std::wstring, component_properties_t> sorted_components_database_t;
 extern const components_database_t components_database;
 extern const char* thermo_db_serialized;
-
-}
 
 #endif
 

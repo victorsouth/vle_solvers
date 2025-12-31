@@ -1,8 +1,5 @@
-﻿#include "components_db.h"
+#include "../vle_solvers.h"
 
-namespace vle_solvers
-{
-;
 
 double antoine_model_t::get_saturated_pressure(double temperature) const
 {
@@ -19,12 +16,12 @@ double antoine_model_t::get_saturated_pressure(double temperature) const
     switch (formula) {
     case antoine_formula::LnMmHgKelvin: {
         double lnPsat = A - B / std::max(min_denumerator, temperature + C);
-        double Psat_mmHg = exp(lnPsat);
+        double Psat_mmHg = std::exp(lnPsat);
         Psat_Pa = (Psat_mmHg / 760) * 1e5;
         break;
     }
     case antoine_formula::LgMmHgCelcium: {
-        double lgPsat = A - B / std::max(min_denumerator, kelvin2celcium(temperature) + C);
+        double lgPsat = A - B / std::max(min_denumerator, vle_solvers::kelvin2celcium(temperature) + C);
         double Psat_mmHg = std::pow(10.0, lgPsat);
         Psat_Pa = (Psat_mmHg / 760) * 1e5;
         break;
@@ -34,8 +31,8 @@ double antoine_model_t::get_saturated_pressure(double temperature) const
         const double& E = antoine_coefficients[4];
         const double& F = antoine_coefficients[5];
         double lnPsat = A + B / std::max(min_denumerator, temperature + C) +
-            D * log(temperature) + E * pow(temperature, F);
-        double Psat_kPa = exp(lnPsat);
+            D * std::log(temperature) + E * std::pow(temperature, F);
+        double Psat_kPa = std::exp(lnPsat);
         Psat_Pa = Psat_kPa * 1000;
         break;
     }
@@ -46,7 +43,7 @@ double antoine_model_t::get_saturated_pressure(double temperature) const
         break;
     }
     case antoine_formula::LgBarCelcium: {
-        double lgPsat = A - B / std::max(min_denumerator, kelvin2celcium(temperature) + C);
+        double lgPsat = A - B / std::max(min_denumerator, vle_solvers::kelvin2celcium(temperature) + C);
         double Psat_bar = std::pow(10.0, lgPsat);
         Psat_Pa = Psat_bar * 1e5;
         break;
@@ -67,13 +64,13 @@ double antoine_model_t::get_temperature_for_saturated_pressure(double saturated_
     switch (formula) {
     case antoine_formula::LnMmHgKelvin: {
         double Psat_mmHg = Psat_Pa * 760 / 1e5;
-        double lnPsat = log(Psat_mmHg);
+        double lnPsat = std::log(Psat_mmHg);
         double temperature = B / (A - lnPsat) - C;
         return temperature;
     }
     case antoine_formula::LgBarKelvin: {
         double Psat_bar = Psat_Pa / 1e5;
-        double lgPsat = log10(Psat_bar);
+        double lgPsat = std::log10(Psat_bar);
         double temperature = B / (A - lgPsat) - C;
         return temperature;
     }
@@ -83,8 +80,8 @@ double antoine_model_t::get_temperature_for_saturated_pressure(double saturated_
 }
 
 thermodynamic_functions_t::thermodynamic_functions_t(
-    const std::vector<function_range_t<thermodynamic_functions_coefficients_t>>& ranges)
-    : ranged_function_t(ranges)
+    const std::vector<fixed_solvers::function_range_t<thermodynamic_functions_coefficients_t>>& ranges)
+    : fixed_solvers::ranged_function_t<thermodynamic_functions_coefficients_t>(ranges)
 {
     
 }
@@ -98,7 +95,8 @@ double thermodynamic_functions_t::get_Cp_molar(double temperature) const
     *** В данной функции сделано приведение к размерным величинам! ***
 */
     size_t index = get_range_index(temperature);
-    double result = M_R * polyval(ranges[index].coefficients.heat_capacity, temperature);
+    double result = M_R * fixed_solvers::polyval(
+        ranges[index].coefficients.heat_capacity, temperature);
     return result;
 }
 
@@ -115,7 +113,7 @@ double thermodynamic_functions_t::get_entropy_molar(double temperature) const
     const auto& A = ranges[index].coefficients.heat_capacity;
     const double& T = temperature;
 
-    double entropy_dimensionless = A[0] * log(T) + T * (A[1] + T * (A[2] / 2.0 + T * (A[3] / 3.0 + A[4] / 4.0 * T))) +
+    double entropy_dimensionless = A[0] * std::log(T) + T * (A[1] + T * (A[2] / 2.0 + T * (A[3] / 3.0 + A[4] / 4.0 * T))) +
         ranges[index].coefficients.entropy;
 
     return entropy_dimensionless * M_R;
@@ -167,19 +165,6 @@ double component_properties_t::get_enthalpy_liquid(double pressure, double tempe
     //return enthalpy;
 }
 
-
-template <AmountType amount_type>
-double component_properties_t::get_enthalpy_gas(double temperature) const
-{
-    if constexpr (amount_type == AmountType::Mass) {
-        return functions.get_enthalpy_gas_molar(temperature) / molar_mass;
-    }
-    else {
-        return functions.get_enthalpy_gas_molar(temperature);
-    }
-}
-
-
 template<AmountType amount_type>
 double component_properties_t::get_inner_energy_gas(double temperature) const
 {
@@ -194,7 +179,7 @@ double component_properties_t::get_inner_energy_gas(double temperature) const
 
 template <typename Function>
 double numerical_differentiate(Function f, double x, double eps = 1e-8) {
-    double dx = std::max(1.0, abs(x)) * eps;
+    double dx = std::max(1.0, std::abs(x)) * eps;
     double df = f(x + dx) - f(x - dx);
     return df / (2 * dx);
 }
@@ -281,30 +266,29 @@ double component_properties_t::get_saturated_pressure_extrapolation(double tempe
     double omega = acentric_factor;
 
     double result =
-        critical_pressure * exp(alpha * (1 + omega) * (1 - critical_temperature / temperature));
+        critical_pressure * std::exp(alpha * (1 + omega) * (1 - critical_temperature / temperature));
     return result;
 }
 
-double component_properties_t::estimate_antoine_exptraploation_coeff() const
+double component_properties_t::estimate_antoine_extrapolation_coeff() const
 {
-    //throw std::runtime_error("Not impl");
     size_t point_count = 20;
 
-    VectorXd Y(point_count);
-    MatrixXd X(point_count, 1);
+    Eigen::VectorXd Y(point_count);
+    Eigen::MatrixXd X(point_count, 1);
 
     double dT = (antoine_model.max_bound - antoine_model.min_bound) / (point_count - 1);
     for (size_t index = 0; index < point_count; ++index) {
         double T = antoine_model.min_bound + index * dT;
 
         double Psat = get_saturated_pressure(T);
-        Y(index) = log(Psat / critical_pressure);
+        Y(index) = std::log(Psat / critical_pressure);
 
         X(index, 0) = (1 + acentric_factor) * (1 - critical_temperature / T);
 
     }
 
-    VectorXd alpha = (X.transpose() * X).inverse() * X.transpose() * Y;
+    Eigen::VectorXd alpha = (X.transpose() * X).inverse() * X.transpose() * Y;
     return alpha(0);
 }
 
@@ -319,9 +303,6 @@ double component_properties_t::get_saturated_pressure_derivative(double temperat
     return (Psat_plus - Psat_minus) / (2 * dT);
 }
 
-template double component_properties_t::get_enthalpy_gas<AmountType::Molar>(double) const;
-template double component_properties_t::get_enthalpy_gas<AmountType::Mass>(double) const;
-
 template double component_properties_t::get_enthalpy_liquid<AmountType::Molar>(double, double) const;
 template double component_properties_t::get_enthalpy_liquid<AmountType::Mass>(double, double) const;
 
@@ -332,4 +313,3 @@ template double component_properties_t::get_inner_energy_gas<AmountType::Mass>(d
 template double component_properties_t::get_inner_energy_liquid<AmountType::Molar>(double temperature) const;
 template double component_properties_t::get_inner_energy_liquid<AmountType::Mass>(double temperature) const;
 
-}
