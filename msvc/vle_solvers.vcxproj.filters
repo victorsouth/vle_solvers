@@ -3,43 +3,112 @@
   <ItemGroup>
     <Filter Include="Source Files">
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
     <Filter Include="Header Files">
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\DB">
+      <UniqueIdentifier>{a8cc8d7d-cedd-4c8d-94b8-59f8e1ad52af}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\DB">
+      <UniqueIdentifier>{adcf0a15-f7b6-43f7-927b-d5b63b964f04}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Fluid">
+      <UniqueIdentifier>{a1a131ef-1432-40c6-b6ed-ec0db2f39766}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Fluid">
+      <UniqueIdentifier>{e776c520-967b-4614-8ffa-ae1804d1ec7a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Fluid\Solvers">
+      <UniqueIdentifier>{f280de45-3a39-4ea0-9993-1213a8294268}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Fluid\Solvers">
+      <UniqueIdentifier>{f280de45-3a39-4ea0-9993-1213a8294269}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Helpers">
+      <UniqueIdentifier>{b4ec2e97-c111-447f-8d3a-7f34e8f6b418}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\db\common_db.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\db\components_db.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\db\tdb_serialize_2024_05_24.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\db\tdb_serialize_common.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\vle_solvers.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
+    <ClCompile Include="..\vle\db\components_db.cpp">
+      <Filter>Source Files\DB</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vle\db\components_db_data.cpp">
+      <Filter>Source Files\DB</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vle\db\components_db_init.cpp">
+      <Filter>Source Files\DB</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vle\fluid\fluid_base.cpp">
+      <Filter>Source Files\Fluid</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vle\fluid\fluid_common.cpp">
+      <Filter>Source Files\Fluid</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vle\fluid\fluid_equations.cpp">
+      <Filter>Source Files\Fluid</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vle\fluid\fluid_raoult_dalton.cpp">
+      <Filter>Source Files\Fluid</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vle\fluid\solvers\ph_flash.cpp">
+      <Filter>Source Files\Fluid\Solvers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vle\fluid\solvers\rachford_rice.cpp">
+      <Filter>Source Files\Fluid\Solvers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vle\fluid\solvers\uv_flash.cpp">
+      <Filter>Source Files\Fluid\Solvers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\db\components_db.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\db\components_db_data.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\db\components_db_init.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
+    <ClInclude Include="..\vle\components_db.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vle\physical_constants.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vle\vle_solvers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vle\db\tdb_serialize_common.h">
+      <Filter>Header Files\DB</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vle\db\tdb_serialize_2024_09_24.h">
+      <Filter>Header Files\DB</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vle\fluid\fluid_base.h">
+      <Filter>Header Files\Fluid</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vle\fluid\fluid_common.h">
+      <Filter>Header Files\Fluid</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vle\fluid\fluid_equations.h">
+      <Filter>Header Files\Fluid</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vle\fluid\fluid_raoult_dalton.h">
+      <Filter>Header Files\Fluid</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vle\fluid\solvers\ph_flash.h">
+      <Filter>Header Files\Fluid\Solvers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vle\fluid\solvers\phase_boundaries.h">
+      <Filter>Header Files\Fluid\Solvers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vle\fluid\solvers\rachford_rice.h">
+      <Filter>Header Files\Fluid\Solvers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vle\fluid\solvers\uv_flash.h">
+      <Filter>Header Files\Fluid\Solvers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vle\helpers\physical_helpers.h">
+      <Filter>Header Files\Helpers</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -5,7 +5,7 @@
 #include <boost/property_tree/json_parser.hpp>
 
 //#include <common/common_hydraulics.h>
-#include <vle_solvers/components_db.h>
+#include <vle/components_db.h>
 
 inline double get_double_value(const boost::property_tree::ptree& node) {
     auto str = node.get_value<std::string>();
