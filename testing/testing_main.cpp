@@ -6,9 +6,20 @@
 #define _VARIADIC_MAX 10 /* for gtest */
 #include <gtest/gtest.h>
 
-#include "test_database.h"
-
 #include <iostream>
+#include <map>
+
+// Вспомогательная функция для вывода ошибок
+inline void print_errors(const std::wstring& prefix, double a, double b, double error_border) {
+    double relative_error = (a - b) / a;
+    std::wcout << prefix << a << '\t' << b << " err:" << relative_error << std::endl;
+
+    ASSERT_LE(std::abs(relative_error), error_border);
+}
+
+#include "test_database.h"
+#include "test_components.h"
+#include "test_fluid.h"
 
 
 int main(int argc, char** argv) {

@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-
 /// @brief Тест для примера того, как работать с базой данных
 TEST(DataBase, ComponentPropertiesInitialization)
 {
