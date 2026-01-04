@@ -10,6 +10,11 @@
 #include <numeric>
 #include <utility>
 #include <string>
+#include <mutex>
+#include <shared_mutex>
+#include <iomanip>
+#include <fstream>
+#include <memory>
 #include <Eigen/Dense>
 
 #include <fixed/fixed.h>
