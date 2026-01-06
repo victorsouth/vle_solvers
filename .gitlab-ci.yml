@@ -168,13 +168,13 @@ MinGW_build:
       - Libs/MinGW
  
  # Запуск тестов с использованием GTest
-pde_tests:
+testing_vle_solvers:
   stage: Unit_Testing
   tags:
     - docker
   image: $DOCKER_REGISTRY/$DOCKER_REPO/gcc_cmake_boost_eigen_gtest:latest
   script:
-    - bash pipeline/pipeline_scripts/tests_start.sh GCC pde_tests
+    - bash pipeline/pipeline_scripts/tests_start.sh GCC testing_vle_solvers
   needs: [GCC_build]
   dependencies: [GCC_build]
   allow_failure: false
