@@ -14,6 +14,7 @@ private:
     /// @brief Флюид, для которого ищется температура кипения
     const fluid_t* fluid;
 public:
+    /// @brief Конструктор калькулятора температуры конденсации при заданном давлении
     dew_point_at_given_pressure(double pressure, const fluid_t* fluid) 
         : pressure(pressure)
         , fluid(fluid)
@@ -75,6 +76,7 @@ private:
     /// @brief Флюид, для которого ищется температура кипения
     const fluid_t* fluid;
 public:
+    /// @brief Конструктор калькулятора температуры кипения при заданном давлении
     bubble_point_at_given_pressure(double pressure, const fluid_t* fluid)
         : pressure(pressure)
         , fluid(fluid)

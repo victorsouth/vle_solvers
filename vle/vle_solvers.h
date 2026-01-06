@@ -10,6 +10,11 @@
 #include <numeric>
 #include <utility>
 #include <string>
+#include <mutex>
+#include <shared_mutex>
+#include <iomanip>
+#include <fstream>
+#include <memory>
 #include <Eigen/Dense>
 
 #include <fixed/fixed.h>
@@ -38,7 +43,4 @@
 #include "fluid/fluid_base.h"
 #include "fluid/fluid_raoult_dalton.h"
 #include "fluid/fluid_equations.h"
-
-
-//using namespace std; настолько глубоко, что тут нет необходимости
 
