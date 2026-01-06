@@ -8,6 +8,8 @@
        газокинетический диаметр,
        равновесная энергия
 */
+/// @brief Сериализатор свойств базы данных компонентов (версия 2024-09-24)
+/// Предоставляет методы для сериализации и десериализации свойств компонентов в формат JSON и обратно
 class serializer_2024_09_24 {
 private:
     static void serialize_van_velzen(const van_velzen_viscosity_correlation& van_velzen,
