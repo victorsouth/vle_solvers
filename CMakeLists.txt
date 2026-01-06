@@ -105,8 +105,8 @@ target_include_directories(${PROJECT_NAME}
     PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/vle>
-    $<INSTALL_INTERFACE:include>
-    $<INSTALL_INTERFACE:include/vle>
+    $<INSTALL_INTERFACE:include/vle_solvers>
+    $<INSTALL_INTERFACE:include/vle_solvers/vle>
 )
 add_library(vle_solvers::vle_solvers ALIAS vle_solvers)
 
@@ -138,11 +138,11 @@ if(VLE_SOLVERS_INSTALL)
     )
 
     # Установка заголовочных файлов (headers)
-    install(FILES ${HEADER} DESTINATION include/vle/)
-    install(FILES ${HEADER_DB} DESTINATION include/vle/db)
-    install(FILES ${HEADER_FLUID} DESTINATION include/vle/fluid)
-    install(FILES ${HEADER_FLUID_SOLVERS} DESTINATION include/vle/fluid/solvers)
-    install(FILES ${HEADER_HELPERS} DESTINATION include/vle/helpers)
+    install(FILES ${HEADER} DESTINATION include/vle_solvers/vle/)
+    install(FILES ${HEADER_DB} DESTINATION include/vle_solvers/vle/db)
+    install(FILES ${HEADER_FLUID} DESTINATION include/vle_solvers/vle/fluid)
+    install(FILES ${HEADER_FLUID_SOLVERS} DESTINATION include/vle_solvers/vle/fluid/solvers)
+    install(FILES ${HEADER_HELPERS} DESTINATION include/vle_solvers/vle/helpers)
 
 endif()
 
