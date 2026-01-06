@@ -1,10 +1,5 @@
 ﻿#pragma once
 
-#include <mutex>
-#include <shared_mutex>
-#include <iomanip>
-#include <fstream>
-
 namespace vlelib {
 ;
 /// @brief Состояние флюида и flash-расчета
