@@ -4,7 +4,7 @@
 PWD_STORE=$PWD
 PRJ_NAME="vle_solvers"
 LOG_NAME="${PRJ_NAME}_build.log"
-BRANCH=$PDE_SOLVERS_BRANCH
+BRANCH=$VLE_SOLVERS_BRANCH
 
 # Проверяем, передан ли аргумент (GCC, MinGW или Clang)
 if [ -z "$1" ]; then
