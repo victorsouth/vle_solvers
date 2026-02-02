@@ -29,7 +29,7 @@ set(HEADER
 
 set(HEADER_DB
     vle/db/tdb_serialize_common.h
-    vle/db/tdb_serialize_2024_09_24.h
+    vle/db/tdb_serialize_2026_02_02.h
 )
 
 set(SOURCE_DB

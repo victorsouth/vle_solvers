@@ -1,7 +1,7 @@
 ﻿#include "../vle_solvers.h"
 
 #define BOOST_EXCEPTION_DISABLE
-#include "tdb_serialize_2024_09_24.h"
+#include "tdb_serialize_2026_02_02.h"
 
 //#include <common/common_hydraulics.h>
 //using hydraulics::celcium2kelvin;
@@ -14,7 +14,7 @@ struct db_initializer_t {
     db_initializer_t(const components_database_t& _db)
     {
         components_database_t& db = const_cast<components_database_t&>(_db);
-        db = serializer_2024_09_24::deserialize_from_string<components_database_t>(std::string(thermo_db_serialized));
+        db = serializer_2026_02_02::deserialize_from_string<components_database_t>(std::string(thermo_db_serialized));
 
         calc_extrapolation_coeff(db);
     }

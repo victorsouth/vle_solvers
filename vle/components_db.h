@@ -100,6 +100,10 @@ struct van_velzen_viscosity_correlation
 struct component_properties_t {
     /// @brief название (формула)
     std::wstring name; 
+    /// @brief название (название)
+    std::wstring component_name;
+    /// @brief название (формула)
+    std::wstring CASno;
     /// @brief молярная масса
     double molar_mass; 
     /// @brief плотность жидкости при 20 град
