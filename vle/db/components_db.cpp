@@ -1,4 +1,21 @@
-#include "../vle_solvers.h"
+#include <cmath>
+#include <Eigen/Dense>
+#include "components_db.h"
+//#include "fluid/fluid_base.h"
+#include "physical_constants.h"
+#include "helpers/physical_helpers.h"
+//#include <fixed/fixed_system.h>
+/// @brief Расчет приращения для численного расчета производной на основе относительного отклонения
+/// @param value Точка, где вычисляется производная
+/// @param epsilon Относительное отклонение
+/// @return Приращение
+inline double numeric_derivative_delta(double value, double epsilon)
+{
+    using std::max;
+    return epsilon * max(1.0, std::abs(value));
+}
+
+
 
 
 double antoine_model_t::get_saturated_pressure(double temperature) const

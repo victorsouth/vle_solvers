@@ -1,6 +1,7 @@
-﻿#include "../vle_solvers.h"
-
-using std::endl;
+﻿#include "fluid_raoult_dalton.h"
+//#include <fixed/fixed.h>
+#include <fixed/fixed_bisection.h>
+#include "fluid_equations.h"
 
 namespace vlelib {
 

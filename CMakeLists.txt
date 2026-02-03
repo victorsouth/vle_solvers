@@ -43,6 +43,7 @@ set(HEADER_FLUID
     vle/fluid/fluid_common.h
     vle/fluid/fluid_equations.h
     vle/fluid/fluid_raoult_dalton.h
+    vle/fluid/fluid_utils.h
 )
 
 set(SOURCE_FLUID
@@ -50,6 +51,7 @@ set(SOURCE_FLUID
     vle/fluid/fluid_common.cpp
     vle/fluid/fluid_equations.cpp
     vle/fluid/fluid_raoult_dalton.cpp
+    vle/fluid/fluid_utils.cpp
 )
 
 set(HEADER_FLUID_SOLVERS

@@ -1,8 +1,29 @@
-﻿#include "../vle_solvers.h"
+﻿//#include <fixed/fixed.h>
+#include "fluid_base.h"
+#include <iomanip>
 
 
 namespace vlelib {
 ;
+
+void fluid_state_t::deserialize_text(std::istream &stream){
+    std::string str;
+    stream>>str;
+    if(str!=fixed_solvers::get_class_as_string(*this))throw std::logic_error("wrong type:"+str);
+    fixed_solvers::load_vector(stream,concentration);
+    stream>>flash>>pressure>>temperature;
+    /// вызываем исключение в случае неудачного чтения из потока
+    if(stream.fail()){
+        throw std::runtime_error("wrong data");
+    }
+
+}
+
+void fluid_state_t::serialize_text(std::ostream &stream) const{
+    stream<< fixed_solvers::get_class_as_string(*this)<<std::endl;
+    fixed_solvers::save_vector(stream,concentration);
+    stream<<flash<<' '<<pressure<<' '<<temperature<<'\n';
+}
 
 
 flash_type_t flash_calculation_result_t::get_flash_status() const
@@ -175,6 +196,15 @@ void fluid_fundamental_data_t::set_state(const fluid_state_t& state)
 size_t fluid_fundamental_data_t::get_components_count() const
 {
     return components_.size();
+}
+
+std::wstring fluid_fundamental_data_t::get_compound_name() const {
+    std::wstringstream result;
+    int i{0};
+    for (const auto& component : components_) {
+        result << component->name << std::setprecision(3)<<concentration_[i++];
+    }
+    return result.str();
 }
 
 const std::vector<const component_properties_t*>& fluid_fundamental_data_t::get_components() const
@@ -651,6 +681,7 @@ fluid_components_functions_t::get_enthalpy_vapor_derivatives_by_components<Amoun
 template std::pair<Eigen::VectorXd, Eigen::VectorXd>
 fluid_components_functions_t::get_enthalpy_vapor_derivatives_by_components<AmountType::Molar>(
         double pressure, double temperature) const;
+
 
 
 }

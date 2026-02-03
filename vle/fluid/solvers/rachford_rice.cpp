@@ -1,4 +1,6 @@
-﻿#include "../../vle_solvers.h" // очень некрасивый инклуд...
+﻿//#include "../../vle_solvers.h" // очень некрасивый инклуд...
+#include "fluid/fluid_base.h"
+#include "rachford_rice.h"
 
 namespace vlelib {
 ;

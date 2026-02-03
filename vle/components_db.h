@@ -6,9 +6,10 @@
 #include <array>
 #include <map>
 #include <unordered_map>
-#include <mutex>
-#include "vle_solvers.h"
-//using namespace std;
+#include <vector>
+#include <string>
+#include <fixed/helpers/math_helpers.h>
+#include <fixed/helpers/ranged_functions.h>
 
 /// @brief Используемые единицы количества вещества (мольные, массовые)
 enum class AmountType { Molar, Mass };

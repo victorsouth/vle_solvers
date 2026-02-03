@@ -1,4 +1,9 @@
-﻿#include "../vle_solvers.h"
+﻿#include <cmath>
+#include "physical_constants.h"
+#include "helpers/physical_helpers.h"
+#include "fluid_common.h"
+#include "fluid_base.h"
+#include <numeric>
 
 
 namespace vlelib {
@@ -28,28 +33,6 @@ double density_liquid_manovyan1(double temperature, double density_20)
 
     return result;
 }
-
-std::pair<std::vector<double>, std::vector<double>> plot_enthalpy(
-    fluid_t* fluid, double pressure, double Tfrom, double Tto, double Tstep /*= 0.1*/)
-{
-    std::pair<std::vector<double>, std::vector<double>> result;
-    auto& T = result.first;
-    auto& H = result.second;
-    //vector<double> H, vapor_frac, Temp;
-    for (double t = Tfrom; t < Tto; t += Tstep)
-    {
-        const auto vle = fluid->flash(pressure, t);
-        double h = vle.enthalpy.mass.mix;
-
-        T.push_back(t);
-        H.push_back(h);
-        //vapor_frac.push_back(vle.flash);
-    }
-    return result;
-}
-
-
-
 
 
 void fill_concentration_from_fluid(fluid_t* fluid, std::vector<double>* vector_concentration, size_t components_count)
@@ -90,24 +73,6 @@ Eigen::VectorXd get_fracs_as_VectorXd(const std::vector<double>& amounts)
     Eigen::VectorXd fracs = Eigen::Map<Eigen::VectorXd>(const_cast<double*>(amounts.data()), amounts.size());
     fracs /= total_flow;
     return fracs;
-}
-
-std::vector<std::tuple<double, double, double>> phase_diagram(
-    const fluid_t* fluid, double Pfrom, double Pto, double Tfrom, double Tto, size_t step_count /*= 10*/)
-{
-    double DP = (Pto - Pfrom) / step_count;
-    double DT = (Tto - Tfrom) / step_count;
-
-    std::vector<std::tuple<double, double, double>> values;
-    for (double P = Pfrom; P < Pto; P += DP)
-    {
-        for (double T = Tfrom; T < Tto; T += DT) {
-            const auto vle = fluid->flash(P, T);
-            values.emplace_back(P, T, vle.flash);
-        }
-
-    }
-    return values;
 }
 
 }

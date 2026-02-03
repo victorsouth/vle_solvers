@@ -1,4 +1,9 @@
-﻿#include "../../vle_solvers.h" // очень некрасивый инклуд...
+﻿//#include "../../vle_solvers.h" // очень некрасивый инклуд...
+#include <cmath>
+#include <Eigen/Dense>
+#include <fixed/helpers/math_helpers.h>
+#include "uv_flash.h"
+#include "rachford_rice.h"
 
 namespace vlelib {
 ;

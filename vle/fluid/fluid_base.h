@@ -1,7 +1,45 @@
 ﻿#pragma once
+#include <vector>
+#include <string>
+#include <memory>
+#include <limits>
+#include "fluid_common.h"
+#include "components_db.h"
+#include "physical_constants.h"
+#include <mutex>
+#include <fixed/helpers/string_helpers.h>
+//#define numeric_derivative_delta numeric_derivative_delta__
+//#define two_sided_derivative two_sided_derivative__
 
 namespace vlelib {
 ;
+/// @brief Расчет приращения для численного расчета производной на основе относительного отклонения
+/// @param value Точка, где вычисляется производная
+/// @param epsilon Относительное отклонение
+/// @return Приращение
+inline double numeric_derivative_delta(double value, double epsilon)
+{
+    using std::max;
+    return epsilon * max(1.0, std::abs(value));
+}
+
+/// @brief Численный расчет производной от функции одного аргумента по двусторонней формуле
+/// @tparam Function Тип функции
+/// @param f Функция
+/// @param value Точка, в которой вычисляется произвожная
+/// @param epsilon Относительное приращение (см. numeric_derivative_delta)
+/// @return Производная
+template <typename Function>
+inline auto two_sided_derivative(Function f, double value, double epsilon) {
+    double dx = numeric_derivative_delta(value, epsilon);
+
+    typedef std::invoke_result_t<Function, double> ResultType;
+    ResultType f_plus = f(value + dx);
+    ResultType f_minus = f(value - dx);
+    ResultType difference = f_plus - f_minus;
+    ResultType result = difference / (2 * dx);
+    return result;
+}
 /// @brief Состояние флюида и flash-расчета
 struct fluid_state_t {
     /// @brief Концентрации
@@ -15,25 +53,10 @@ struct fluid_state_t {
     /// @brief чтение данных класса из входного потока
     /// производится проверка корректности входных данных по имени
     /// @param stream входной поток
-    virtual void deserialize_text(std::istream& stream){
-        std::string str;
-        stream>>str;
-        if(str!=fixed_solvers::get_class_as_string(*this))throw std::logic_error("wrong type:"+str);
-        fixed_solvers::load_vector(stream,concentration);
-        stream>>flash>>pressure>>temperature;
-        /// вызываем исключение в случае неудачного чтения из потока
-        if(stream.fail()){
-            throw std::runtime_error("wrong data");
-        }
-
-    }
+    virtual void deserialize_text(std::istream& stream);
     /// @brief запись данных класса в выходной поток
     /// @param stream выходной поток
-    virtual void serialize_text(std::ostream& stream)const{
-        stream<< fixed_solvers::get_class_as_string(*this)<<std::endl;
-        fixed_solvers::save_vector(stream,concentration);
-        stream<<flash<<' '<<pressure<<' '<<temperature<<'\n';
-    }
+    virtual void serialize_text(std::ostream& stream)const;
     virtual ~fluid_state_t() = default;
 };
 
@@ -153,6 +176,7 @@ inline void crashdump_and_throw(
 /// @brief Фазовое состояние вещества
 enum class state_of_matter_t { Undefined, Gas, Liquid, TwoPhase, Critical };
 
+class fluid_t;
 /// @brief Результаты flash-расчета
 struct flash_calculation_result_t {
     /// @brief Целостность данных
@@ -282,14 +306,7 @@ public:
 public:
     /// @brief (потокобезопасно)
     /// @return 
-    std::wstring get_compound_name() const {
-        std::wstringstream result;
-        int i{0};
-        for (const auto& component : components_) {
-            result << component->name << std::setprecision(3)<<concentration_[i++];
-        }
-        return result.str();
-    }
+    std::wstring get_compound_name() const;
 
     /// @brief (потокобезопасно) Возвращает данные для изолированных вызовов
     const fluid_stubdata_t get_mock_data() const;
@@ -309,7 +326,7 @@ public:
 /// Нет численных методов
 class fluid_components_functions_t {
     /// @brief Здесь исходим из того, что перечень компонентов меняться не будет
-    const vector<const component_properties_t*>& components_;
+    const std::vector<const component_properties_t*>& components_;
 public:
     /// @brief Запрещаем копирование, чтобы не копировать ссылку
     fluid_components_functions_t(const fluid_components_functions_t&) = delete;
@@ -748,5 +765,7 @@ inline std::unique_ptr<Fluid> create_fluid(
     }
 }
 
+//#undef numeric_derivative_delta
+//#undef two_sided_derivative
 
 }

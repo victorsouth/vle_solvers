@@ -143,7 +143,7 @@ private:
 
     static thermodynamic_functions_t deserialize_td_functions(const boost::property_tree::ptree& props)
     {
-        vector<fixed_solvers::function_range_t<thermodynamic_functions_coefficients_t>> ranges;
+        std::vector<fixed_solvers::function_range_t<thermodynamic_functions_coefficients_t>> ranges;
 
         for (size_t index = 1; true; ++index) {
             //try 
@@ -184,7 +184,7 @@ private:
     static fixed_solvers::ranged_polynom_t<heat_capacity_coefficients_t> deserialize_heat_capacity_liquid(
         const boost::property_tree::ptree& props)
     {
-        vector<fixed_solvers::function_range_t<heat_capacity_coefficients_t>> ranges;
+        std::vector<fixed_solvers::function_range_t<heat_capacity_coefficients_t>> ranges;
 
         for (size_t index = 1; true; ++index) {
             try {

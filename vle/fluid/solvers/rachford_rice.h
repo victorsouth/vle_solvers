@@ -1,5 +1,13 @@
 ﻿#pragma once
-
+#include <Eigen/Dense>
+#include <Eigen/Sparse>
+#include <numeric>
+#include <iomanip>
+#include <fixed/fixed_system.h>
+#include <fixed/array_ext.h>
+#include <fixed/fixed_linear_solver.h>
+#include <fixed/fixed_constraints.h>
+#include <fixed/fixed_nonlinear_solver.h>
 namespace vlelib {
 ;
 
