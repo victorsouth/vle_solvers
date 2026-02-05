@@ -19,7 +19,7 @@ endif()
 
 find_package(fixed_solvers REQUIRED)
 find_package(Boost REQUIRED COMPONENTS serialization)
-
+option(VLESOLVERS_WITH_PCH "Use Prcompiled Headers" ON)
 # Установка путей к файлам в папках в переменные
 set(HEADER
     vle/vle_solvers.h
@@ -110,6 +110,10 @@ target_include_directories(${PROJECT_NAME}
     $<INSTALL_INTERFACE:include/vle_solvers/vle>
 )
 add_library(vle_solvers::vle_solvers ALIAS vle_solvers)
+if(VLESOLVERS_WITH_PCH)
+    target_precompile_headers(${PROJECT_NAME} PUBLIC vle/vle_solvers.h)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC VLESOLVERS_WITH_PCH)
+endif()
 
 option(VLE_SOLVERS_INSTALL "" ON)
 

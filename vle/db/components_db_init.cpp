@@ -7,6 +7,7 @@
 //using hydraulics::celcium2kelvin;
 
 const components_database_t components_database;
+const components_database_t hypocomponents_database{};
 
 /// @brief Структура для обвязки инициализации глобавльной базы данных по компонентам
 struct db_initializer_t {
@@ -33,3 +34,11 @@ struct db_initializer_t {
 };
 
 db_initializer_t db_init(components_database);
+
+void replace_database(const components_database_t &db_components, const components_database_t &db_hypocomponents)
+{
+    components_database_t& db = const_cast<components_database_t&>(components_database);
+    db=db_components;
+    components_database_t& hdb = const_cast<components_database_t&>(hypocomponents_database);
+    hdb=db_hypocomponents;
+}

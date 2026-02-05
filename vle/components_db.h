@@ -185,8 +185,10 @@ struct component_properties_t {
 typedef std::unordered_map<std::wstring, component_properties_t> components_database_t;
 typedef std::map<std::wstring, component_properties_t> sorted_components_database_t;
 extern const components_database_t components_database;
+extern const components_database_t hypocomponents_database;
 extern const char* thermo_db_serialized;
-
+//не очень хорошо, ну и ладно
+void replace_database(const components_database_t& db_components,const components_database_t& db_hypocomponents);
 #endif
 
 /// @brief удельная внутренняя энергия вещества в газовом фазовом состоянии
