@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+﻿cmake_minimum_required(VERSION 3.10)
 
 project(vle_solvers)
 
@@ -111,7 +111,7 @@ target_include_directories(${PROJECT_NAME}
 )
 add_library(vle_solvers::vle_solvers ALIAS vle_solvers)
 if(VLESOLVERS_WITH_PCH)
-    target_precompile_headers(${PROJECT_NAME} PUBLIC vle/vle_solvers.h)
+    target_precompile_headers(${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:vle/vle_solvers.h> )
     target_compile_definitions(${PROJECT_NAME} PUBLIC VLESOLVERS_WITH_PCH)
 endif()
 
@@ -180,6 +180,7 @@ if(VLE_SOLVERS_BUILD_TESTS)
         PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/testing>
     )
+    #target_precompile_headers(testing_vle_solvers REUSE_FROM ${PROJECT_NAME})
     install(TARGETS testing_vle_solvers DESTINATION bin)
 
 endif()
