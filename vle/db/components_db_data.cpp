@@ -1,4 +1,4 @@
-const char* thermo_db_serialized = 
+﻿const char* thermo_db_serialized = 
 "{"
 "    \"AR\": {"
 "        \"molar_mass\": \"0.039947999999999997\","

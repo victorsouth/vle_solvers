@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "tdb_serialize_common.h"
 
 #include <optional>
@@ -253,6 +253,9 @@ private:
         properties.name = name;
         try{
         properties.component_name = fixed_solvers::string2wide(props.get<std::string>("component_name"));
+        std::cerr<<props.get<std::string>("component_name")<<std::endl;
+        std::wcerr<<properties.component_name<<std::endl;
+
         properties.CASno = fixed_solvers::string2wide(props.get<std::string>("CASno"));
         }catch(...){
 
