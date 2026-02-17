@@ -253,8 +253,9 @@ private:
         properties.name = name;
         try{
         properties.component_name = fixed_solvers::string2wide(props.get<std::string>("component_name"));
-        std::cerr<<props.get<std::string>("component_name")<<std::endl;
-        std::wcerr<<properties.component_name<<std::endl;
+        //std::cerr<<props.get<std::string>("component_name")<<std::endl;
+        //std::wcout<<properties.component_name<<std::endl;
+        //std::cerr<<fixed_solvers::wide2string(properties.component_name)<<std::endl;
 
         properties.CASno = fixed_solvers::string2wide(props.get<std::string>("CASno"));
         }catch(...){
