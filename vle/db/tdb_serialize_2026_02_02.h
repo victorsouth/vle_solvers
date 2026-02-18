@@ -3,12 +3,11 @@
 
 #include <optional>
 
-/* Сериализация 18.11.2020, добавление параметров:
-       корреляции Ван-Вельцена B, T0, 
-       газокинетический диаметр,
-       равновесная энергия
+/* Сериализация 02.02.2026, добавление параметров:
+ * component_name - читаемое имя компонента
+ * CASno - CAS номер
 */
-/// @brief Сериализатор свойств базы данных компонентов (версия 2024-09-24)
+/// @brief Сериализатор свойств базы данных компонентов (версия 2026-02-02)
 /// Предоставляет методы для сериализации и десериализации свойств компонентов в формат JSON и обратно
 class serializer_2026_02_02 {
 private:
@@ -253,9 +252,6 @@ private:
         properties.name = name;
         try{
         properties.component_name = fixed_solvers::string2wide(props.get<std::string>("component_name"));
-        //std::cerr<<props.get<std::string>("component_name")<<std::endl;
-        //std::wcout<<properties.component_name<<std::endl;
-        //std::cerr<<fixed_solvers::wide2string(properties.component_name)<<std::endl;
 
         properties.CASno = fixed_solvers::string2wide(props.get<std::string>("CASno"));
         }catch(...){

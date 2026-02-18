@@ -223,6 +223,8 @@ private:
     /// @brief Параметры компонентов флюида. Ссылка на БД
     /// (никогда не меняется, запрещаем на уровне интерфейса)
     const std::vector<const component_properties_t*> components_;
+    /// тут место для бинарных коэффициентов
+    std::shared_ptr<Eigen::MatrixXd> binary_coeffs;
     /// @brief Мольный состав
     Eigen::VectorXd concentration_;
     /// @brief Общий мьютекс для состава
