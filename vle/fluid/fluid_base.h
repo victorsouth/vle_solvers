@@ -663,7 +663,7 @@ template <typename Fluid>
 inline std::unique_ptr<Fluid> create_fluid(const std::vector<std::wstring>& component_names,
                                       const std::vector<double>& molar_fractions = std::vector<double>()
         ,const components_database_t& db_components=components_database
-        ,const components_database_t& db_hypocomponents=hypocomponents_database)
+        ,const components_database_t& db_hypocomponents={})
 {
     std::vector<const component_properties_t*> components;
 
@@ -691,42 +691,8 @@ inline std::unique_ptr<Fluid> create_fluid(const std::vector<std::wstring>& comp
         return std::move(std::make_unique<Fluid>(components, fractions));
     }
 }
-#if 0
 
-/// @brief Функция создает поток флюида с заданным компонентным составом и мольными долями
-/// @tparam Fluid
-/// @param component_names Названия компонентов
-/// @param molar_fractions Мольные доли компонентов
-template <typename Fluid>
-inline std::unique_ptr<Fluid> create_fluid(const std::vector<std::wstring>& component_names,
-                                      const std::vector<double>& molar_fractions = std::vector<double>())
-{
-    std::vector<const component_properties_t*> components;
-
-    for (const std::wstring& name : component_names) {
-        try {
-            const auto& component_properties = components_database.at(name);
-            components.emplace_back(&component_properties);
-        }
-        catch (std::exception&) {
-            std::stringstream msg;
-            msg << "Component is not exist in thermoDB: " << fixed_solvers::wide2string(name);
-            throw std::logic_error(msg.str().c_str());
-        }
-
-    }
-
-    if (molar_fractions.empty()) {
-        return std::move(std::make_unique<Fluid>(components));
-    }
-    else {
-        Eigen::VectorXd fractions = Eigen::VectorXd::Map(&molar_fractions[0], molar_fractions.size());
-        return std::move(std::make_unique<Fluid>(components, fractions));
-    }
-}
-#endif
-
-
+//TODO !рефактор!
 /// @brief Функция создает поток из состава потока
 /// @tparam Fluid Тип выходного потока
 /// @param fluid_data Состав потока
