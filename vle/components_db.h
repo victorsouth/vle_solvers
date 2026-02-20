@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #ifndef __COMPONENTS_DB__
 #define __COMPONENTS_DB__
 
@@ -100,6 +100,10 @@ struct van_velzen_viscosity_correlation
 struct component_properties_t {
     /// @brief название (формула)
     std::wstring name; 
+    /// @brief название (название)
+    std::wstring component_name;
+    /// @brief название (формула)
+    std::wstring CASno;
     /// @brief молярная масса
     double molar_mass; 
     /// @brief плотность жидкости при 20 град
@@ -182,7 +186,6 @@ typedef std::unordered_map<std::wstring, component_properties_t> components_data
 typedef std::map<std::wstring, component_properties_t> sorted_components_database_t;
 extern const components_database_t components_database;
 extern const char* thermo_db_serialized;
-
 #endif
 
 /// @brief удельная внутренняя энергия вещества в газовом фазовом состоянии

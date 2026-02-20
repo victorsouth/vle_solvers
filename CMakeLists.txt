@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+﻿cmake_minimum_required(VERSION 3.10)
 
 project(vle_solvers)
 
@@ -19,7 +19,7 @@ endif()
 
 find_package(fixed_solvers REQUIRED)
 find_package(Boost REQUIRED COMPONENTS serialization)
-
+option(VLESOLVERS_WITH_PCH "Use Prcompiled Headers" ON)
 # Установка путей к файлам в папках в переменные
 set(HEADER
     vle/vle_solvers.h
@@ -29,7 +29,7 @@ set(HEADER
 
 set(HEADER_DB
     vle/db/tdb_serialize_common.h
-    vle/db/tdb_serialize_2024_09_24.h
+    vle/db/tdb_serialize_2026_02_02.h
 )
 
 set(SOURCE_DB
@@ -110,6 +110,10 @@ target_include_directories(${PROJECT_NAME}
     $<INSTALL_INTERFACE:include/vle_solvers/vle>
 )
 add_library(vle_solvers::vle_solvers ALIAS vle_solvers)
+if(VLESOLVERS_WITH_PCH)
+    target_precompile_headers(${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:vle/vle_solvers.h> )
+    target_compile_definitions(${PROJECT_NAME} PUBLIC VLESOLVERS_WITH_PCH)
+endif()
 
 option(VLE_SOLVERS_INSTALL "" ON)
 
@@ -176,6 +180,7 @@ if(VLE_SOLVERS_BUILD_TESTS)
         PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/testing>
     )
+    #target_precompile_headers(testing_vle_solvers REUSE_FROM ${PROJECT_NAME})
     install(TARGETS testing_vle_solvers DESTINATION bin)
 
 endif()

@@ -223,6 +223,8 @@ private:
     /// @brief Параметры компонентов флюида. Ссылка на БД
     /// (никогда не меняется, запрещаем на уровне интерфейса)
     const std::vector<const component_properties_t*> components_;
+    /// тут место для бинарных коэффициентов
+    std::shared_ptr<Eigen::MatrixXd> binary_coeffs;
     /// @brief Мольный состав
     Eigen::VectorXd concentration_;
     /// @brief Общий мьютекс для состава
@@ -653,23 +655,27 @@ public: // итеративные расчетные задачи, нужен р
 };
 
 
-
 /// @brief Функция создает поток флюида с заданным компонентным составом и мольными долями
 /// @tparam Fluid
 /// @param component_names Названия компонентов
 /// @param molar_fractions Мольные доли компонентов
 template <typename Fluid>
 inline std::unique_ptr<Fluid> create_fluid(const std::vector<std::wstring>& component_names,
-                                      const std::vector<double>& molar_fractions = std::vector<double>())
+                                      const std::vector<double>& molar_fractions = std::vector<double>()
+        ,const components_database_t& db_components=components_database
+        ,const components_database_t& db_hypocomponents={})
 {
     std::vector<const component_properties_t*> components;
 
     for (const std::wstring& name : component_names) {
-        try {
-            const auto& component_properties = components_database.at(name);
+
+        if(db_components.count(name)==1 ){
+            const auto& component_properties = db_components.at(name);
             components.emplace_back(&component_properties);
-        }
-        catch (std::exception&) {
+        } else if(db_hypocomponents.count(name)==1 ){
+            const auto& component_properties = db_hypocomponents.at(name);
+            components.emplace_back(&component_properties);
+        } else {
             std::stringstream msg;
             msg << "Component is not exist in thermoDB: " << fixed_solvers::wide2string(name);
             throw std::logic_error(msg.str().c_str());
@@ -686,8 +692,7 @@ inline std::unique_ptr<Fluid> create_fluid(const std::vector<std::wstring>& comp
     }
 }
 
-
-
+//TODO !рефактор!
 /// @brief Функция создает поток из состава потока
 /// @tparam Fluid Тип выходного потока
 /// @param fluid_data Состав потока

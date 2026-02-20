@@ -52,8 +52,8 @@ double get_enthalpy_liq(const component_properties_t* c, double pressure, double
 /// @param component_names Имена компонентов
 /// @param molar_fractions Мольные доли
 /// @return Уникальный указатель на флюид
-template std::unique_ptr<fluid_rault_dalton_t>
-create_fluid<fluid_rault_dalton_t>(const std::vector<std::wstring>& component_names, const std::vector<double>& molar_fractions);
+//template std::unique_ptr<fluid_rault_dalton_t>
+//create_fluid<fluid_rault_dalton_t>(const std::vector<std::wstring>& component_names, const std::vector<double>& molar_fractions);
 
 double fluid_rault_dalton_t::get_density_liquid(const component_properties_t& component,
                                                 double pressure, double temperature)
