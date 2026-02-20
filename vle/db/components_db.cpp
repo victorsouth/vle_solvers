@@ -313,3 +313,4 @@ template double component_properties_t::get_inner_energy_gas<AmountType::Mass>(d
 template double component_properties_t::get_inner_energy_liquid<AmountType::Molar>(double temperature) const;
 template double component_properties_t::get_inner_energy_liquid<AmountType::Mass>(double temperature) const;
 
+

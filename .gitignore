@@ -364,3 +364,5 @@ FodyWeavers.xsd
 /msvc_cmake
 /PLAN.md
 /ANALYSIS.md
+
+build*/
