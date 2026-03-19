@@ -660,15 +660,15 @@ public: // итеративные расчетные задачи, нужен р
 /// @tparam Fluid - ComponentDB тип базы (сортированная/несортированная)
 /// @param component_names Названия компонентов
 /// @param molar_fractions Мольные доли компонентов
-template <typename Fluid,typename ComponentDB>
-inline std::unique_ptr<Fluid> create_fluid(const std::vector<std::wstring>& component_names
+template <typename Fluid,typename ComponentDB,typename StringT>
+inline std::unique_ptr<Fluid> create_fluid(const std::vector<StringT>& component_names
                                       ,const std::vector<double>& molar_fractions
         ,const ComponentDB& db_components
-        ,const ComponentDB& db_hypocomponents)
+        ,const ComponentDB& db_hypocomponents,std::function<std::string(const StringT&)> strconw)
 {
     std::vector<const component_properties_t*> components;
 
-    for (const std::wstring& name : component_names) {
+    for (const auto& name : component_names) {
 
         if(db_components.count(name)==1 ){
             const auto& component_properties = db_components.at(name);
@@ -678,7 +678,7 @@ inline std::unique_ptr<Fluid> create_fluid(const std::vector<std::wstring>& comp
             components.emplace_back(&component_properties);
         } else {
             std::stringstream msg;
-            msg << "Component is not exist in thermoDB: " << fixed_solvers::wide2string(name);
+            msg << "Component is not exist in thermoDB: " << strconw(name);//fixed_solvers::wide2string(name);
             throw std::logic_error(msg.str().c_str());
         }
 
@@ -695,10 +695,9 @@ inline std::unique_ptr<Fluid> create_fluid(const std::vector<std::wstring>& comp
 template <typename Fluid>
 inline std::unique_ptr<Fluid> create_fluid(const std::vector<std::wstring>& component_names,
                                       const std::vector<double>& molar_fractions = std::vector<double>()
-        ,const components_database_t& db_components=components_database
-        ,const components_database_t& db_hypocomponents={})
+        ,const components_database_t& db_components=components_database)
 {
-    return create_fluid<Fluid>(component_names,molar_fractions,db_components,db_hypocomponents);
+    return create_fluid<Fluid,components_database_t,std::wstring>(component_names,molar_fractions,db_components,{},fixed_solvers::wide2string);
 }
 
 
