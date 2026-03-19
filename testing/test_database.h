@@ -14,3 +14,4 @@ TEST(DataBase, ComponentPropertiesInitialization)
 
 	ASSERT_FALSE(std::isnan(component_properties.molar_mass));
 }
+
