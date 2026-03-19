@@ -656,14 +656,15 @@ public: // итеративные расчетные задачи, нужен р
 
 
 /// @brief Функция создает поток флюида с заданным компонентным составом и мольными долями
-/// @tparam Fluid
+/// @tparam Fluid - тип флюида
+/// @tparam Fluid - ComponentDB тип базы (сортированная/несортированная)
 /// @param component_names Названия компонентов
 /// @param molar_fractions Мольные доли компонентов
-template <typename Fluid>
-inline std::unique_ptr<Fluid> create_fluid(const std::vector<std::wstring>& component_names,
-                                      const std::vector<double>& molar_fractions = std::vector<double>()
-        ,const components_database_t& db_components=components_database
-        ,const components_database_t& db_hypocomponents={})
+template <typename Fluid,typename ComponentDB>
+inline std::unique_ptr<Fluid> create_fluid(const std::vector<std::wstring>& component_names
+                                      ,const std::vector<double>& molar_fractions
+        ,const ComponentDB& db_components
+        ,const ComponentDB& db_hypocomponents)
 {
     std::vector<const component_properties_t*> components;
 
@@ -684,13 +685,22 @@ inline std::unique_ptr<Fluid> create_fluid(const std::vector<std::wstring>& comp
     }
 
     if (molar_fractions.empty()) {
-        return std::move(std::make_unique<Fluid>(components));
+        return std::make_unique<Fluid>(components);
     }
     else {
         Eigen::VectorXd fractions = Eigen::VectorXd::Map(&molar_fractions[0], molar_fractions.size());
-        return std::move(std::make_unique<Fluid>(components, fractions));
+        return std::make_unique<Fluid>(components, fractions);
     }
 }
+template <typename Fluid>
+inline std::unique_ptr<Fluid> create_fluid(const std::vector<std::wstring>& component_names,
+                                      const std::vector<double>& molar_fractions = std::vector<double>()
+        ,const components_database_t& db_components=components_database
+        ,const components_database_t& db_hypocomponents={})
+{
+    return create_fluid<Fluid>(component_names,molar_fractions,db_components,db_hypocomponents);
+}
+
 
 //TODO !рефактор!
 /// @brief Функция создает поток из состава потока
