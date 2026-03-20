@@ -669,9 +669,7 @@ inline std::unique_ptr<Fluid> create_fluid(const std::vector<StringT>& component
     std::vector<const component_properties_t*> components;
 
     for (const auto& name : component_names) {
-        std::cerr<<strconw(name)<<std::endl;
         if(db_components.count(name)==1 ){
-            std::cerr<<strconw(name)<<std::endl;
             const auto& component_properties = db_components.at(name);
             components.emplace_back(&component_properties);
         } else if(db_hypocomponents.count(name)==1 ){
@@ -686,7 +684,6 @@ inline std::unique_ptr<Fluid> create_fluid(const std::vector<StringT>& component
     }
 
     if (molar_fractions.empty()) {
-        std::cerr<<"empty"<<std::endl;
         return std::make_unique<Fluid>(components);
     }
     else {
