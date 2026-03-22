@@ -187,8 +187,11 @@ struct component_properties_t {
 /// @brief Запись бинарного коэффициента взаимодействия (BIP).
 /// Содержит CAS-номера двух компонентов и коэффициент k_ij.
 struct bip_record_t {
+    /// @brief первый CAS-номер записи
     std::wstring cas1_m;
+    /// @brief второй CAS-номер записи
     std::wstring cas2_m;
+    /// @brief бинарный коэффициент
     double k_ij_m;
 };
 
