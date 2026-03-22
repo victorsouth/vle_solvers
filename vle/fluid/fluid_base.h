@@ -662,7 +662,7 @@ public: // итеративные расчетные задачи, нужен р
 template <typename Fluid>
 inline std::unique_ptr<Fluid> create_fluid(const std::vector<std::wstring>& component_names,
                                       const std::vector<double>& molar_fractions = std::vector<double>()
-        ,const components_database_t& db_components=components_database
+        ,const components_database_t& db_components=components_database_by_formula
         ,const components_database_t& db_hypocomponents={})
 {
     std::vector<const component_properties_t*> components;
@@ -727,8 +727,8 @@ inline std::unique_ptr<Fluid> create_fluid(
     std::vector<const component_properties_t*> components;
     for (const std::wstring& name : component_names) {
         try {
-            auto it = components_database.find(name);
-            if (it != components_database.end()) {
+            auto it = components_database_by_formula.find(name);
+            if (it != components_database_by_formula.end()) {
                 components.emplace_back(&it->second);
                 continue;
             }

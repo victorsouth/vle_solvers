@@ -117,7 +117,7 @@ vector<std::tuple<double, double, double>> phase_diagram(
 inline std::tuple<std::vector<double>, std::vector<double>, std::vector<double>> plot_antoine(
     const std::wstring& component_name, double Tfrom, double Tto, double Tstep)
 {
-    const auto& component = components_database.at(component_name);
+    const auto& component = components_database_by_formula.at(component_name);
 
     double alpha = component.estimate_antoine_extrapolation_coeff();
 

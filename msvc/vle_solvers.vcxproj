@@ -53,6 +53,7 @@
   <ItemGroup>
     <ClCompile Include="..\vle\db\components_db.cpp" />
     <ClCompile Include="..\vle\db\components_db_data.cpp" />
+    <ClCompile Include="..\vle\db\components_db_data_BIP.cpp" />
     <ClCompile Include="..\vle\db\components_db_init.cpp" />
     <ClCompile Include="..\vle\fluid\fluid_base.cpp" />
     <ClCompile Include="..\vle\fluid\fluid_common.cpp" />
