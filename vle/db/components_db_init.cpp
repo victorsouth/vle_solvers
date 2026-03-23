@@ -4,48 +4,17 @@
 #include "tdb_serialize_2026_02_02.h"
 
 
-const components_database_t components_database_by_formula;
-
-
-/// @brief Структура для обвязки инициализации глобавльной базы данных по компонентам
-struct db_initializer_t {
-    /// @brief Инициализация глобальной базы из глобальной строки
-    db_initializer_t(const components_database_t& _db)
-    {
-        components_database_t& db = const_cast<components_database_t&>(_db);
-        db = serializer_2026_02_02::deserialize_from_string<components_database_t>(
-            std::string(thermo_db_serialized_by_formula));
-
-        calc_extrapolation_coeff(db);
-    }
-
-    /// @brief Расчёт коэффициента экстраполяции модели Антуана
-    void calc_extrapolation_coeff(components_database_t& db)
-    {
-        for (auto& [name, data] : db)
-        {
-            double my_estimation = data.estimate_antoine_extrapolation_coeff();
-            data.antoine_model.extrapolation_coefficient = my_estimation;
-        }
-
-    }
-
-};
-
-
 static thermo_db_t make_db_old()
 {
     // база данных собранная по химической формуле
-    db_initializer_t db_init(components_database_by_formula);
     thermo_db_t db = thermo_db_t();
     return db;
 }
 
 
-
 static thermo_db_t make_db_new()
 {
-    // база данных собранная по химической формуле
+    // база данных собранная по CAS-номеру
     //thermo_db_t db = thermo_db_t(std::string(thermo_db_serialized_by_casno));
     //return db;
     return {};
@@ -53,8 +22,6 @@ static thermo_db_t make_db_new()
 
 
 const thermo_db_t components_database = make_db_old();
-//const components_database_t hypocomponents_database{};
-
 
 
 thermo_db_t::thermo_db_t(const std::string& thermo_db_by_casno)
@@ -78,13 +45,18 @@ thermo_db_t::thermo_db_t()
     // так как собираем здесь поэлементно, то очищаем.
     components.clear();
     formula2cas_mapping_var1.clear();
+    
+    components_database_t db_by_formula = serializer_2026_02_02::
+        deserialize_from_string<components_database_t>(std::string(thermo_db_serialized_by_formula));
+
     // собираем из текущий базы компонентов (которая по формулам)
-    for (const auto& component_by_formula : components_database_by_formula) {
-        const auto& chemical_formula = component_by_formula.first;
-        const auto& casno = component_by_formula.second.CASno;
-        components[casno] = component_by_formula.second;
-        formula2cas_mapping_var1.insert({ chemical_formula, casno });
+    for (const auto& [formula, component] : db_by_formula) {
+        const auto& casno = component.CASno;
+        components[casno] = component;
+        components[casno].name = formula;
+        formula2cas_mapping_var1.insert({ formula, casno });
     }
+
     init_bips(bip_records_global);
     init_extrapolation_coeff();
 }
@@ -122,7 +94,21 @@ const component_properties_t& thermo_db_t::get_component_by_formula(const std::w
 
 const component_properties_t& thermo_db_t::get_component_by_casno(const std::wstring& casno) const
 {
-    int ncomp = components.count(casno);
+    std::size_t ncomp = components.count(casno);
+    if (!ncomp) {
+        throw std::runtime_error("CASno not found");
+    }
+    return components.at(casno);
+}
+
+component_properties_t& thermo_db_t::get_component_by_formula(const std::wstring& formula)
+{
+    return get_component_by_casno(get_casno_by_formula(formula));
+}
+
+component_properties_t& thermo_db_t::get_component_by_casno(const std::wstring& casno)
+{
+    std::size_t ncomp = components.count(casno);
     if (!ncomp) {
         throw std::runtime_error("CASno not found");
     }

@@ -209,6 +209,7 @@ struct wstring_pair_set_hash_t {
     size_t operator()(const std::set<std::wstring>& pair) const noexcept
     {
         if (pair.size() != 2) {
+            // при указании гарантии noexcept?
             throw std::runtime_error("Wrong pair set size");
         }
         const size_t h1 = std::hash<std::wstring>{}(*pair.begin());
@@ -237,6 +238,12 @@ public:
     /// @brief Возвращает свойства компонента по CAS-номеру.
     /// Если компонент отсутствует, возвращает nullptr.
     const component_properties_t& get_component_by_casno(const std::wstring& casno) const;
+    /// @brief Возвращает свойства компонента по химической формуле.
+    /// Если формула отсутствует, возвращает nullptr.
+    component_properties_t& get_component_by_formula(const std::wstring& formula);
+    /// @brief Возвращает свойства компонента по CAS-номеру.
+    /// Если компонент отсутствует, возвращает nullptr.
+    component_properties_t& get_component_by_casno(const std::wstring& casno);
     /// @brief Возвращает CAS-номер компонента по химической формуле.
     /// Если формула отсутствует или неоднозначна, кидает исключение
     const std::wstring& get_casno_by_formula(const std::wstring& formula) const;
@@ -265,7 +272,7 @@ private:
 extern const char* thermo_db_serialized_by_formula;
 
 /// @brief Глобальная база данных компонентов, индексированная по химическим формулам.
-extern const components_database_t components_database_by_formula;
+//extern const components_database_t components_database_by_formula;
 
 /// @brief Глобальный набор бинарных коэффициентов взаимодействия.
 extern const bip_records_t bip_records_global;

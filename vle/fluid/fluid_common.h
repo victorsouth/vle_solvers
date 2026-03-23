@@ -109,15 +109,15 @@ vector<std::tuple<double, double, double>> phase_diagram(
 
 /// @brief Рассчитывает давление насыщенных паров для заданного чистого вещества 
 /// в заданном диапазоне по модели Антуана
-/// @param component_name 
+/// @param component_formula 
 /// @param Tfrom Начало диапазона
 /// @param Tto Конец диапазона
 /// @param Tstep Шаг по температурному диапазону
 /// @return Рассчитанные значения 
 inline std::tuple<std::vector<double>, std::vector<double>, std::vector<double>> plot_antoine(
-    const std::wstring& component_name, double Tfrom, double Tto, double Tstep)
+    const std::wstring& component_formula, double Tfrom, double Tto, double Tstep)
 {
-    const auto& component = components_database_by_formula.at(component_name);
+    const auto& component = components_database.get_component_by_formula(component_formula);
 
     double alpha = component.estimate_antoine_extrapolation_coeff();
 
