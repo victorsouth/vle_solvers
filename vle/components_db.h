@@ -239,22 +239,6 @@ public:
     /// @brief Возвращает свойства компонента по CAS-номеру.
     /// Если компонент отсутствует, возвращает nullptr.
     const component_properties_t& get_component_by_casno(const std::wstring& casno) const;
-    /// @brief Возвращает свойства компонента по химической формуле.
-    /// Если формула отсутствует, возвращает nullptr.
-    //component_properties_t& get_component_by_formula(const std::wstring& formula)
-    //{
-    //    return get_component_by_casno(get_casno_by_formula(formula));
-    //}
-    ///// @brief Возвращает свойства компонента по CAS-номеру.
-    ///// Если компонент отсутствует, возвращает nullptr.
-    //component_properties_t& get_component_by_casno(const std::wstring& casno)
-    //{
-    //    std::size_t ncomp = components.count(casno);
-    //    if (!ncomp) {
-    //        throw std::runtime_error("CASno not found");
-    //    }
-    //    return components.at(casno);
-    //}
     /// @brief Возвращает CAS-номер компонента по химической формуле.
     /// Если формула отсутствует или неоднозначна, кидает исключение
     const std::wstring& get_casno_by_formula(const std::wstring& formula) const;
@@ -292,6 +276,4 @@ extern const bip_records_t bip_records_global;
 extern const thermo_db_t components_database;
 
 #endif
-
-/// @brief удельная внутренняя энергия вещества в газовом фазовом состоянии
 
