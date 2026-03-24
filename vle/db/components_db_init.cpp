@@ -101,20 +101,6 @@ const component_properties_t& thermo_db_t::get_component_by_casno(const std::wst
     return components.at(casno);
 }
 
-component_properties_t& thermo_db_t::get_component_by_formula(const std::wstring& formula)
-{
-    return get_component_by_casno(get_casno_by_formula(formula));
-}
-
-component_properties_t& thermo_db_t::get_component_by_casno(const std::wstring& casno)
-{
-    std::size_t ncomp = components.count(casno);
-    if (!ncomp) {
-        throw std::runtime_error("CASno not found");
-    }
-    return components.at(casno);
-}
-
 const std::wstring& thermo_db_t::get_casno_by_formula(const std::wstring& formula) const
 {
     if (formula.empty()) {

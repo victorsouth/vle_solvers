@@ -206,7 +206,8 @@ using bip_records_t = std::vector<bip_record_t>;
 
 /// @brief Для использования const std::set<std::wstring>& pair как ключа в unordered_map
 struct wstring_pair_set_hash_t {
-    size_t operator()(const std::set<std::wstring>& pair) const noexcept
+    /// @brief Собственно, хэш
+    size_t operator()(const std::set<std::wstring>& pair) const 
     {
         if (pair.size() != 2) {
             // при указании гарантии noexcept?
@@ -240,10 +241,20 @@ public:
     const component_properties_t& get_component_by_casno(const std::wstring& casno) const;
     /// @brief Возвращает свойства компонента по химической формуле.
     /// Если формула отсутствует, возвращает nullptr.
-    component_properties_t& get_component_by_formula(const std::wstring& formula);
-    /// @brief Возвращает свойства компонента по CAS-номеру.
-    /// Если компонент отсутствует, возвращает nullptr.
-    component_properties_t& get_component_by_casno(const std::wstring& casno);
+    //component_properties_t& get_component_by_formula(const std::wstring& formula)
+    //{
+    //    return get_component_by_casno(get_casno_by_formula(formula));
+    //}
+    ///// @brief Возвращает свойства компонента по CAS-номеру.
+    ///// Если компонент отсутствует, возвращает nullptr.
+    //component_properties_t& get_component_by_casno(const std::wstring& casno)
+    //{
+    //    std::size_t ncomp = components.count(casno);
+    //    if (!ncomp) {
+    //        throw std::runtime_error("CASno not found");
+    //    }
+    //    return components.at(casno);
+    //}
     /// @brief Возвращает CAS-номер компонента по химической формуле.
     /// Если формула отсутствует или неоднозначна, кидает исключение
     const std::wstring& get_casno_by_formula(const std::wstring& formula) const;

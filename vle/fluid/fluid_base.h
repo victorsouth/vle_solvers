@@ -708,7 +708,44 @@ inline std::unique_ptr<Fluid> create_fluid(const std::vector<std::wstring>& comp
     return std::make_unique<Fluid>(components, fractions);
 }
 
+/// @brief Функция создает поток флюида с заданным компонентным составом и мольными долями
+/// @tparam Fluid - тип флюида
+/// @tparam Fluid - ComponentDB тип базы (сортированная/несортированная)
+/// @param component_names Названия компонентов
+/// @param molar_fractions Мольные доли компонентов
+template <typename Fluid, typename ComponentDB, typename StringT>
+inline std::unique_ptr<Fluid> create_fluid(const std::vector<StringT>& component_names
+    , const std::vector<double>& molar_fractions
+    , const ComponentDB& db_components
+    , const ComponentDB& db_hypocomponents, std::function<std::string(const StringT&)> strconw)
+{
+    std::vector<const component_properties_t*> components;
 
+    for (const auto& name : component_names) {
+        if (db_components.count(name) == 1) {
+            const auto& component_properties = db_components.at(name);
+            components.emplace_back(&component_properties);
+        }
+        else if (db_hypocomponents.count(name) == 1) {
+            const auto& component_properties = db_hypocomponents.at(name);
+            components.emplace_back(&component_properties);
+        }
+        else {
+            std::stringstream msg;
+            msg << "Component is not exist in thermoDB: " << strconw(name);//fixed_solvers::wide2string(name);
+            throw std::logic_error(msg.str().c_str());
+        }
+
+    }
+
+    if (molar_fractions.empty()) {
+        return std::make_unique<Fluid>(components);
+    }
+    else {
+        Eigen::VectorXd fractions = Eigen::VectorXd::Map(&molar_fractions[0], molar_fractions.size());
+        return std::make_unique<Fluid>(components, fractions);
+    }
+}
 
 //TODO !рефактор!
 /// @brief Функция создает поток из состава потока
