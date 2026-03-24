@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 /// @brief Тест расчета давления насыщенных паров для гликоля
 TEST(ThermoEngine, ResearchGlycole) {
@@ -40,8 +40,12 @@ TEST(ThermoDB, StdString) {
                 component_list,{},other_db,{},[](const std::string &str)->std::string{return str;});
 
 }
-struct nameCasNo{
-    std::string name,CasNo;
+/// @brief Пара "имя компонента + CAS номер" для использования как ключа.
+struct nameCasNo {
+    /// @brief Имя компонента.
+    std::string name;
+    /// @brief CAS номер компонента.
+    std::string CasNo;
 };
 bool operator<(const struct nameCasNo&a,const struct nameCasNo&b){
     return a.CasNo<b.CasNo;
