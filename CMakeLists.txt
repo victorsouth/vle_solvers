@@ -35,6 +35,7 @@ set(HEADER_DB
 set(SOURCE_DB
     vle/db/components_db.cpp
     vle/db/components_db_data.cpp
+	vle/db/components_db_data_BIP.cpp
     vle/db/components_db_init.cpp
 )
 

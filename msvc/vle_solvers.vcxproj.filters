@@ -66,6 +66,9 @@
     <ClCompile Include="..\vle\fluid\solvers\uv_flash.cpp">
       <Filter>Source Files\Fluid\Solvers</Filter>
     </ClCompile>
+    <ClCompile Include="..\vle\db\components_db_data_BIP.cpp">
+      <Filter>Source Files\DB</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\vle\components_db.h">

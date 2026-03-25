@@ -1,12 +1,15 @@
-﻿#pragma once
+#pragma once
 #ifndef __COMPONENTS_DB__
 #define __COMPONENTS_DB__
 
 #include <limits>
 #include <array>
 #include <map>
+#include <set>
 #include <unordered_map>
 #include <mutex>
+#include <optional>
+#include <utility>
 #include "vle_solvers.h"
 //using namespace std;
 
@@ -182,11 +185,95 @@ struct component_properties_t {
     double estimate_antoine_extrapolation_coeff() const;
 };
 
-typedef std::unordered_map<std::wstring, component_properties_t> components_database_t;
-typedef std::map<std::wstring, component_properties_t> sorted_components_database_t;
-extern const components_database_t components_database;
-extern const char* thermo_db_serialized;
-#endif
 
-/// @brief удельная внутренняя энергия вещества в газовом фазовом состоянии
+/// @brief Запись бинарного коэффициента взаимодействия (BIP).
+/// Содержит CAS-номера двух компонентов и коэффициент k_ij.
+struct bip_record_t {
+    /// @brief первый CAS-номер записи
+    std::wstring cas1;
+    /// @brief второй CAS-номер записи
+    std::wstring cas2;
+    /// @brief бинарный коэффициент
+    double bip_value;
+};
+
+/// @brief База данных компонентов, индексированная по CAS-номеру.
+using components_database_t = std::unordered_map<std::wstring, component_properties_t> ;
+
+/// @brief Набор бинарных коэффициентов взаимодействия.
+using bip_records_t = std::vector<bip_record_t>;
+
+
+/// @brief Для использования const std::set<std::wstring>& pair как ключа в unordered_map
+struct wstring_pair_set_hash_t {
+    /// @brief Собственно, хэш
+    size_t operator()(const std::set<std::wstring>& pair) const 
+    {
+        if (pair.size() != 2) {
+            // при указании гарантии noexcept?
+            throw std::runtime_error("Wrong pair set size");
+        }
+        const size_t h1 = std::hash<std::wstring>{}(*pair.begin());
+        const size_t h2 = std::hash<std::wstring>{}(*pair.rbegin());
+        return h1 ^ (h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2));
+    }
+};
+
+/// @brief База данных термодинамических свойств компонентов.
+/// Содержит CAS-базу, отображение формула->CAS и бинарные коэффициенты взаимодействия.
+/// После инициализации является неизменяемой.
+class thermo_db_t {
+public:
+    /// @brief Инициализация базы данных по глобальной базе компонентов (по формулам).
+    /// Формирует CAS-базу, отображение формул и загружает бинарные коэффициенты.
+    thermo_db_t();
+
+    /// @brief Инициализация базы данных из сериализованной строки по CAS-номерам.
+    /// Используется для альтернативного пути загрузки.
+    thermo_db_t(const std::string& thermo_db);
+    /// @brief Возвращает базу данных компонентов, индексированную по CAS-номеру.
+    const components_database_t& get_component_casno_database() const;
+    /// @brief Возвращает свойства компонента по химической формуле.
+    /// Если формула отсутствует, возвращает nullptr.
+    const component_properties_t& get_component_by_formula(const std::wstring& formula) const;
+    /// @brief Возвращает свойства компонента по CAS-номеру.
+    /// Если компонент отсутствует, возвращает nullptr.
+    const component_properties_t& get_component_by_casno(const std::wstring& casno) const;
+    /// @brief Возвращает CAS-номер компонента по химической формуле.
+    /// Если формула отсутствует или неоднозначна, кидает исключение
+    const std::wstring& get_casno_by_formula(const std::wstring& formula) const;
+    /// @brief Возвращает бинарный коэффициент взаимодействия k_ij по паре формул.
+    /// Если коэффициент отсутствует, возвращает std::nullopt.
+    double get_bip_pair_formula(const std::wstring& formula1, const std::wstring& formula2) const;
+    /// @brief Возвращает бинарный коэффициент взаимодействия k_ij по паре CAS-номеров.
+    /// Если коэффициент отсутствует, возвращает std::nullopt.
+    double get_bip_pair_casno(const std::wstring& cas1, const std::wstring& cas2) const;
+
+private:
+    /// @brief Расчёт коэффициента экстраполяции модели Антуана для всех компонентов.
+    void init_extrapolation_coeff();
+    /// @brief Инициализация бинарных коэффициентов взаимодействия из глобальной базы
+    void init_bips(const bip_records_t& bip_records);
+private:
+    /// @brief CAS-база компонентов
+    components_database_t components;
+    /// @brief Формула -> CAS
+    std::unordered_multimap<std::wstring, std::wstring> formula2cas_mapping_var1;
+    /// @brief Бинарные коэффициенты взаимодействия
+    std::unordered_map<std::set<std::wstring>, double, wstring_pair_set_hash_t> bips;
+};
+
+/// @brief Сериализованная база данных компонентов, индексированная по химическим формулам.
+extern const char* thermo_db_serialized_by_formula;
+
+/// @brief Глобальная база данных компонентов, индексированная по химическим формулам.
+//extern const components_database_t components_database_by_formula;
+
+/// @brief Глобальный набор бинарных коэффициентов взаимодействия.
+extern const bip_records_t bip_records_global;
+
+/// @brief Глобальная термодинамическая база данных (CAS-база).
+extern const thermo_db_t components_database;
+
+#endif
 
