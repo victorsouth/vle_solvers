@@ -206,6 +206,7 @@ public:
         const auto& vle = flash(pressure, temperature);
         return vle.enthalpy.mass.vapor;
     }
+
     virtual double get_enthalpy_td_mass_liquid(double pressure, double temperature) const override
     {
         const auto& vle = flash(pressure, temperature);
@@ -216,28 +217,21 @@ public:
     virtual double get_enthalpy_td_molar(double pressure, double temperature) const override
     {
         const auto& vle = flash(pressure, temperature);
-
-        return vle.enthalpy.mass.mix * get_molar_mass();
+        return vle.enthalpy.molar.mix;
     }
+
     // Расчет удельной мольной энтальпии пара
     virtual double get_enthalpy_td_molar_vapor(double pressure, double temperature) const override
     {
         const auto& vle = flash(pressure, temperature);
-
-        if (vle.is_gas_only() || vle.is_two_phase())
-            return vle.enthalpy.mass.vapor * vle.fluid_vapor->get_molar_mass();
-        else
-            return 0;
+        return vle.enthalpy.molar.vapor;
     }
+
     // Расчет удельной мольной энтальпии жидкости
     virtual double get_enthalpy_td_molar_liquid(double pressure, double temperature) const override
     {
         const auto& vle = flash(pressure, temperature);
-
-        if (vle.is_liquid_only() || vle.is_two_phase())
-            return vle.enthalpy.mass.liquid * vle.fluid_liquid->get_molar_mass();
-        else
-            return 0;
+        return vle.enthalpy.molar.liquid;
     }
 
     // Расчет температуры под заданную энтальпию и давление
