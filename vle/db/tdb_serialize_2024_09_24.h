@@ -302,7 +302,7 @@ private:
             serialize_component(kvp.first, kvp.second, root);
         }
         std::string str_result =
-            std::string("const char* thermo_db_serialized = \n") +
+            std::string("const char* thermo_db_serialized_by_formula = \n") +
             serialize_as_string(root) + ";";
 
         std::ofstream code_file(fixed_solvers::wide2string(path) + "components_db_data.cpp");

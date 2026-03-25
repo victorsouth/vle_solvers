@@ -6,12 +6,8 @@ TEST(DataBase, ComponentPropertiesInitialization)
 	// Инициализируем компонент
 	std::wstring component_name = L"CO2";
 
-	// Объявляем переменную со свойствами компонентов
-    component_properties_t component_properties;
-
 	// Инициализируем свойства для заданного компонента
-	component_properties = components_database.at(component_name);
-
+	const component_properties_t& component_properties = components_database.get_component_by_formula(component_name);
 	ASSERT_FALSE(std::isnan(component_properties.molar_mass));
 }
 

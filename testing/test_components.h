@@ -2,7 +2,9 @@
 
 /// @brief Тест расчета давления насыщенных паров для гликоля
 TEST(ThermoEngine, ResearchGlycole) {
-    const auto& data = components_database.at(L"C4H10O3");
+
+
+    const auto data = components_database.get_component_by_formula(L"C4H10O3");
 
     double t1 = data.get_saturated_pressure(vle_solvers::celcium2kelvin(-200));
     double t2 = data.get_saturated_pressure(vle_solvers::celcium2kelvin(-170));
@@ -16,11 +18,12 @@ TEST(ThermoEngine, ResearchGlycole) {
 
 /// @brief Тест сравнения теплоемкости метана
 TEST(ThermoDB, Compare1) {
-    const auto& c = components_database.at(L"CH4");
+    const auto component = components_database.get_component_by_formula(L"CH4");
+
 
     double density_std = 0.7168;
 
-    double Cp = c.get_Cp_gas_mass(KELVIN_OFFSET);
+    double Cp = component.get_Cp_gas_mass(KELVIN_OFFSET);
 
     std::vector<std::wstring> component_list{ L"CH4" };
     auto fluid = vlelib::create_fluid<vlelib::fluid_rault_dalton_t>(component_list);
@@ -34,32 +37,32 @@ TEST(ThermoDB, Compare1) {
 
 TEST(ThermoDB, StdString) {
     std::map<std::string,component_properties_t> other_db;
-    other_db["CH4"]=components_database.at(L"CH4");
+    other_db["CH4"]=components_database.get_component_by_formula(L"CH4");
     std::vector<std::string> component_list{ "CH4" };
     auto fluid = vlelib::create_fluid<vlelib::fluid_rault_dalton_t,std::map<std::string,component_properties_t>,std::string>(
                 component_list,{},other_db,{},[](const std::string &str)->std::string{return str;});
 
 }
 /// @brief Пара "имя компонента + CAS номер" для использования как ключа.
-struct nameCasNo {
+struct name_casno {
     /// @brief Имя компонента.
     std::string name;
     /// @brief CAS номер компонента.
     std::string CasNo;
 };
-bool operator<(const struct nameCasNo&a,const struct nameCasNo&b){
+bool operator<(const struct name_casno& a, const struct name_casno& b) {
     return a.CasNo<b.CasNo;
 }
 TEST(ThermoDB, ComplexStruct) {
-    const auto& c = components_database.at(L"CH4");
-    nameCasNo key{fixed_solvers::wide2string(c.name),fixed_solvers::wide2string(c.CASno)};
-    std::map<nameCasNo,component_properties_t> other_db;
-    other_db[key]=c;
-    other_db[{"CH4","89898956"}]=c;
-    std::vector<nameCasNo> component_list{ key };
+    const auto& c = components_database.get_component_by_formula(L"CH4");
+    name_casno key{ fixed_solvers::wide2string(c.name),fixed_solvers::wide2string(c.CASno) };
+    std::map<name_casno, component_properties_t> other_db;
+    other_db[key] = c;
+    other_db[{"CH4", "89898956"}] = c;
+    std::vector<name_casno> component_list{ key };
     {
-        auto fluid = vlelib::create_fluid<vlelib::fluid_rault_dalton_t,std::map<nameCasNo,component_properties_t>,nameCasNo>(
-                component_list,{},other_db,{},[](const nameCasNo &str)->std::string{return str.name+str.CasNo;});
+        auto fluid = vlelib::create_fluid<vlelib::fluid_rault_dalton_t, std::map<name_casno, component_properties_t>, name_casno>(
+            component_list, {}, other_db, {}, [](const name_casno& str)->std::string {return str.name + str.CasNo; });
     }
 #if 0
     nameCasNo not_found{"swds","zsdfasdf"};

@@ -314,3 +314,4 @@ template double component_properties_t::get_inner_energy_liquid<AmountType::Mola
 template double component_properties_t::get_inner_energy_liquid<AmountType::Mass>(double temperature) const;
 
 
+
