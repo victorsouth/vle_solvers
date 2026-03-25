@@ -194,50 +194,6 @@ public:
     template <AmountType amount_type>
     double find_liquid_temperature_with_inner_energy(double inner_energy) const;
 
-
-    //// todo: Выпилить, все есть в flash_calc
-    virtual double get_enthalpy_td_mass(double pressure, double temperature) const override
-    {
-        const auto& vle = flash(pressure, temperature);
-        return vle.enthalpy.mass.mix;
-    }
-    virtual double get_enthalpy_td_mass_vapor(double pressure, double temperature) const override
-    {
-        const auto& vle = flash(pressure, temperature);
-        return vle.enthalpy.mass.vapor;
-    }
-
-    virtual double get_enthalpy_td_mass_liquid(double pressure, double temperature) const override
-    {
-        const auto& vle = flash(pressure, temperature);
-        return vle.enthalpy.mass.liquid;
-    }
-
-    // Расчет удельной мольной энтальпии смеси
-    virtual double get_enthalpy_td_molar(double pressure, double temperature) const override
-    {
-        const auto& vle = flash(pressure, temperature);
-        return vle.enthalpy.molar.mix;
-    }
-
-    // Расчет удельной мольной энтальпии пара
-    virtual double get_enthalpy_td_molar_vapor(double pressure, double temperature) const override
-    {
-        const auto& vle = flash(pressure, temperature);
-        return vle.enthalpy.molar.vapor;
-    }
-
-    // Расчет удельной мольной энтальпии жидкости
-    virtual double get_enthalpy_td_molar_liquid(double pressure, double temperature) const override
-    {
-        const auto& vle = flash(pressure, temperature);
-        return vle.enthalpy.molar.liquid;
-    }
-
-    // Расчет температуры под заданную энтальпию и давление
-
-
-
 };   // end class fluid_rault_dalton_t
 
 
