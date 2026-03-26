@@ -1,3 +1,6 @@
+include:
+      - local: "ci-ai/docker.yml"
+
 stages:
   - Static_test
   - Defining_branches
