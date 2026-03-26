@@ -1,0 +1,35 @@
+include:
+  - local: "ci-ai/base.yml"
+
+.ai-review-docker:
+  stage: Static_test
+  tags:
+    - docker-ai
+  image: ollama-ai-review:latest
+  extends: .ai-review-base
+  needs: []
+  allow_failure: true
+
+ai-review-docker-all:
+  extends: [ .ai-review-docker, .ai-review-all ]
+
+# ai-review-docker-inline:
+#   extends: [ .ai-review-docker, .ai-review-inline ]
+
+# ai-review-docker-context:
+#   extends: [ .ai-review-docker, .ai-review-context ]
+
+# ai-review-docker-summary:
+#   extends: [ .ai-review-docker, .ai-review-summary ]
+
+# ai-review-docker-inline-reply:
+#   extends: [ .ai-review-docker, .ai-review-inline-reply ]
+
+# ai-review-docker-summary-reply:
+#   extends: [ .ai-review-docker, .ai-review-summary-reply ]
+
+# ai-review-docker-clear-inline:
+#   extends: [ .ai-review-docker, .ai-review-clear-inline ]
+
+# ai-review-docker-clear-summary:
+#   extends: [ .ai-review-docker, .ai-review-clear-summary ]
