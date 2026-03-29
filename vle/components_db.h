@@ -10,8 +10,32 @@
 #include <mutex>
 #include <optional>
 #include <utility>
+#include <ranges>
 #include "vle_solvers.h"
 //using namespace std;
+
+// Был объявлен в #include "fluid\fluid_base.h"
+
+/// @brief Состав потока
+struct fluid_stubdata_t {
+    /// @brief Список чистых компонентов из БД
+    std::vector<std::wstring> component_list;
+    /// @brief Мольный состав смеси
+    std::vector<double> molar_fraction;
+
+#ifdef VLELIB_SERIALIZATION_SUPPORT
+    /// @brief Для сериализации
+    friend class boost::serialization::access;
+    /// @brief Интрузивная сериализация/десериализация
+    template<class Archive>
+    void serialize(Archive& ar, const unsigned int version)
+    {
+        ar& BOOST_SERIALIZATION_NVP(component_list);
+        ar& BOOST_SERIALIZATION_NVP(molar_fraction);
+    }
+#endif
+};
+
 
 /// @brief Используемые единицы количества вещества (мольные, массовые)
 enum class AmountType { Molar, Mass };
@@ -198,7 +222,7 @@ struct bip_record_t {
 };
 
 /// @brief База данных компонентов, индексированная по CAS-номеру.
-using components_database_t = std::unordered_map<std::wstring, component_properties_t> ;
+using components_database_t = std::unordered_map<std::wstring, component_properties_t>;
 
 /// @brief Набор бинарных коэффициентов взаимодействия.
 using bip_records_t = std::vector<bip_record_t>;
@@ -249,6 +273,72 @@ public:
     /// Если коэффициент отсутствует, возвращает std::nullopt.
     double get_bip_pair_casno(const std::wstring& cas1, const std::wstring& cas2) const;
 
+    /// @brief Функция создает поток флюида с заданным компонентным составом и мольными долями
+    /// @tparam Fluid
+    /// @param component_formulas Названия компонентов
+    /// @param molar_fractions Мольные доли компонентов
+    template <typename Fluid>
+    inline std::unique_ptr<Fluid> create_fluid(const std::vector<std::wstring>& component_formulas
+        , const std::vector<double>& molar_fractions = std::vector<double>()) const;
+    /// @brief Функция создает поток флюида с заданным компонентным составом и мольными долями
+    /// @tparam Fluid - тип флюида
+    /// @tparam ComponentDB тип базы (сортированная/несортированная)
+    /// @param component_names Названия компонентов
+    /// @param molar_fractions Мольные доли компонентов
+    template <typename Fluid, typename ComponentDB, typename StringT>
+    inline std::unique_ptr<Fluid> create_fluid(const std::vector<StringT>& component_names
+        , const std::vector<double>& molar_fractions
+        , const ComponentDB& db_components
+        , const ComponentDB& db_hypocomponents, std::function<std::string(const StringT&)> strconw) const;
+    /// @brief Создаёт объект Fluid на основе списка чистых и гипо-компонентов и их мольных долей 
+    /// ***************************************************************************
+    /// @detail Функция ищет свойства компонентов сначала в базе чистых веществ (components_database),
+    /// а если компонент там отсутствует — в базе псевдокомпонентов (pseudocomponents_db).
+    /// Если компонент не найден ни в одной базе, выбрасывается исключение logic_error.
+    /// В случае отсутствия мольных долей создаётся объект Fluid только с набором компонентов.
+    /// Если мольные доли заданы, они преобразуются в Eigen::Eigen::VectorXd и передаются конструктору Fluid.
+    /// @tparam Fluid - тип создаваемого объекта жидкости
+    /// @param pseudocomponents_db - база данных псевдокомпонентов, используемая при 
+    /// отсутствии компонента в базе чистых веществ.
+    /// @param component_formulas - список имён компонентов (wstring), которые должны быть найдены в базе.
+    /// @param molar_fractions - вектор мольных долей компонентов. Если пустой, используется конструктор Fluid без долей.
+    /// @return unique_ptr<Fluid> - умный указатель на созданный объект Fluid.
+    template <typename Fluid>
+    inline std::unique_ptr<Fluid> create_fluid(
+        const components_database_t& pseudocomponents_db,
+        const std::vector<std::wstring>& component_formulas,
+        const std::vector<double>& molar_fractions) const;
+
+    template <typename Fluid>
+    inline std::unique_ptr<Fluid> create_fluid(const fluid_stubdata_t& fluid_data) const;
+
+    /// @brief Создаёт копию объекта Fluid с возможной заменой компонентного состава
+    /// ***************************************************************************
+    /// @detail Функция дублирует объект жидкости Fluid, копируя все его внутренние
+    /// параметры, включая концентрации, бинарные коэффициенты и используемую
+    /// термодинамическую базу данных.
+    /// Если список dest_components_casno пустой, создаётся точная копия исходного
+    /// объекта Fluid.
+    /// Если список dest_components_casno задан, функция пытается сопоставить
+    /// компоненты исходного объекта с компонентами, указанными в списке CAS‑номеров.
+    /// Порядок компонентов в dest_components_casno определяет порядок компонентов
+    /// в результирующем объекте Fluid.
+    /// Если какой‑либо компонент из dest_components_casno отсутствует в базе данных
+    /// исходного Fluid, выбрасывается исключение std::logic_error.
+    /// @tparam Fluid — тип создаваемого объекта жидкости
+    /// @param src_fluid_ptr — указатель на исходный объект Fluid, который требуется
+    /// дублировать. Не должен быть nullptr.
+    /// @param dest_components_casno — список CAS‑номеров компонентов, определяющий
+    /// желаемый порядок и состав компонентов в результирующем объекте Fluid.
+    /// Если список пустой, используется состав исходного Fluid.
+    /// @return std::unique_ptr<Fluid> — умный указатель на созданный объект Fluid.
+    template <typename Fluid>
+    static std::unique_ptr<Fluid> duplicate_fluid(const Fluid* src_fluid_ptr
+        , const std::vector<std::wstring>& dest_components_casno = {});
+    /// @brief Добавляет в базу данных псевдокомпоненты, закладываем, что коэффициенты 
+    /// парного взаимодействия для псевдокомпонентов нули.
+    /// @param oils_hypocomps_parameters 
+    void add_hypocomps(const components_database_t& oils_hypocomps_parameters);
 private:
     /// @brief Расчёт коэффициента экстраполяции модели Антуана для всех компонентов.
     void init_extrapolation_coeff();
@@ -262,18 +352,252 @@ private:
     /// @brief Бинарные коэффициенты взаимодействия
     std::unordered_map<std::set<std::wstring>, double, wstring_pair_set_hash_t> bips;
 };
+//*****************************************************************************
+
+
 
 /// @brief Сериализованная база данных компонентов, индексированная по химическим формулам.
-extern const char* thermo_db_serialized_by_formula;
+//extern const char* thermo_db_serialized_by_formula;
+extern const char* get_thermo_db_serialized_by_formula();
 
 /// @brief Глобальная база данных компонентов, индексированная по химическим формулам.
 //extern const components_database_t components_database_by_formula;
 
 /// @brief Глобальный набор бинарных коэффициентов взаимодействия.
-extern const bip_records_t bip_records_global;
+//extern const bip_records_t bip_records_global;
+extern inline const bip_records_t& get_bip_records_global();
 
 /// @brief Глобальная термодинамическая база данных (CAS-база).
 extern const thermo_db_t components_database;
+//*****************************************************************************
+
+
+
+template <typename Fluid>
+inline std::unique_ptr<Fluid> thermo_db_t::create_fluid(
+    const std::vector<std::wstring>& component_formulas
+    , const std::vector<double>& molar_fractions) const
+{
+    std::vector<const component_properties_t*> components_local;
+    components_local.reserve(component_formulas.size());
+
+    for (const std::wstring& formula : component_formulas) {
+
+        // 1) Попытка найти компонент в БД
+        try {
+            const std::wstring& cas = get_casno_by_formula(formula);
+            const auto& component_properties = components.at(cas);
+            components_local.emplace_back(&component_properties);
+            continue;
+        }
+        catch (const std::exception&) {
+            // формула не найдена в БД
+        }
+
+        // 2) Ошибка
+        std::stringstream msg;
+        msg << "Component does not exist in thermoDB: "
+            << fixed_solvers::wide2string(formula);
+        throw std::logic_error(msg.str());
+
+    }
+
+    if (molar_fractions.empty()) {
+        return std::make_unique<Fluid>(components_local);
+    }
+
+    Eigen::VectorXd fractions = Eigen::VectorXd::Map(
+        molar_fractions.data(),
+        molar_fractions.size()
+    );
+
+    return std::make_unique<Fluid>(components_local, fractions);
+}
+//*****************************************************************************
+
+
+
+template <typename Fluid, typename ComponentDB, typename StringT>
+inline std::unique_ptr<Fluid> thermo_db_t::create_fluid(
+    const std::vector<StringT>& component_names
+    , const std::vector<double>& molar_fractions
+    , const ComponentDB& db_components
+    , const ComponentDB& db_hypocomponents
+    , std::function<std::string(const StringT&)> strconw) const
+{
+    std::vector<const component_properties_t*> components;
+
+    for (const auto& name : component_names) {
+        if (db_components.count(name) == 1) {
+            const auto& component_properties = db_components.at(name);
+            components.emplace_back(&component_properties);
+        }
+        else if (db_hypocomponents.count(name) == 1) {
+            const auto& component_properties = db_hypocomponents.at(name);
+            components.emplace_back(&component_properties);
+        }
+        else {
+            std::stringstream msg;
+            msg << "Component is not exist in thermoDB: " << strconw(name);//fixed_solvers::wide2string(name);
+            throw std::logic_error(msg.str().c_str());
+        }
+
+    }
+
+    if (molar_fractions.empty()) {
+        return std::make_unique<Fluid>(components);
+    }
+    else {
+        Eigen::VectorXd fractions = Eigen::VectorXd::Map(&molar_fractions[0], molar_fractions.size());
+        return std::make_unique<Fluid>(components, fractions);
+    }
+}
+//*****************************************************************************
+
+
+
+//TODO !рефактор!
+/// @brief Функция создает поток из состава потока
+/// @tparam Fluid Тип выходного потока
+/// @param fluid_data Состав потока
+/// @return Уникальный указатель на поток
+template <typename Fluid>
+inline std::unique_ptr<Fluid> thermo_db_t::create_fluid(const fluid_stubdata_t & fluid_data) const
+{
+    return create_fluid<Fluid>(fluid_data.component_list, fluid_data.molar_fraction);
+}
+//*****************************************************************************
+
+
+
+template <typename Fluid>
+inline std::unique_ptr<Fluid> thermo_db_t::create_fluid(
+    const components_database_t& pseudocomponents_db,
+    const std::vector<std::wstring>& component_formulas,
+    const std::vector<double>& molar_fractions) const
+{
+    std::vector<const component_properties_t*> components;
+    components.reserve(component_formulas.size());
+
+    for (const std::wstring& formula : component_formulas) {
+        // 1) Попытка найти компонент в основной БД
+        try {
+            const auto& comp = components_database.get_component_by_formula(formula);
+            components.emplace_back(&comp);
+            continue;
+        }
+        catch (const std::exception&) {
+        }
+
+        // 2) Попытка найти компонент в базе псевдо-компонентов
+        if (pseudocomponents_db.count(formula) == 1) {
+            const auto& comp = pseudocomponents_db.at(formula);
+            components.emplace_back(&comp);
+            continue;
+        }
+
+        // 3) Ошибка
+        std::stringstream msg;
+        msg << "Component does not exist in thermoDB: "
+            << fixed_solvers::wide2string(formula);
+        throw std::logic_error(msg.str());
+    }
+
+    if (molar_fractions.empty()) {
+        return std::make_unique<Fluid>(components);
+    }
+
+    Eigen::VectorXd fractions = Eigen::VectorXd::Map(
+        molar_fractions.data(),
+        molar_fractions.size()
+    );
+
+    // std::move при возврате результата make_unique — это пустая операция.
+    // компилятор сам применит RVO/NRVO.
+    return std::make_unique<Fluid>(components, fractions);
+}
+//*****************************************************************************
+
+
+
+
+template <typename Fluid>
+static std::unique_ptr<Fluid> thermo_db_t::duplicate_fluid(
+    const Fluid* src_fluid_ptr, const std::vector<std::wstring>& dest_components_casno)
+{
+    if (!src_fluid_ptr) {
+        throw std::logic_error("Source fluid pointer is null");
+    }
+
+    // если список пустой, просто копируем
+    size_t dest_size = dest_components_casno.size();
+    if (!dest_size) {
+        return std::make_unique<Fluid>(*src_fluid_ptr);
+    }
+
+    const std::vector<const component_properties_t*>& src_comp_props = src_fluid_ptr->get_components();
+    size_t src_size = src_comp_props.size();
+    if (dest_size > src_size) {
+        throw std::logic_error("Destination has more components than source");
+    }
+
+    // для ускорения поиска создаем отображение CASno -> индекс в src_fluid_ptr
+    std::unordered_map<std::wstring, size_t> casno_to_src_index;
+    casno_to_src_index.reserve(src_size);
+    for (size_t src_index = 0; src_index < src_size; ++src_index) {
+        casno_to_src_index[src_comp_props[src_index]->CASno] = src_index;
+    }
+
+    // нужно перенести:
+    // 1. свойства компонентов
+    std::vector<const component_properties_t*> dest_comp_props(dest_size, nullptr);
+    std::vector<size_t> map_dest_to_src(dest_size);
+
+    for (size_t dest_i = 0; dest_i < dest_size; ++dest_i) {
+        // дубликатов в списке dest_components_casno быть не должно, так что можно не проверять
+        const auto& dest_casno = dest_components_casno[dest_i];
+        auto it = casno_to_src_index.find(dest_casno);
+        if (it == casno_to_src_index.end()) {
+            // компонент не найден
+            std::stringstream msg;
+            msg << "Component with CAS " << fixed_solvers::wide2string(dest_casno)
+                << " is not found in source fluid";
+            throw std::logic_error(msg.str());
+        }
+        const size_t src_i = it->second;
+        dest_comp_props[dest_i] = src_comp_props[src_i];
+        map_dest_to_src[dest_i] = src_i;
+    }
+
+    // 2. мольные доли. Они могут меняться, но mutex в самом геттере
+    const Eigen::VectorXd& src_molar_fractions = src_fluid_ptr->get_molar_fraction();
+    Eigen::VectorXd dest_molar_fractions(dest_size);
+    for (size_t dest_i = 0; dest_i < dest_size; dest_i++) {
+        const size_t src_i = map_dest_to_src[dest_i];
+        dest_molar_fractions(dest_i) = src_molar_fractions(src_i);
+    }
+
+    // 3. матрицу бинарных коэффициентов взаимодействия
+    const Eigen::MatrixXd& src_bips_matrix = src_fluid_ptr->get_binary_coeffs_ref();
+    // Если матрица пустая, то и копировать нечего
+    if( !src_bips_matrix.size() ) {
+        return std::make_unique<Fluid>(dest_comp_props, dest_molar_fractions);
+    }
+
+    Eigen::MatrixXd dest_bips(dest_size, dest_size);
+    for (size_t dest_i = 0; dest_i < dest_size; dest_i++) {
+        for (size_t dest_j = 0; dest_j < dest_size; dest_j++) {
+            const size_t src_i = map_dest_to_src[dest_i];
+            const size_t src_j = map_dest_to_src[dest_j];
+            dest_bips(dest_i, dest_j) = src_bips_matrix(src_i, src_j);
+        }
+    }
+
+    return std::make_unique<Fluid>(dest_comp_props, dest_molar_fractions, dest_bips);
+}
+//*****************************************************************************
+
+
 
 #endif
 

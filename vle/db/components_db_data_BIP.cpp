@@ -1,6 +1,7 @@
 ﻿#include "../vle_solvers.h"
-
-const bip_records_t bip_records_global = {
+inline const bip_records_t& get_bip_records_global() {
+    static const bip_records_t* bip_records_global =
+        new bip_records_t{
     {L"7783-06-4", L"7727-37-9", 0.1520000000 },
     {L"7783-06-4", L"124-38-9", 0.1060000000 },
     {L"7783-06-4", L"74-82-8", 0.0820889340 },
@@ -1023,4 +1024,6 @@ const bip_records_t bip_records_global = {
     {L"124-38-9", L"71-23-8", 0.1160684694 },
     {L"124-38-9", L"71-36-3", 0.0973119049 },
     {L"124-38-9", L"111-46-6", 0.1355337642 }
+    };
+    return *bip_records_global;
 };

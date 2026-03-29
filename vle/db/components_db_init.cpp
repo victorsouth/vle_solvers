@@ -34,7 +34,7 @@ thermo_db_t::thermo_db_t(const std::string& thermo_db_by_casno)
         const auto& chemical_formula = component_by_casno.second.name;
         formula2cas_mapping_var1.insert({ chemical_formula, component_by_casno.first});
     }
-    init_bips(bip_records_global);
+    init_bips(get_bip_records_global());
     init_extrapolation_coeff();
 }
 
@@ -47,7 +47,8 @@ thermo_db_t::thermo_db_t()
     formula2cas_mapping_var1.clear();
     
     components_database_t db_by_formula = serializer_2026_02_02::
-        deserialize_from_string<components_database_t>(std::string(thermo_db_serialized_by_formula));
+        deserialize_from_string<components_database_t>(std::string(
+            get_thermo_db_serialized_by_formula()));
 
     // собираем из текущий базы компонентов (которая по формулам)
     for (const auto& [formula, component] : db_by_formula) {
@@ -57,7 +58,7 @@ thermo_db_t::thermo_db_t()
         formula2cas_mapping_var1.insert({ formula, casno });
     }
 
-    init_bips(bip_records_global);
+    init_bips(get_bip_records_global());
     init_extrapolation_coeff();
 }
 
@@ -128,6 +129,8 @@ double thermo_db_t::get_bip_pair_formula(const std::wstring& formula1, const std
     return get_bip_pair_casno(cas1, cas2);
 }
 
+
+
 double thermo_db_t::get_bip_pair_casno(const std::wstring& cas1, const std::wstring& cas2) const
 {
     const auto key = std::set<std::wstring>{ cas1, cas2 };
@@ -137,3 +140,24 @@ double thermo_db_t::get_bip_pair_casno(const std::wstring& cas1, const std::wstr
     }
     return iter->second;
 }
+//*****************************************************************************
+
+
+
+void thermo_db_t::add_hypocomps(const components_database_t& oils_hypocomps_parameters)
+{
+    // для псевдокомпонентов casno == formula
+    for (const auto& [casno, properties] : oils_hypocomps_parameters) {
+        if (components.count(casno) == 0) {
+            components[casno] = properties;
+            components[casno].CASno = casno;
+            components[casno].component_name = casno;
+            formula2cas_mapping_var1.emplace(casno, casno);
+        }
+    }
+    // так как BIP нулевые для псевдокомпонентов и их взаимодействия с остальными 
+    // компонентами, то не вставляем их в bips
+}
+//*****************************************************************************
+
+

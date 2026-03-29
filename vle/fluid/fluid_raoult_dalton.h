@@ -37,6 +37,15 @@ public:
         : fluid_t(components, molar_fraction)
     {
     }
+    /// @brief Конструктор на основе векторов компонентов (std::vector), мольных 
+    /// долей (Eigen::VectorXd) и матрицы бинарных коэффициентов (Eigen::MatrixXd)
+    fluid_rault_dalton_t(const std::vector<const component_properties_t*>& components,
+        const Eigen::VectorXd& molar_fraction,
+        const Eigen::MatrixXd& binary_coeffs)
+        : fluid_t(components, molar_fraction, binary_coeffs)
+    {
+    }
+
     /// @brief Копирует флюид вместе с данными мемоизации,
     /// вызывает копирующий конструктор, в котором проверяется целостность данных мемоизации
     virtual std::unique_ptr<fluid_t> create_copy(bool copy_memoization = true) const override

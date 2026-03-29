@@ -1,4 +1,5 @@
-﻿const char* thermo_db_serialized_by_formula = 
+﻿const char* get_thermo_db_serialized_by_formula() {
+    static const char* thermo_db_serialized_by_formula = 
 "{"
 "    \"AR\": {"
 "        \"molar_mass\": \"0.039947999999999997\","
@@ -3764,3 +3765,5 @@
 "    }"
 "}"
 ;
+    return thermo_db_serialized_by_formula;
+};

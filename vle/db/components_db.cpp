@@ -49,7 +49,7 @@ double antoine_model_t::get_saturated_pressure(double temperature) const
         break;
     }
     default:
-        throw std::logic_error("Unsupported formula");
+        throw std::logic_error("get_saturated_pressure::Unsupported formula");
     }
     return std::max(min_PsatPa, Psat_Pa);
 }
@@ -75,7 +75,7 @@ double antoine_model_t::get_temperature_for_saturated_pressure(double saturated_
         return temperature;
     }
     default:
-        throw std::logic_error("Unsupported formula");
+        throw std::logic_error("get_temperature_for_saturated_pressure::Unsupported formula");
     }
 }
 
