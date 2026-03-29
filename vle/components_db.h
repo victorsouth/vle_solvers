@@ -11,7 +11,6 @@
 #include <optional>
 #include <utility>
 #include "vle_solvers.h"
-//using namespace std;
 
 /// @brief Используемые единицы количества вещества (мольные, массовые)
 enum class AmountType { Molar, Mass };
