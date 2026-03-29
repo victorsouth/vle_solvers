@@ -522,7 +522,7 @@ inline std::unique_ptr<Fluid> thermo_db_t::create_fluid(
 
 
 template <typename Fluid>
-static std::unique_ptr<Fluid> thermo_db_t::duplicate_fluid(
+std::unique_ptr<Fluid> thermo_db_t::duplicate_fluid(
     const Fluid* src_fluid_ptr, const std::vector<std::wstring>& dest_components_casno)
 {
     if (!src_fluid_ptr) {
