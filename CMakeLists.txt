@@ -17,7 +17,9 @@ if(MINGW)
     add_compile_options("-Wa,-mbig-obj")
 endif()
 
+if(NOT TARGET fixed_solvers::fixed_solvers)
 find_package(fixed_solvers REQUIRED)
+endif()
 find_package(Boost REQUIRED COMPONENTS serialization)
 option(VLESOLVERS_WITH_PCH "Use Prcompiled Headers" ON)
 # Установка путей к файлам в папках в переменные
