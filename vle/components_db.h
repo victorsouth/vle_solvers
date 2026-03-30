@@ -247,13 +247,44 @@ struct wstring_pair_set_hash_t {
 /// После инициализации является неизменяемой.
 class thermo_db_t {
 public:
-    /// @brief Инициализация базы данных по глобальной базе компонентов (по формулам).
+    /// @brief Основной конструктор, инициализация чистой БД и псевдо БД
+    thermo_db_t(const components_database_t& pure_db, 
+        const bip_records_t& bip_db,
+        const components_database_t& pseudo_db) 
+    {
+        // собираем из текущий базы компонентов (которая по формулам)
+        for (const auto& [_, component] : pure_db) {
+            const auto& casno = component.CASno;
+            cas_components[casno] = component;
+            formula2cas_mapping.insert({ component.name, casno });
+        }
+
+        // для псевдокомпонентов casno == formula
+        for (const auto& [pseudo_name, properties] : pseudo_db) {
+            if (cas_components.count(pseudo_name) != 0)
+                throw std::runtime_error("Pseudocomonent name duplicates with pure");
+            cas_components[pseudo_name] = properties;
+            cas_components[pseudo_name].CASno = pseudo_name;
+            cas_components[pseudo_name].component_name = pseudo_name;
+            formula2cas_mapping.emplace(pseudo_name, pseudo_name);
+        }
+        // так как BIP нулевые для псевдокомпонентов и их взаимодействия с остальными 
+        // компонентами, то не вставляем их в bips
+
+        init_bips(bip_db);
+        init_extrapolation_coeff();
+
+    }
+
+    /// @brief Делегирующий конструктор, создает БД чистых по глобальной базе, 
+    /// дополняет ее переданной БД псевдокомпонентов
+    thermo_db_t(const components_database_t& pseudo_db);
+
+    /// @brief Инициализация базы данных по глобальной базе чистых компонентов (по формулам).
     /// Формирует CAS-базу, отображение формул и загружает бинарные коэффициенты.
     thermo_db_t();
 
-    /// @brief Инициализация базы данных из сериализованной строки по CAS-номерам.
-    /// Используется для альтернативного пути загрузки.
-    thermo_db_t(const std::string& thermo_db);
+public:
     /// @brief Возвращает базу данных компонентов, индексированную по CAS-номеру.
     const components_database_t& get_component_casno_database() const;
     /// @brief Возвращает свойства компонента по химической формуле.
@@ -272,6 +303,7 @@ public:
     /// Если коэффициент отсутствует, возвращает std::nullopt.
     double get_bip_pair_casno(const std::wstring& cas1, const std::wstring& cas2) const;
 
+public:
     /// @brief Функция создает поток флюида с заданным компонентным составом и мольными долями
     /// @tparam Fluid
     /// @param component_formulas Названия компонентов
@@ -334,20 +366,22 @@ public:
     template <typename Fluid>
     static std::unique_ptr<Fluid> duplicate_fluid(const Fluid* src_fluid_ptr
         , const std::vector<std::wstring>& dest_components_casno = {});
-    /// @brief Добавляет в базу данных псевдокомпоненты, закладываем, что коэффициенты 
-    /// парного взаимодействия для псевдокомпонентов нули.
-    /// @param oils_hypocomps_parameters 
-    void add_hypocomps(const components_database_t& oils_hypocomps_parameters);
 private:
     /// @brief Расчёт коэффициента экстраполяции модели Антуана для всех компонентов.
-    void init_extrapolation_coeff();
+    void init_extrapolation_coeff() {
+        for (auto& [name, data] : cas_components)
+        {
+            double my_estimation = data.estimate_antoine_extrapolation_coeff();
+            data.antoine_model.extrapolation_coefficient = my_estimation;
+        }
+    }
     /// @brief Инициализация бинарных коэффициентов взаимодействия из глобальной базы
     void init_bips(const bip_records_t& bip_records);
 private:
     /// @brief CAS-база компонентов
-    components_database_t components;
+    components_database_t cas_components;
     /// @brief Формула -> CAS
-    std::unordered_multimap<std::wstring, std::wstring> formula2cas_mapping_var1;
+    std::unordered_multimap<std::wstring, std::wstring> formula2cas_mapping;
     /// @brief Бинарные коэффициенты взаимодействия
     std::unordered_map<std::set<std::wstring>, double, wstring_pair_set_hash_t> bips;
 };
@@ -359,11 +393,7 @@ private:
 //extern const char* thermo_db_serialized_by_formula;
 extern const char* get_thermo_db_serialized_by_formula();
 
-/// @brief Глобальная база данных компонентов, индексированная по химическим формулам.
-//extern const components_database_t components_database_by_formula;
-
 /// @brief Глобальный набор бинарных коэффициентов взаимодействия.
-//extern const bip_records_t bip_records_global;
 extern const bip_records_t& get_bip_records_global();
 
 /// @brief Глобальная термодинамическая база данных (CAS-база).
@@ -385,7 +415,7 @@ inline std::unique_ptr<Fluid> thermo_db_t::create_fluid(
         // 1) Попытка найти компонент в БД
         try {
             const std::wstring& cas = get_casno_by_formula(formula);
-            const auto& component_properties = components.at(cas);
+            const auto& component_properties = cas_components.at(cas);
             components_local.emplace_back(&component_properties);
             continue;
         }
