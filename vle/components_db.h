@@ -364,7 +364,7 @@ extern const char* get_thermo_db_serialized_by_formula();
 
 /// @brief Глобальный набор бинарных коэффициентов взаимодействия.
 //extern const bip_records_t bip_records_global;
-extern inline const bip_records_t& get_bip_records_global();
+extern const bip_records_t& get_bip_records_global();
 
 /// @brief Глобальная термодинамическая база данных (CAS-база).
 extern const thermo_db_t components_database;

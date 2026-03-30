@@ -1,5 +1,5 @@
-﻿#include "../vle_solvers.h"
-inline const bip_records_t& get_bip_records_global() {
+#include "../vle_solvers.h"
+const bip_records_t& get_bip_records_global() {
     static const bip_records_t* bip_records_global =
         new bip_records_t{
     {L"7783-06-4", L"7727-37-9", 0.1520000000 },
