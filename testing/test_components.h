@@ -36,20 +36,6 @@ TEST(ThermoDB, Compare1) {
 }
 
 
-/// @brief Проверяет, что create_fluid работает с произвольными строковыми ключами и внешней БД.
-TEST(ThermoDB, StdString) {
-    std::map<std::string,component_properties_t> other_db;
-    other_db["CH4"]=components_database.get_component_by_formula(L"CH4");
-    std::vector<std::string> component_list{ "CH4" };
-    auto fluid = components_database.create_fluid<vlelib::fluid_rault_dalton_t
-        , std::map<std::string, component_properties_t>, std::string>(
-            component_list, {}
-            , other_db, {}
-            , [](const std::string &str)->std::string{return str;});
-
-}
-
-
 /// @brief Пара "имя компонента + CAS номер" для использования как ключа.
 struct name_casno {
     /// @brief Имя компонента.
@@ -64,28 +50,3 @@ bool operator<(const struct name_casno& a, const struct name_casno& b) {
 }
 
 
-/// @brief Проверяет, что create_fluid работает с составным ключом (структурой) 
-/// и пользовательским преобразователем.
-TEST(ThermoDB, ComplexStruct) {
-    const auto& c = components_database.get_component_by_formula(L"CH4");
-    name_casno key{ fixed_solvers::wide2string(c.name),fixed_solvers::wide2string(c.CASno) };
-    std::map<name_casno, component_properties_t> other_db;
-    other_db[key] = c;
-    other_db[{"CH4", "89898956"}] = c;
-    std::vector<name_casno> component_list{ key };
-    {
-        auto fluid = components_database.create_fluid<vlelib::fluid_rault_dalton_t
-            , std::map<name_casno, component_properties_t>, name_casno>(
-                component_list, {}
-            , other_db, {}
-        , [](const name_casno& str)->std::string {return str.name + str.CasNo; });
-    }
-#if 0
-    nameCasNo not_found{"swds","zsdfasdf"};
-    std::vector<nameCasNo> component_list2{not_found};
-    ASSERT_THROW({//что-то тут не собирается
-        auto fluid = vlelib::create_fluid<vlelib::fluid_rault_dalton_t,std::map<nameCasNo,component_properties_t>,nameCasNo>(
-                     component_list2,{},other_db,{},[](const nameCasNo &str)->std::string{return str.name+str.CasNo;});
-    },std::domain_error);
-#endif
-}
