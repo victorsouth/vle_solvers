@@ -313,13 +313,7 @@ public:
         , const std::vector<std::wstring>& dest_components_casno = {});
 private:
     /// @brief Расчёт коэффициента экстраполяции модели Антуана для всех компонентов.
-    void init_extrapolation_coeff() {
-        for (auto& [name, data] : cas_components)
-        {
-            double my_estimation = data.estimate_antoine_extrapolation_coeff();
-            data.antoine_model.extrapolation_coefficient = my_estimation;
-        }
-    }
+    void init_extrapolation_coeff();
     /// @brief Инициализация бинарных коэффициентов взаимодействия из глобальной базы
     void init_bips(const bip_records_t& bip_records);
 private:

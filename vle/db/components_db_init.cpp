@@ -8,6 +8,14 @@
 const thermo_db_t components_database; 
 
 
+void thermo_db_t::init_extrapolation_coeff() {
+    for (auto& [name, data] : cas_components)
+    {
+        double my_estimation = data.estimate_antoine_extrapolation_coeff();
+        data.antoine_model.extrapolation_coefficient = my_estimation;
+    }
+}
+
 void thermo_db_t::init_bips(const bip_records_t& bip_records)
 {
     for (const auto& rec : bip_records) {
