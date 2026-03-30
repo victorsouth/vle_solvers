@@ -321,24 +321,7 @@ public:
         , const std::vector<double>& molar_fractions
         , const ComponentDB& db_components
         , const ComponentDB& db_hypocomponents, std::function<std::string(const StringT&)> strconw) const;
-    /// @brief Создаёт объект Fluid на основе списка чистых и гипо-компонентов и их мольных долей 
-    /// ***************************************************************************
-    /// @detail Функция ищет свойства компонентов сначала в базе чистых веществ (components_database),
-    /// а если компонент там отсутствует — в базе псевдокомпонентов (pseudocomponents_db).
-    /// Если компонент не найден ни в одной базе, выбрасывается исключение logic_error.
-    /// В случае отсутствия мольных долей создаётся объект Fluid только с набором компонентов.
-    /// Если мольные доли заданы, они преобразуются в Eigen::Eigen::VectorXd и передаются конструктору Fluid.
-    /// @tparam Fluid - тип создаваемого объекта жидкости
-    /// @param pseudocomponents_db - база данных псевдокомпонентов, используемая при 
-    /// отсутствии компонента в базе чистых веществ.
-    /// @param component_formulas - список имён компонентов (wstring), которые должны быть найдены в базе.
-    /// @param molar_fractions - вектор мольных долей компонентов. Если пустой, используется конструктор Fluid без долей.
-    /// @return unique_ptr<Fluid> - умный указатель на созданный объект Fluid.
-    template <typename Fluid>
-    inline std::unique_ptr<Fluid> create_fluid(
-        const components_database_t& pseudocomponents_db,
-        const std::vector<std::wstring>& component_formulas,
-        const std::vector<double>& molar_fractions) const;
+
 
     template <typename Fluid>
     inline std::unique_ptr<Fluid> create_fluid(const fluid_stubdata_t& fluid_data) const;
@@ -499,52 +482,6 @@ inline std::unique_ptr<Fluid> thermo_db_t::create_fluid(const fluid_stubdata_t &
 
 
 
-template <typename Fluid>
-inline std::unique_ptr<Fluid> thermo_db_t::create_fluid(
-    const components_database_t& pseudocomponents_db,
-    const std::vector<std::wstring>& component_formulas,
-    const std::vector<double>& molar_fractions) const
-{
-    std::vector<const component_properties_t*> components;
-    components.reserve(component_formulas.size());
-
-    for (const std::wstring& formula : component_formulas) {
-        // 1) Попытка найти компонент в основной БД
-        try {
-            const auto& comp = components_database.get_component_by_formula(formula);
-            components.emplace_back(&comp);
-            continue;
-        }
-        catch (const std::exception&) {
-        }
-
-        // 2) Попытка найти компонент в базе псевдо-компонентов
-        if (pseudocomponents_db.count(formula) == 1) {
-            const auto& comp = pseudocomponents_db.at(formula);
-            components.emplace_back(&comp);
-            continue;
-        }
-
-        // 3) Ошибка
-        std::stringstream msg;
-        msg << "Component does not exist in thermoDB: "
-            << fixed_solvers::wide2string(formula);
-        throw std::logic_error(msg.str());
-    }
-
-    if (molar_fractions.empty()) {
-        return std::make_unique<Fluid>(components);
-    }
-
-    Eigen::VectorXd fractions = Eigen::VectorXd::Map(
-        molar_fractions.data(),
-        molar_fractions.size()
-    );
-
-    // std::move при возврате результата make_unique — это пустая операция.
-    // компилятор сам применит RVO/NRVO.
-    return std::make_unique<Fluid>(components, fractions);
-}
 //*****************************************************************************
 
 
