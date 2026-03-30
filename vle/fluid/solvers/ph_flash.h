@@ -69,7 +69,7 @@ public:
     /// \return невязка
     virtual function_type residuals(const var_type& x) override
     {
-        return given_enthalpy - fluid->get_enthalpy_td_mass(given_pressure, x);
+        return given_enthalpy - fluid->flash(given_pressure, x).enthalpy.mass.mix;
     }
     /// \brief
     /// конструктор desired_enthalpy
@@ -101,13 +101,13 @@ public:
         p.argument_limit_max = 5000;
         // correcting limits by estimation if applicable
         if (std::isfinite(initial_temperature)) {
-            double enthalpy_at_initial_temperature = fluid->get_enthalpy_td_mass(given_pressure, initial_temperature);
+            double enthalpy_at_initial_temperature = fluid->flash(given_pressure, initial_temperature).enthalpy.mass.mix;
             if (enthalpy_at_initial_temperature < given_enthalpy)p.argument_limit_min = initial_temperature;
             if (enthalpy_at_initial_temperature > given_enthalpy)p.argument_limit_max = initial_temperature;
         }
         double T_critical = fluid->get_pseudocritical_temperature();
         {
-            double enthalpy_at_critical_temperature = fluid->get_enthalpy_td_mass(given_pressure, T_critical);
+            double enthalpy_at_critical_temperature = fluid->flash(given_pressure, T_critical).enthalpy.mass.mix;
             if (enthalpy_at_critical_temperature < given_enthalpy)p.argument_limit_min = T_critical;
             if (enthalpy_at_critical_temperature > given_enthalpy)p.argument_limit_max = T_critical;
         }
