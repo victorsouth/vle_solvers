@@ -8,7 +8,6 @@
 const thermo_db_t components_database; 
 
 
-
 void thermo_db_t::init_bips(const bip_records_t& bip_records)
 {
     for (const auto& rec : bip_records) {
@@ -17,6 +16,32 @@ void thermo_db_t::init_bips(const bip_records_t& bip_records)
     }
 }
 
+thermo_db_t::thermo_db_t(const components_database_t& pure_db, const bip_records_t& bip_db, 
+    const components_database_t& pseudo_db)
+{
+    // собираем из текущий базы компонентов (которая по формулам)
+    for (const auto& [_, component] : pure_db) {
+        const auto& casno = component.CASno;
+        cas_components[casno] = component;
+        formula2cas_mapping.insert({ component.name, casno });
+    }
+
+    // для псевдокомпонентов casno == formula
+    for (const auto& [pseudo_name, properties] : pseudo_db) {
+        if (cas_components.count(pseudo_name) != 0)
+            throw std::runtime_error("Pseudocomonent name duplicates with pure");
+        cas_components[pseudo_name] = properties;
+        cas_components[pseudo_name].CASno = pseudo_name;
+        cas_components[pseudo_name].component_name = pseudo_name;
+        formula2cas_mapping.emplace(pseudo_name, pseudo_name);
+    }
+    // так как BIP нулевые для псевдокомпонентов и их взаимодействия с остальными 
+    // компонентами, то не вставляем их в bips
+
+    init_bips(bip_db);
+    init_extrapolation_coeff();
+
+}
 
 thermo_db_t::thermo_db_t(const components_database_t& pseudo_db)
     : thermo_db_t(serializer_2026_02_02::
