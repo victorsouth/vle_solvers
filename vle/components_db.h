@@ -343,43 +343,38 @@ extern const thermo_db_t components_database;
 
 template <typename Fluid>
 inline std::unique_ptr<Fluid> thermo_db_t::create_fluid(
-    const std::vector<std::wstring>& component_formulas
+    const std::vector<std::wstring>& component_list
     , const std::vector<double>& molar_fractions) const
 {
     std::vector<const component_properties_t*> components_local;
-    components_local.reserve(component_formulas.size());
+    components_local.reserve(component_list.size());
 
-    for (const std::wstring& formula : component_formulas) {
-
-        // 1) Попытка найти компонент в БД
-        try {
-            const std::wstring& cas = get_casno_by_formula(formula);
-            const auto& component_properties = cas_components.at(cas);
-            components_local.emplace_back(&component_properties);
-            continue;
+    for (const auto& component_id : component_list) {
+        if (cas_components.count(component_id) == 1) {
+            // Трактуем component_id как CAS. Дублей CAS нет, поэтому проверяем только на count == 1
+            const component_properties_t& properties = cas_components.at(component_id);
+            components_local.emplace_back(&properties);
         }
-        catch (const std::exception&) {
-            // формула не найдена в БД
+        else {
+            // Не нашли component_id среди CAS-номеров, 
+            // Трактуем component_id как формулу, по которой пробуем получить CAS
+            const std::wstring& cas = get_casno_by_formula(component_id); // здесь будет exception, если формула не найдется
+            const component_properties_t& properties = cas_components.at(cas);
+            components_local.emplace_back(&properties);
         }
-
-        // 2) Ошибка
-        std::stringstream msg;
-        msg << "Component does not exist in thermoDB: "
-            << fixed_solvers::wide2string(formula);
-        throw std::logic_error(msg.str());
-
     }
 
-    if (molar_fractions.empty()) {
+    if (!molar_fractions.empty()) {
+        Eigen::VectorXd fractions = Eigen::VectorXd::Map(
+            molar_fractions.data(),
+            molar_fractions.size()
+        );
+        return std::make_unique<Fluid>(components_local, fractions);
+    }
+    else  {
         return std::make_unique<Fluid>(components_local);
     }
 
-    Eigen::VectorXd fractions = Eigen::VectorXd::Map(
-        molar_fractions.data(),
-        molar_fractions.size()
-    );
-
-    return std::make_unique<Fluid>(components_local, fractions);
 }
 //*****************************************************************************
 
