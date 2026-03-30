@@ -12,7 +12,6 @@
 #include <utility>
 #include <ranges>
 #include "vle_solvers.h"
-//using namespace std;
 
 // Был объявлен в #include "fluid\fluid_base.h"
 
