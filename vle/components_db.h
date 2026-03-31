@@ -2,16 +2,17 @@
 #ifndef __COMPONENTS_DB__
 #define __COMPONENTS_DB__
 
-#include <limits>
-#include <array>
-#include <map>
-#include <set>
-#include <unordered_map>
-#include <mutex>
-#include <optional>
-#include <utility>
-#include <ranges>
-#include "vle_solvers.h"
+//#include <limits>
+//#include <array>
+//#include <map>
+//#include <set>
+//#include <unordered_map>
+//#include <mutex>
+//#include <optional>
+//#include <utility>
+//#include <ranges>
+//#include "vle_solvers.h"
+#include "components_db_bip.h"
 
 // Был объявлен в #include "fluid\fluid_base.h"
 
@@ -209,38 +210,9 @@ struct component_properties_t {
 };
 
 
-/// @brief Запись бинарного коэффициента взаимодействия (BIP).
-/// Содержит CAS-номера двух компонентов и коэффициент k_ij.
-struct bip_record_t {
-    /// @brief первый CAS-номер записи
-    std::wstring cas1;
-    /// @brief второй CAS-номер записи
-    std::wstring cas2;
-    /// @brief бинарный коэффициент
-    double bip_value;
-};
-
 /// @brief База данных компонентов, индексированная по CAS-номеру.
 using components_database_t = std::unordered_map<std::wstring, component_properties_t>;
 
-/// @brief Набор бинарных коэффициентов взаимодействия.
-using bip_records_t = std::vector<bip_record_t>;
-
-
-/// @brief Для использования const std::set<std::wstring>& pair как ключа в unordered_map
-struct wstring_pair_set_hash_t {
-    /// @brief Собственно, хэш
-    size_t operator()(const std::set<std::wstring>& pair) const 
-    {
-        if (pair.size() != 2) {
-            // при указании гарантии noexcept?
-            throw std::runtime_error("Wrong pair set size");
-        }
-        const size_t h1 = std::hash<std::wstring>{}(*pair.begin());
-        const size_t h2 = std::hash<std::wstring>{}(*pair.rbegin());
-        return h1 ^ (h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2));
-    }
-};
 
 /// @brief База данных термодинамических свойств компонентов.
 /// Содержит CAS-базу, отображение формула->CAS и бинарные коэффициенты взаимодействия.
@@ -261,19 +233,19 @@ public:
     /// @brief Возвращает базу данных компонентов, индексированную по CAS-номеру.
     const components_database_t& get_component_casno_database() const;
     /// @brief Возвращает свойства компонента по химической формуле.
-    /// Если формула отсутствует, возвращает nullptr.
+    /// Если формула отсутствует, кидает исключение.
     const component_properties_t& get_component_by_formula(const std::wstring& formula) const;
     /// @brief Возвращает свойства компонента по CAS-номеру.
-    /// Если компонент отсутствует, возвращает nullptr.
+    /// Если компонент отсутствует, кидает исключение.
     const component_properties_t& get_component_by_casno(const std::wstring& casno) const;
     /// @brief Возвращает CAS-номер компонента по химической формуле.
     /// Если формула отсутствует или неоднозначна, кидает исключение
     const std::wstring& get_casno_by_formula(const std::wstring& formula) const;
     /// @brief Возвращает бинарный коэффициент взаимодействия k_ij по паре формул.
-    /// Если коэффициент отсутствует, возвращает std::nullopt.
+    /// Если коэффициент отсутствует, возвращает NaN.
     double get_bip_pair_formula(const std::wstring& formula1, const std::wstring& formula2) const;
     /// @brief Возвращает бинарный коэффициент взаимодействия k_ij по паре CAS-номеров.
-    /// Если коэффициент отсутствует, возвращает std::nullopt.
+    /// Если коэффициент отсутствует, возвращает NaN.
     double get_bip_pair_casno(const std::wstring& cas1, const std::wstring& cas2) const;
 
 public:
@@ -287,6 +259,12 @@ public:
 
     template <typename Fluid>
     inline std::unique_ptr<Fluid> create_fluid(const fluid_stubdata_t& fluid_data) const;
+
+    template <typename Fluid>
+    inline std::unique_ptr<Fluid> create_fluid(const std::vector<std::wstring>& component_formulas
+        , const bip_recalc_plan_t& bip_recalc_plan 
+        , const std::vector<double>& molar_fractions = std::vector<double>()
+        ) const;
 
     /// @brief Создаёт копию объекта Fluid с возможной заменой компонентного состава
     /// ***************************************************************************
@@ -322,7 +300,7 @@ private:
     /// @brief Формула -> CAS
     std::unordered_multimap<std::wstring, std::wstring> formula2cas_mapping;
     /// @brief Бинарные коэффициенты взаимодействия
-    std::unordered_map<std::set<std::wstring>, double, wstring_pair_set_hash_t> bips;
+    bips_hashedmap_t bips;
 };
 //*****************************************************************************
 
@@ -371,17 +349,76 @@ inline std::unique_ptr<Fluid> thermo_db_t::create_fluid(
         );
         return std::make_unique<Fluid>(components_local, fractions);
     }
-    else  {
+    else {
         return std::make_unique<Fluid>(components_local);
+    }
+};
+//*****************************************************************************
+
+
+Eigen::MatrixXd estimate_BIP_formulas(
+    const std::vector<std::wstring>& components_casno_list
+    , const std::vector<const component_properties_t*>& components
+    , const bips_hashedmap_t& bips
+    , const bip_recalc_plan_t& bip_recalc_plan);
+
+
+
+template <typename Fluid>
+inline std::unique_ptr<Fluid> thermo_db_t::create_fluid(
+    const std::vector<std::wstring>& component_list
+    , const bip_recalc_plan_t& bip_recalc_plan
+    , const std::vector<double>& molar_fractions) const
+{
+    // Заложим на будущее
+    // static_assert(
+    //     std::is_same_v<Fluid, vlelib::fluid_peng_robinson_t>,
+    //     "thermo_db_t::create_fluid: BIP recalculation is supported only for fluid_peng_robinson_t"
+    //     );
+
+    std::vector<const component_properties_t*> components_local;
+    components_local.reserve(component_list.size());
+
+    for (const auto& component_id : component_list) {
+        if (cas_components.count(component_id) == 1) {
+            // Трактуем component_id как CAS. Дублей CAS нет, поэтому проверяем только на count == 1
+            const component_properties_t& properties = cas_components.at(component_id);
+            components_local.emplace_back(&properties);
+        }
+        else {
+            // Не нашли component_id среди CAS-номеров, 
+            // Трактуем component_id как формулу, по которой пробуем получить CAS
+            const std::wstring& cas = get_casno_by_formula(component_id); // здесь будет exception, если формула не найдется
+            const component_properties_t& properties = cas_components.at(cas);
+            components_local.emplace_back(&properties);
+        }
+    }
+
+    std::vector<std::wstring> components_casno_list;
+    components_casno_list.reserve(component_list.size());
+    for (const auto& comp_cas : components_local) {
+        components_casno_list.push_back(comp_cas->CASno);
+    }
+
+    Eigen::MatrixXd binary_coeffs_local;
+    if (bip_recalc_plan.size()) {
+        binary_coeffs_local = estimate_BIP_formulas(
+            components_casno_list, components_local, bips, bip_recalc_plan);
+    }
+
+    if (!molar_fractions.empty()) {
+        Eigen::VectorXd fractions = Eigen::VectorXd::Map(
+            molar_fractions.data(),
+            molar_fractions.size()
+        );
+        return std::make_unique<Fluid>(components_local, binary_coeffs_local, fractions);
+    }
+    else {
+        return std::make_unique<Fluid>(components_local, binary_coeffs_local);
     }
 
 }
 //*****************************************************************************
-
-
-
-//*****************************************************************************
-
 
 
 //TODO !рефактор!
@@ -395,11 +432,6 @@ inline std::unique_ptr<Fluid> thermo_db_t::create_fluid(const fluid_stubdata_t &
     return create_fluid<Fluid>(fluid_data.component_list, fluid_data.molar_fraction);
 }
 //*****************************************************************************
-
-
-
-//*****************************************************************************
-
 
 
 
@@ -478,7 +510,6 @@ std::unique_ptr<Fluid> thermo_db_t::duplicate_fluid(
     return std::make_unique<Fluid>(dest_comp_props, dest_molar_fractions, dest_bips);
 }
 //*****************************************************************************
-
 
 
 #endif

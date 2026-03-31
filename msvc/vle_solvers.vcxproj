@@ -52,6 +52,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\vle\db\components_db.cpp" />
+    <ClCompile Include="..\vle\db\components_db_bip.cpp" />
     <ClCompile Include="..\vle\db\components_db_data.cpp" />
     <ClCompile Include="..\vle\db\components_db_data_BIP.cpp" />
     <ClCompile Include="..\vle\db\components_db_init.cpp" />
@@ -65,6 +66,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\vle\components_db.h" />
+    <ClInclude Include="..\vle\components_db_bip.h" />
     <ClInclude Include="..\vle\physical_constants.h" />
     <ClInclude Include="..\vle\vle_solvers.h" />
     <ClInclude Include="..\vle\db\tdb_serialize_common.h" />

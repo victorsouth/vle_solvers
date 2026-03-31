@@ -69,6 +69,9 @@
     <ClCompile Include="..\vle\db\components_db_data_BIP.cpp">
       <Filter>Source Files\DB</Filter>
     </ClCompile>
+    <ClCompile Include="..\vle\db\components_db_bip.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\vle\components_db.h">
@@ -112,6 +115,9 @@
     </ClInclude>
     <ClInclude Include="..\vle\helpers\physical_helpers.h">
       <Filter>Header Files\Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vle\components_db_bip.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
