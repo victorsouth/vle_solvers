@@ -312,12 +312,23 @@ struct bip_matrix_verification_t {
     Eigen::MatrixXd bip_matrix;
 };
 
-bip_matrix_verification_t get_target_bip_matrix();
+bip_matrix_verification_t get_bip_matrix_verification_ChuehPrausnitz() {
+    bip_matrix_verification_t bip_matrix_verification_ChuehPrausnitz = {
+        { L"CH4", L"C2H6", L"C3H8", L"n_C4H10" },
+        (Eigen::MatrixXd(4,4) <<
+            0.0000000, 0.0068442, 0.0214428, 0.0367701,
+            0.0068442, 0.0000000, 0.0041499, 0.0122406,
+            0.0214428, 0.0041499, 0.0000000, 0.0021642,
+            0.0367701, 0.0122406, 0.0021642, 0.0000000
+        ).finished()
+    };
+    return bip_matrix_verification_ChuehPrausnitz;
+}
 
 
 TEST(ThermoDB, BIPByPlanMatchesChuehPrausnitz)
 {
-    bip_matrix_verification_t bip_matrix_verification = get_target_bip_matrix();
+    bip_matrix_verification_t bip_matrix_verification = get_bip_matrix_verification_ChuehPrausnitz();
 
     // Берём два компонента, у которых точно есть Tc и Vc
     std::vector<std::wstring> components = bip_matrix_verification.components_formulas;
@@ -350,18 +361,6 @@ TEST(ThermoDB, BIPByPlanMatchesChuehPrausnitz)
     //    bip_matrix_verification.bip_matrix, 1e-6));
 }
 
-bip_matrix_verification_t get_target_bip_matrix() {
-    bip_matrix_verification_t bip_matrix_verification_ChuehPrausnitz = {
-        { L"CH4", L"C2H6", L"C3H8", L"n_C4H10" },
-        (Eigen::MatrixXd(4,4) <<
-            0.0000000, 0.0068442, 0.0214428, 0.0367701,
-            0.0068442, 0.0000000, 0.0041499, 0.0122406,
-            0.0214428, 0.0041499, 0.0000000, 0.0021642,
-            0.0367701, 0.0122406, 0.0021642, 0.0000000
-        ).finished()
-    };
-    return bip_matrix_verification_ChuehPrausnitz;
-}
 
 
 const CAS_formula_map_t get_target_component_CAS_map()
