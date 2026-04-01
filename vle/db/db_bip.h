@@ -91,6 +91,11 @@ double estimate_bip_Gao(
     const component_properties_t& component1, const component_properties_t& component2);
 
 
+/// @brief Генерирует план расчета всех пар BIP по заданной корреляции
+bip_estimation_plan_t generate_bip_estimation_plan_with_correlation(
+    const std::vector<std::wstring>& component_list, bip_correlation_t correlation);
+
+
 /// @brief Расчет матрицы бинарных коэффициентов взаимодействия для 
 /// заданного состава компонентов и плана пересчёта BIP.
 Eigen::MatrixXd estimate_bip_matrix(

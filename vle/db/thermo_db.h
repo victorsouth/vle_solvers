@@ -80,10 +80,10 @@ public:
                 molar_fractions.data(),
                 molar_fractions.size()
             );
-            return std::make_unique<Fluid>(components_local, binary_coeffs_local, fractions);
+            return std::make_unique<Fluid>(components_local, fractions, binary_coeffs_local);
         }
         else {
-            return std::make_unique<Fluid>(components_local, binary_coeffs_local);
+            return std::make_unique<Fluid>(components_local, Eigen::VectorXd(), binary_coeffs_local);
         }
 
     }
