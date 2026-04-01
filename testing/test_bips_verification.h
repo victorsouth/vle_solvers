@@ -132,6 +132,20 @@ struct bip_matrix_verification_t {
         };
         return bip_matrix_verification_ChuehPrausnitz;
     }
+
+    /// @brief Возвращает эталонную матрицу BIP для корреляции Гао.
+    static bip_matrix_verification_t get_Gao() {
+        bip_matrix_verification_t bip_matrix_verification_Gao = {
+            { L"CH4", L"C2H6", L"C3H8", L"n_C4H10" },
+            (Eigen::MatrixXd(4, 4) <<
+                0.0000000, 0.0084334, 0.0164518, 0.0238250,
+                0.0084334, 0.0000000, 0.0014037, 0.0041805,
+                0.0164518, 0.0014037, 0.0000000, 0.0007479,
+                0.0238250, 0.0041805, 0.0007479, 0.0000000
+            ).finished()
+        };
+        return bip_matrix_verification_Gao;
+    }
 };
 
 /// @brief Проверяет, что бинарные коэффициенты по умолчанию совпадают с табличными
@@ -183,7 +197,28 @@ TEST(BinaryCoefficients, VerifiesChuehPrausnitz)
         bip_matrix_verification.bip_matrix, 1e-4));
 }
 
-/// @brief Проверяет способность верифицировать данные по корреляции Чуи–Праусница на примере от АМ
+
+/// @brief Проверяет способность верифицировать данные по корреляции Гао на примере от АМ
+TEST(BinaryCoefficients, VerifiesGao)
+{
+    // Arrange
+    bip_matrix_verification_t bip_matrix_verification = bip_matrix_verification_t::get_Gao();
+    std::vector<std::wstring> components = bip_matrix_verification.components_formulas;
+    bip_estimation_plan_t plan = generate_bip_estimation_plan_with_correlation(
+        components, bip_correlation_t::Gao);
+
+    // Act
+    auto fluid = components_database.create_fluid<vlelib::fluid_rault_dalton_t>(
+        components, {}, plan);
+    const Eigen::MatrixXd& bip_matrix_evaluated = fluid->get_binary_coeffs_ref();
+
+    // Assert
+    ASSERT_TRUE(bip_matrix_evaluated.isApprox(
+        bip_matrix_verification.bip_matrix, 1e-4));
+}
+
+
+/// @brief Проверяет способность не испортить данные из корреляции Нисиуми
 TEST(BinaryCoefficients, VerifiesNishiumi)
 {
     // Arrange
