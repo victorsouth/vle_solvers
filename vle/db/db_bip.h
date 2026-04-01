@@ -95,6 +95,10 @@ double estimate_bip_Gao(
 bip_estimation_plan_t generate_bip_estimation_plan_with_correlation(
     const std::vector<std::wstring>& component_list, bip_correlation_t correlation);
 
+/// @brief Генерирует план расчета всех пар BIP по правилу use_db_only.
+bip_estimation_plan_t generate_bip_estimation_plan_use_db_only(
+    const std::vector<std::wstring>& component_list);
+
 
 /// @brief Расчет матрицы бинарных коэффициентов взаимодействия для 
 /// заданного состава компонентов и плана пересчёта BIP.

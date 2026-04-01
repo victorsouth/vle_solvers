@@ -276,20 +276,54 @@ struct bip_matrix_verification_t {
     std::vector<std::wstring> components_formulas;
     /// @brief матрица бинарных коэффициентов
     Eigen::MatrixXd bip_matrix;
-};
 
-bip_matrix_verification_t get_bip_matrix_verification_ChuehPrausnitz() {
-    bip_matrix_verification_t bip_matrix_verification_ChuehPrausnitz = {
-        { L"CH4", L"C2H6", L"C3H8", L"n_C4H10" },
-        (Eigen::MatrixXd(4,4) <<
-            0.0000000, 0.0068442, 0.0214428, 0.0367701,
-            0.0068442, 0.0000000, 0.0041499, 0.0122406,
-            0.0214428, 0.0041499, 0.0000000, 0.0021642,
-            0.0367701, 0.0122406, 0.0021642, 0.0000000
-        ).finished()
-    };
-    return bip_matrix_verification_ChuehPrausnitz;
-}
+    static bip_matrix_verification_t get_Nishiumi() {
+        const bip_records_t bip_records_verification = bip_records_verification_Nishiumi();
+
+        std::vector<std::wstring> component_formulas;
+        auto add_unique = [&](const std::wstring& component_formula) {
+            if (std::find(component_formulas.begin(), component_formulas.end(), component_formula)
+                == component_formulas.end()) {
+                component_formulas.push_back(component_formula);
+            }
+        };
+
+        for (const auto& rec : bip_records_verification) {
+            add_unique(rec.cas1);
+            add_unique(rec.cas2);
+        }
+
+        const size_t size = component_formulas.size();
+        Eigen::MatrixXd bip_matrix = Eigen::MatrixXd::Zero(size, size);
+
+        std::unordered_map<std::wstring, size_t> component_index;
+        component_index.reserve(size);
+        for (size_t index = 0; index < size; ++index) {
+            component_index[component_formulas[index]] = index;
+        }
+
+        for (const auto& rec : bip_records_verification) {
+            const size_t i = component_index.at(rec.cas1);
+            const size_t j = component_index.at(rec.cas2);
+            bip_matrix(i, j) = rec.bip_value;
+        }
+
+        return { component_formulas, bip_matrix };
+    }
+
+    static bip_matrix_verification_t get_ChuehPrausnitz() {
+        bip_matrix_verification_t bip_matrix_verification_ChuehPrausnitz = {
+            { L"CH4", L"C2H6", L"C3H8", L"n_C4H10" },
+            (Eigen::MatrixXd(4, 4) <<
+                0.0000000, 0.0068442, 0.0214428, 0.0367701,
+                0.0068442, 0.0000000, 0.0041499, 0.0122406,
+                0.0214428, 0.0041499, 0.0000000, 0.0021642,
+                0.0367701, 0.0122406, 0.0021642, 0.0000000
+            ).finished()
+        };
+        return bip_matrix_verification_ChuehPrausnitz;
+    }
+};
 
 
 
@@ -315,7 +349,7 @@ TEST(BinaryCoefficients, DISABLED_DeniesRaoultDalton)
 TEST(BinaryCoefficients, VerifiesChuehPrausnitz)
 {
     // Arrange
-    bip_matrix_verification_t bip_matrix_verification = get_bip_matrix_verification_ChuehPrausnitz();
+    bip_matrix_verification_t bip_matrix_verification = bip_matrix_verification_t::get_ChuehPrausnitz();
     std::vector<std::wstring> components = bip_matrix_verification.components_formulas;
     bip_estimation_plan_t plan = generate_bip_estimation_plan_with_correlation(
         components, bip_correlation_t::ChuehPrausnitz);
@@ -330,40 +364,24 @@ TEST(BinaryCoefficients, VerifiesChuehPrausnitz)
         bip_matrix_verification.bip_matrix, 1e-4));
 }
 
-
-TEST(ThermoDB, BIPByPlanMatchesNishiumi)
+/// @brief Проверяет способность верифицировать данные по корреляции Чуи–Праусница на примере от АМ
+TEST(BinaryCoefficients, VerifiesNishiumi)
 {
-    const bip_records_t bip_records_verification = bip_records_verification_Nishiumi();
+    // Arrange
+    bip_matrix_verification_t bip_matrix_verification = bip_matrix_verification_t::get_Nishiumi();
+    std::vector<std::wstring> components = bip_matrix_verification.components_formulas;
+    bip_estimation_plan_t plan = generate_bip_estimation_plan_use_db_only(components);
 
-    std::vector<std::wstring> component_formulas;
-    auto add_unique = [&](const std::wstring& s) {
-        if (std::find(component_formulas.begin(), component_formulas.end(), s) == component_formulas.end())
-            component_formulas.push_back(s);
-        };
-    for (const auto& rec : bip_records_verification) {
-        add_unique(rec.cas1);
-        add_unique(rec.cas2);
-    }
+    // Act
+    auto fluid = components_database.create_fluid<vlelib::fluid_rault_dalton_t>(
+        components, {}, plan);
+    const Eigen::MatrixXd& bip_matrix_evaluated = fluid->get_binary_coeffs_ref();
 
-    FAIL();
-
-    //bip_recalc_plan_t recalc_plan = {
-    //    {{{0,1},{ 3,3 }}, bip_correlation_t::Nothing}
-    //    // , {{{1,2}}, bip_correlation_t::Nishiumi} будет исключение из-за отсутствия реализации
-    //};
-
-    //// должен быть fluid_peng_robinson_t, а с fluid_rault_dalton_t должен кидать исключение
-    //auto fluid = components_database.create_fluid<vlelib::fluid_rault_dalton_t>(
-    //    component_formulas, recalc_plan);
-
-    //for (auto [formula1, formula2, bip] : bip_records_verification) {
-    //    if (formula1 == formula2) {
-    //        continue;
-    //    }
-
-    //    ASSERT_NEAR(components_database.get_bip_pair_formula(formula1, formula2), bip, 1e-7);
-    //}
+    // Assert
+    ASSERT_TRUE(bip_matrix_evaluated.isApprox(
+        bip_matrix_verification.bip_matrix, 1e-4));
 }
+
 
 
 const CAS_formula_map_t get_target_component_CAS_map()
