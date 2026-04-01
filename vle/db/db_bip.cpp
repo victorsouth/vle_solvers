@@ -36,7 +36,7 @@ bip_database_t get_bips_subset(
 double estimate_bip(const component_properties_t& component1, const component_properties_t& component2, bip_correlation_t bip_correlation)
 {
     switch (bip_correlation) {
-    case bip_correlation_t::Chueh_Prausnitz:
+    case bip_correlation_t::ChuehPrausnitz:
         return estimate_bip_ChuehPrausnitz(component1, component2);
     case bip_correlation_t::Gao:
         return estimate_bip_Gao(component1, component2);
@@ -96,7 +96,7 @@ Eigen::MatrixXd estimate_bip_matrix(const std::vector<std::wstring>& components_
         local_db[casno] = index;
     }
 
-    for (const bip_estimation_info_t& info : bip_estimation_plan) {
+    for (const bip_estimation_plan_entry_t& info : bip_estimation_plan) {
         if (info.cas_pair.size() != 2) {
             throw std::runtime_error("estimate_bip_matrix: cas_pair must contain exactly 2 CAS numbers");
         }

@@ -63,7 +63,7 @@ TEST(BinaryCoefficientsPlan, HandlesOptionChuehPrausnitz) {
     plan.push_back({
         .cas_pair = { casno_list[0], casno_list[1] },
         .rule = bip_estimation_rule_t::use_correlation_only,
-        .correlation = bip_correlation_t::Chueh_Prausnitz
+        .correlation = bip_correlation_t::ChuehPrausnitz
         });
 
     // Act
@@ -325,19 +325,40 @@ bip_matrix_verification_t get_bip_matrix_verification_ChuehPrausnitz() {
     return bip_matrix_verification_ChuehPrausnitz;
 }
 
+/// @brief Генерирует план расчета всех пар BIP по заданной корреляции
+inline bip_estimation_plan_t generate_bip_estimation_plan_with_correlation(
+    const std::vector<std::wstring>& component_list, bip_correlation_t correlation)
+{
+    bip_estimation_plan_t result;
 
-TEST(ThermoDB, BIPByPlanMatchesChuehPrausnitz)
+    for (std::size_t i = 0; i < component_list.size(); ++i) {
+        for (std::size_t j = 0; j < i; ++j) {
+            bip_estimation_plan_entry_t entry;
+            
+            std::vector<std::wstring> cas_pair = 
+                components_database.get_casno_by_formulas({ component_list[i], component_list[j] });
+
+            entry.cas_pair = std::set<std::wstring>(cas_pair.begin(), cas_pair.end());
+            entry.rule = bip_estimation_rule_t::use_correlation_only;
+            entry.correlation = correlation;
+
+            result.push_back(entry);
+        }
+    }
+    return result;
+}
+
+/// @brief Проверяет способность верифицировать данные по корреляции Чуи–Праусница на примере от АМ
+TEST(BinaryCoefficients, VerifiesChuehPrausnitz)
 {
     bip_matrix_verification_t bip_matrix_verification = get_bip_matrix_verification_ChuehPrausnitz();
 
     // Берём два компонента, у которых точно есть Tc и Vc
     std::vector<std::wstring> components = bip_matrix_verification.components_formulas;
 
-    FAIL();
 
-    //bip_recalc_plan_t plan = {
-    //    { {{0,3}}, bip_correlation_t::ChuehPrausnitz }
-    //};
+    bip_estimation_plan_t plan = generate_bip_estimation_plan_with_correlation(
+        components, bip_correlation_t::ChuehPrausnitz);
 
     //// // На будущее
     //// // fluid_rault_dalton_t должен кидать исключение
@@ -351,14 +372,14 @@ TEST(ThermoDB, BIPByPlanMatchesChuehPrausnitz)
     //// auto fluid = components_database.create_fluid<vlelib::fluid_peng_robinson_t>(
     ////     components, plan);
 
-    //auto fluid = components_database.create_fluid<vlelib::fluid_rault_dalton_t>(
-    //    components, plan);
+    auto fluid = components_database.create_fluid<vlelib::fluid_rault_dalton_t>(
+        components, {}, plan);
 
-    //// Достаём свойства компонентов
-    //const Eigen::MatrixXd& bip_matrix_evaluated = fluid->get_binary_coeffs_ref();
+    // Достаём свойства компонентов
+    const Eigen::MatrixXd& bip_matrix_evaluated = fluid->get_binary_coeffs_ref();
 
-    //ASSERT_TRUE(bip_matrix_evaluated.isApprox(
-    //    bip_matrix_verification.bip_matrix, 1e-6));
+    ASSERT_TRUE(bip_matrix_evaluated.isApprox(
+        bip_matrix_verification.bip_matrix, 1e-6));
 }
 
 

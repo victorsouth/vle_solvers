@@ -37,7 +37,7 @@ struct wstring_pair_set_hash_t {
 /// @brief Тип корреляции для пересчёта бинарных коэффициентов.
 enum class bip_correlation_t {
     Nishiumi,
-    Chueh_Prausnitz,
+    ChuehPrausnitz,
     Gao
 };
 
@@ -54,7 +54,7 @@ enum class bip_estimation_rule_t {
 };
 
 /// @brief Правило пересчёта BIP для заданной пары веществ
-struct bip_estimation_info_t {
+struct bip_estimation_plan_entry_t {
     /// @brief Пара компонентов, для которых применяется правило. Указаны CAS-номера компонентов.
     std::set<std::wstring> cas_pair;
     /// @brief Подход к расчету
@@ -68,7 +68,7 @@ struct bip_estimation_info_t {
 
 };
 
-using bip_estimation_plan_t = std::vector<bip_estimation_info_t>;
+using bip_estimation_plan_t = std::vector<bip_estimation_plan_entry_t>;
 
 
 /// @brief Хеш-таблица BIP по множеству формул(?) компонентов.
