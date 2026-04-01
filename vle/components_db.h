@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #ifndef __COMPONENTS_DB__
 #define __COMPONENTS_DB__
 

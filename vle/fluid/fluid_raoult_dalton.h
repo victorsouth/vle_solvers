@@ -203,56 +203,6 @@ public:
     template <AmountType amount_type>
     double find_liquid_temperature_with_inner_energy(double inner_energy) const;
 
-
-    //// todo: Выпилить, все есть в flash_calc
-    virtual double get_enthalpy_td_mass(double pressure, double temperature) const override
-    {
-        const auto& vle = flash(pressure, temperature);
-        return vle.enthalpy.mass.mix;
-    }
-    virtual double get_enthalpy_td_mass_vapor(double pressure, double temperature) const override
-    {
-        const auto& vle = flash(pressure, temperature);
-        return vle.enthalpy.mass.vapor;
-    }
-    virtual double get_enthalpy_td_mass_liquid(double pressure, double temperature) const override
-    {
-        const auto& vle = flash(pressure, temperature);
-        return vle.enthalpy.mass.liquid;
-    }
-
-    // Расчет удельной мольной энтальпии смеси
-    virtual double get_enthalpy_td_molar(double pressure, double temperature) const override
-    {
-        const auto& vle = flash(pressure, temperature);
-
-        return vle.enthalpy.mass.mix * get_molar_mass();
-    }
-    // Расчет удельной мольной энтальпии пара
-    virtual double get_enthalpy_td_molar_vapor(double pressure, double temperature) const override
-    {
-        const auto& vle = flash(pressure, temperature);
-
-        if (vle.is_gas_only() || vle.is_two_phase())
-            return vle.enthalpy.mass.vapor * vle.fluid_vapor->get_molar_mass();
-        else
-            return 0;
-    }
-    // Расчет удельной мольной энтальпии жидкости
-    virtual double get_enthalpy_td_molar_liquid(double pressure, double temperature) const override
-    {
-        const auto& vle = flash(pressure, temperature);
-
-        if (vle.is_liquid_only() || vle.is_two_phase())
-            return vle.enthalpy.mass.liquid * vle.fluid_liquid->get_molar_mass();
-        else
-            return 0;
-    }
-
-    // Расчет температуры под заданную энтальпию и давление
-
-
-
 };   // end class fluid_rault_dalton_t
 
 

@@ -630,20 +630,6 @@ public: // итеративные расчетные задачи, нужен р
             double volume, double inner_energy_molar, double molar_amount,
             double initial_pressure = std::numeric_limits<double>::quiet_NaN(),
             double initial_temperature = std::numeric_limits<double>::quiet_NaN()) const = 0;
-    /// @brief Расчет удельной массовой энтальпии смеси
-    virtual double get_enthalpy_td_mass(double pressure, double temperature) const = 0;
-    /// @brief Расчет удельной массовой энтальпии пара
-    /// @param pressure Рабочее давление
-    /// @param temperature Рабочая температура
-    virtual double get_enthalpy_td_mass_vapor(double pressure, double temperature) const = 0;
-    /// @brief Расчет удельной массовой энтальпии жидкости
-    virtual double get_enthalpy_td_mass_liquid(double pressure, double temperature) const = 0;
-    /// @brief Расчет удельной мольной энтальпии смеси
-    virtual double get_enthalpy_td_molar(double pressure, double temperature) const = 0;
-    /// @brief Расчет удельной мольной энтальпии пара
-    virtual double get_enthalpy_td_molar_vapor(double pressure, double temperature) const = 0;
-    /// @brief Расчет удельной мольной энтальпии жидкости
-    virtual double get_enthalpy_td_molar_liquid(double pressure, double temperature) const = 0;
 };
 
 
