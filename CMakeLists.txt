@@ -1,4 +1,4 @@
-﻿cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.10)
 
 project(vle_solvers)
 
@@ -30,12 +30,19 @@ set(HEADER
 )
 
 set(HEADER_DB
+    vle/db/db_bip.h
+    vle/db/antoine_model.h
+    vle/db/component_properties.h
+    vle/db/fluid_stubdata.h
+    vle/db/thermo_db.h
+    vle/db/td_functions.h
     vle/db/tdb_serialize_common.h
     vle/db/tdb_serialize_2026_02_02.h
 )
 
 set(SOURCE_DB
     vle/db/components_db.cpp
+    vle/db/db_bip.cpp
     vle/db/components_db_data.cpp
 	vle/db/components_db_data_BIP.cpp
     vle/db/components_db_init.cpp

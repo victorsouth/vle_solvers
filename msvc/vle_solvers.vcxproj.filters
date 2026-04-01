@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Source Files">
@@ -69,11 +69,17 @@
     <ClCompile Include="..\vle\db\components_db_data_BIP.cpp">
       <Filter>Source Files\DB</Filter>
     </ClCompile>
-    <ClCompile Include="..\vle\db\components_db_bip.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="..\vle\db\db_bip.cpp">
+      <Filter>Source Files\DB</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\vle\db\antoine_model.h">
+      <Filter>Header Files\DB</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vle\db\component_properties.h">
+      <Filter>Header Files\DB</Filter>
+    </ClInclude>
     <ClInclude Include="..\vle\components_db.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -84,6 +90,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\vle\db\tdb_serialize_common.h">
+      <Filter>Header Files\DB</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vle\db\fluid_stubdata.h">
+      <Filter>Header Files\DB</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vle\db\thermo_db.h">
+      <Filter>Header Files\DB</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vle\db\td_functions.h">
       <Filter>Header Files\DB</Filter>
     </ClInclude>
     <ClInclude Include="..\vle\db\tdb_serialize_2024_09_24.h">
@@ -116,8 +131,8 @@
     <ClInclude Include="..\vle\helpers\physical_helpers.h">
       <Filter>Header Files\Helpers</Filter>
     </ClInclude>
-    <ClInclude Include="..\vle\components_db_bip.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="..\vle\db\db_bip.h">
+      <Filter>Header Files\DB</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

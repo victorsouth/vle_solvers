@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="DebugASAN|Win32">
@@ -52,7 +52,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\vle\db\components_db.cpp" />
-    <ClCompile Include="..\vle\db\components_db_bip.cpp" />
+    <ClCompile Include="..\vle\db\db_bip.cpp" />
     <ClCompile Include="..\vle\db\components_db_data.cpp" />
     <ClCompile Include="..\vle\db\components_db_data_BIP.cpp" />
     <ClCompile Include="..\vle\db\components_db_init.cpp" />
@@ -65,11 +65,16 @@
     <ClCompile Include="..\vle\fluid\solvers\uv_flash.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\vle\db\antoine_model.h" />
+    <ClInclude Include="..\vle\db\component_properties.h" />
     <ClInclude Include="..\vle\components_db.h" />
-    <ClInclude Include="..\vle\components_db_bip.h" />
+    <ClInclude Include="..\vle\db\db_bip.h" />
     <ClInclude Include="..\vle\physical_constants.h" />
     <ClInclude Include="..\vle\vle_solvers.h" />
     <ClInclude Include="..\vle\db\tdb_serialize_common.h" />
+    <ClInclude Include="..\vle\db\fluid_stubdata.h" />
+    <ClInclude Include="..\vle\db\thermo_db.h" />
+    <ClInclude Include="..\vle\db\td_functions.h" />
     <ClInclude Include="..\vle\db\tdb_serialize_2024_09_24.h" />
     <ClInclude Include="..\vle\fluid\fluid_base.h" />
     <ClInclude Include="..\vle\fluid\fluid_common.h" />

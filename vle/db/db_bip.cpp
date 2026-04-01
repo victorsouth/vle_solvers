@@ -1,16 +1,16 @@
 #include "../vle_solvers.h"
 
 
-bips_hashedmap_t get_bips_for_component_list(
-    const std::vector<std::wstring>& components_casno_list
+bips_hashedmap_t get_bips_subset(
+    const std::vector<std::wstring>& casno_subset
     , const bips_hashedmap_t& bips)
 {
     bips_hashedmap_t result;
 
     // Быстрый поиск: превращаем список в set
     std::set<std::wstring> components_set(
-        components_casno_list.begin(),
-        components_casno_list.end()
+        casno_subset.begin(),
+        casno_subset.end()
     );
 
     // Перебираем все BIP в базе
@@ -19,7 +19,7 @@ bips_hashedmap_t get_bips_for_component_list(
         // pair_set — это set из двух CAS-номеров
         // Проверяем, что оба CAS входят в список компонентов
         bool all_included = true;
-        for (const auto& cas : pair_set) {
+        for (const std::wstring& cas : pair_set) {
             if (components_set.count(cas) == 0) {
                 all_included = false;
                 break;
@@ -37,15 +37,6 @@ bips_hashedmap_t get_bips_for_component_list(
 
 
 
-/// @brief Корреляция Чуэ–Праусница (AIChE Journal, 1967).
-inline double correlation_ChuehPrausnitz(
-    const std::vector<const component_properties_t*>& components, size_t i, size_t j);
-
-/// @brief Корреляция Гао (Fluid Phase Equilibria, 1992).
-inline double correlation_Gao(
-    const std::vector<const component_properties_t*>& components, size_t i, size_t j);
-//*****************************************************************************
-
 
 
 
@@ -57,9 +48,9 @@ Eigen::MatrixXd estimate_BIP_formulas(
 {
     const size_t N = components_casno_list.size();
 
-    // 1. Проверяем, что нет правил с корреляцией Nishiumi — она не реализована
+    // 1. Проверяем, что нет правил с корреляцией nishiumi — она не реализована
     for (const auto& rule : bip_recalc_plan) {
-        if (rule.correlation == bip_correlation_t::Nishiumi) {
+        if (rule.correlation == bip_correlation_t::nishiumi) {
             throw std::runtime_error(
                 "estimate_BIP_formulas: correlation Nishiumi is not implemented"
             );
@@ -74,14 +65,14 @@ Eigen::MatrixXd estimate_BIP_formulas(
         }
     }
 
-    // 2. Проверяем, покрывают ли правила SetValue весь диапазон индексов
+    // 2. Проверяем, покрывают ли правила set_value весь диапазон индексов
     {
         std::set<size_t> covered;
         double set_value = std::numeric_limits<double>::quiet_NaN();
         bool has_setvalue = false;
 
         for (const auto& rule : bip_recalc_plan) {
-            if (rule.correlation == bip_correlation_t::SetValue) {
+            if (rule.correlation == bip_correlation_t::set_value) {
 
                 if (!std::isnan(rule.value)) {
                     if (!has_setvalue) {
@@ -112,7 +103,7 @@ Eigen::MatrixXd estimate_BIP_formulas(
 
     // 3. Сужаем BIP по умолчанию
     bips_hashedmap_t bips_for_component_list =
-        get_bips_for_component_list(components_casno_list, bips);
+        get_bips_subset(components_casno_list, bips);
 
     // 4. Строим матрицу BIP по умолчанию
     Eigen::MatrixXd M = Eigen::MatrixXd::Zero(N, N);
@@ -139,11 +130,11 @@ Eigen::MatrixXd estimate_BIP_formulas(
 
         switch (rule.correlation) {
 
-        case bip_correlation_t::Nothing:
+        case bip_correlation_t::nothing:
             // ничего не делаем
             break;
 
-        case bip_correlation_t::SetValue:
+        case bip_correlation_t::set_value:
             for (auto [i, j] : rule.indexes_ranges) {
                 for (size_t ins_index1 = i;ins_index1 <= j;++ins_index1) {
                     for (size_t ins_index2 = i;ins_index2 <= j;++ins_index2) {
@@ -157,24 +148,28 @@ Eigen::MatrixXd estimate_BIP_formulas(
             }
             break;
 
-        case bip_correlation_t::ChuehPrausnitz:
+        case bip_correlation_t::chueh_prausnitz:
             for (auto [i, j] : rule.indexes_ranges) {
                 for (size_t ins_index1 = i;ins_index1 <= j;++ins_index1) {
                     for (size_t ins_index2 = i;ins_index2 <= j;++ins_index2) {
                         M(ins_index1, ins_index2) =
-                            correlation_ChuehPrausnitz(components, ins_index1, ins_index2);
+                            estimate_bip_ChuehPrausnitz(
+                                *components[ins_index1],
+                                *components[ins_index2]);
                         M(ins_index2, ins_index1) = M(ins_index1, ins_index2);
                     }
                 }
             }
             break;
 
-        case bip_correlation_t::Gao:
+        case bip_correlation_t::gao:
             for (auto [i, j] : rule.indexes_ranges) {
                 for (size_t ins_index1 = i;ins_index1 <= j;++ins_index1) {
                     for (size_t ins_index2 = i;ins_index2 <= j;++ins_index2) {
                         M(ins_index1, ins_index2) =
-                            correlation_Gao(components, ins_index1, ins_index2);
+                            correlation_Gao(
+                                *components[ins_index1],
+                                *components[ins_index2]);
                         M(ins_index2, ins_index1) = M(ins_index1, ins_index2);
                     }
                 }
@@ -191,14 +186,13 @@ Eigen::MatrixXd estimate_BIP_formulas(
 }
 
 
-/// @brief Корреляция Чуэ–Праусница (AIChE Journal, 1967).
-inline double correlation_ChuehPrausnitz(
-    const std::vector<const component_properties_t*>& components,
-    size_t i, size_t j)
+double estimate_bip_ChuehPrausnitz(
+    const component_properties_t& component1,
+    const component_properties_t& component2)
 {
     // Внимание! Размерность?
-    const double Vc1 = components[i]->critical_molarvolume;
-    const double Vc2 = components[j]->critical_molarvolume;
+    const double Vc1 = component1.critical_molarvolume;
+    const double Vc2 = component2.critical_molarvolume;
 
     const double A = 1.0;
     const double B = 3.0;
@@ -211,13 +205,12 @@ inline double correlation_ChuehPrausnitz(
 }
 
 
-/// @brief Корреляция Гао (Fluid Phase Equilibria, 1992).
 inline double correlation_Gao(
-    const std::vector<const component_properties_t*>& components,
-    size_t i, size_t j)
+    const component_properties_t& component1,
+    const component_properties_t& component2)
 {
-    const double Tc1 = components[i]->critical_temperature;
-    const double Tc2 = components[j]->critical_temperature;
+    const double Tc1 = component1.critical_temperature;
+    const double Tc2 = component2.critical_temperature;
 
     // Zc в статье Гао — константа 0.3074...
     constexpr double Zc1 = 0.30740130869870384801;

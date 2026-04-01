@@ -2,19 +2,6 @@
 #ifndef __COMPONENTS_DB_BIP__
 #define __COMPONENTS_DB_BIP__
 
-#include <limits>
-#include <array>
-#include <map>
-#include <set>
-#include <unordered_map>
-#include <mutex>
-#include <optional>
-#include <utility>
-#include <ranges>
-#include "vle_solvers.h"
-
-
-
 /// @brief Запись бинарного коэффициента взаимодействия (BIP).
 /// Содержит CAS-номера двух компонентов и коэффициент k_ij.
 struct bip_record_t {
@@ -23,7 +10,7 @@ struct bip_record_t {
     /// @brief второй CAS-номер записи
     std::wstring cas2;
     /// @brief бинарный коэффициент
-    double bip_value;
+    double bip_value = std::numeric_limits<double>::quiet_NaN();
 };
 
 
@@ -49,11 +36,11 @@ struct wstring_pair_set_hash_t {
 
 /// @brief Тип корреляции для пересчёта бинарных коэффициентов.
 enum bip_correlation_t {
-    Nothing,
-    Nishiumi,
-    ChuehPrausnitz,
-    Gao,
-    SetValue
+    nothing,
+    nishiumi,
+    chueh_prausnitz,
+    gao,
+    set_value
 };
 
 /// @brief Правило пересчёта BIP для заданного набора индексов.
@@ -64,7 +51,7 @@ struct bip_estimation_rule_t {
     /// @brief Выбранная корреляция для пересчёта BIP.
     bip_correlation_t correlation;
 
-    /// @brief Фиксированное значение BIP (для SetValue), иначе NaN.
+    /// @brief Фиксированное значение BIP (для set_value), иначе NaN.
     double value = std::numeric_limits<double>::quiet_NaN();
 };
 
@@ -73,6 +60,16 @@ using bip_recalc_plan_t = std::vector<bip_estimation_rule_t>;
 
 /// @brief Хеш-таблица BIP по множеству формул(?) компонентов.
 using bips_hashedmap_t = std::unordered_map<std::set<std::wstring>, double, wstring_pair_set_hash_t>;
+
+struct component_properties_t;
+
+/// @brief Корреляция Чуэ–Праусница (AIChE Journal, 1967).
+double estimate_bip_ChuehPrausnitz(
+    const component_properties_t& component1, const component_properties_t& component2);
+
+/// @brief Корреляция Гао (Fluid Phase Equilibria, 1992).
+double correlation_Gao(
+    const component_properties_t& component1, const component_properties_t& component2);
 
 
 //#ifndef __COMPONENTS_DB_BIP__
