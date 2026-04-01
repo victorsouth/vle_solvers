@@ -3,6 +3,8 @@
 #define __COMPONENTS_DB__
 
 #include <array>
+#define _USE_MATH_DEFINES
+#include <cmath>
 #include <limits>
 #include <map>
 #include <optional>

@@ -1,6 +1,5 @@
 #include "../vle_solvers.h"
 
-
 bip_database_t get_bips_subset(
     const std::vector<std::wstring>& casno_subset
     , const bip_database_t& bips)
