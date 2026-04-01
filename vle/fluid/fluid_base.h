@@ -544,7 +544,7 @@ public:
     double get_adiabatic_exponent(double pressure, double temperature) const;
 };
 
-// @brief Методы для создания копий флюидов
+/// @brief Методы для создания копий флюидов
 class fluid_copy_functions_t {
 private:
     /// @brief Создает копию потока с теми же веществами и компонентным составом
