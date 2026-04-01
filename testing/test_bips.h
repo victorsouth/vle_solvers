@@ -229,25 +229,6 @@ TEST(ThermoDB, BIPUsesOnlyKnownCASNumbers)
     }
 }
 
-static const bip_records_t bip_records_verification_Nishiumi();
-
-
-/// @brief Проверяет, что бинарные коэффициенты по умолчанию совпадают с табличными 
-/// значениями Нисиуми.
-TEST(ThermoDB, BIPDefaultMatchesNishiumi)
-{
-    const bip_records_t bip_records_verification = bip_records_verification_Nishiumi();
-
-    for (auto [formula1, formula2, bip] : bip_records_verification) {
-        if (formula1 == formula2) {
-            continue;
-        }
-        ASSERT_NEAR(components_database.get_bip_pair_formula(formula1, formula2), bip, 1e-7);
-    }
-}
-
-
-
 
 const bip_records_t bip_records_verification_Nishiumi() {
     return {
@@ -286,7 +267,7 @@ struct bip_matrix_verification_t {
                 == component_formulas.end()) {
                 component_formulas.push_back(component_formula);
             }
-        };
+            };
 
         for (const auto& rec : bip_records_verification) {
             add_unique(rec.cas1);
@@ -324,6 +305,24 @@ struct bip_matrix_verification_t {
         return bip_matrix_verification_ChuehPrausnitz;
     }
 };
+
+
+/// @brief Проверяет, что бинарные коэффициенты по умолчанию совпадают с табличными 
+/// значениями Нисиуми.
+TEST(ThermoDB, BIPDefaultMatchesNishiumi)
+{
+    const bip_records_t bip_records_verification = bip_records_verification_Nishiumi();
+
+    for (auto [formula1, formula2, bip] : bip_records_verification) {
+        if (formula1 == formula2) {
+            continue;
+        }
+        ASSERT_NEAR(components_database.get_bip_pair_formula(formula1, formula2), bip, 1e-7);
+    }
+}
+
+
+
 
 
 
