@@ -20,6 +20,7 @@ inline void print_errors(const std::wstring& prefix, double a, double b, double 
 #include "test_database.h"
 #include "test_components.h"
 #include "test_bips.h"
+#include "test_bips_verification.h"
 #include "test_fluid.h"
 
 

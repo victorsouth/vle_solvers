@@ -179,6 +179,7 @@ if(VLE_SOLVERS_BUILD_TESTS)
         testing/test_fluid.h
         testing/test_components.h
         testing/test_bips.h
+        testing/test_bips_verification.h
     )
 
     source_group("Header Files" FILES ${TESTING_HEADERS})
