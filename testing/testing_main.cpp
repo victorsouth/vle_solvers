@@ -1,4 +1,4 @@
-﻿#include <vle/vle_solvers.h>
+#include <vle/vle_solvers.h>
 
 #define GTEST_BREAK_ON_FAILURE 1
 #define GTEST_CATCH_EXCEPTIONS 0
@@ -19,6 +19,7 @@ inline void print_errors(const std::wstring& prefix, double a, double b, double 
 
 #include "test_database.h"
 #include "test_components.h"
+#include "test_bips.h"
 #include "test_fluid.h"
 
 

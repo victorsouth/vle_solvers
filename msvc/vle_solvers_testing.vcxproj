@@ -24,6 +24,7 @@
   <ItemGroup>
     <ClInclude Include="..\testing\test_database.h" />
     <ClInclude Include="..\testing\test_components.h" />
+    <ClInclude Include="..\testing\test_bips.h" />
     <ClInclude Include="..\testing\test_fluid.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

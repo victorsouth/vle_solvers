@@ -1,11 +1,11 @@
 #include "../vle_solvers.h"
 
 
-bips_hashedmap_t get_bips_subset(
+bip_database_t get_bips_subset(
     const std::vector<std::wstring>& casno_subset
-    , const bips_hashedmap_t& bips)
+    , const bip_database_t& bips)
 {
-    bips_hashedmap_t result;
+    bip_database_t result;
 
     // Быстрый поиск: превращаем список в set
     std::set<std::wstring> components_set(
@@ -33,158 +33,18 @@ bips_hashedmap_t get_bips_subset(
 
     return result;
 }
-//*****************************************************************************
 
-
-
-
-
-
-Eigen::MatrixXd estimate_BIP_formulas(
-    const std::vector<std::wstring>& components_casno_list
-    , const std::vector<const component_properties_t*>& components
-    , const bips_hashedmap_t& bips
-    , const bip_recalc_plan_t& bip_recalc_plan)
+double estimate_bip(const component_properties_t& component1, const component_properties_t& component2, bip_correlation_t bip_correlation)
 {
-    const size_t N = components_casno_list.size();
-
-    // 1. Проверяем, что нет правил с корреляцией nishiumi — она не реализована
-    for (const auto& rule : bip_recalc_plan) {
-        if (rule.correlation == bip_correlation_t::nishiumi) {
-            throw std::runtime_error(
-                "estimate_BIP_formulas: correlation Nishiumi is not implemented"
-            );
-        }
+    switch (bip_correlation) {
+    case bip_correlation_t::Chueh_Prausnitz:
+        return estimate_bip_ChuehPrausnitz(component1, component2);
+    case bip_correlation_t::Gao:
+        return estimate_bip_Gao(component1, component2);
     }
 
-    for (const auto& rule : bip_recalc_plan) {
-        for (auto [i, j] : rule.indexes_ranges) {
-            if (i >= N || j >= N) {
-                throw std::runtime_error("estimate_BIP_formulas: index out of range");
-            }
-        }
-    }
-
-    // 2. Проверяем, покрывают ли правила set_value весь диапазон индексов
-    {
-        std::set<size_t> covered;
-        double set_value = std::numeric_limits<double>::quiet_NaN();
-        bool has_setvalue = false;
-
-        for (const auto& rule : bip_recalc_plan) {
-            if (rule.correlation == bip_correlation_t::set_value) {
-
-                if (!std::isnan(rule.value)) {
-                    if (!has_setvalue) {
-                        set_value = rule.value;
-                        has_setvalue = true;
-                    }
-                    else if (set_value != rule.value) {
-                        // значит есть разные значения, будем использовать полный 
-                        // цикл создания матрицы
-                        break;
-                    }
-                }
-
-                for (auto [i, j] : rule.indexes_ranges) {
-                    for (size_t ins_index = i;ins_index <= j;++ins_index) {
-                        covered.insert(ins_index);
-                    }
-                }
-            }
-        }
-
-        // Если покрыт весь диапазон 0..N-1
-        if (has_setvalue && covered.size() == N) {
-            Eigen::MatrixXd M = Eigen::MatrixXd::Constant(N, N, set_value);
-            return M;
-        }
-    }
-
-    // 3. Сужаем BIP по умолчанию
-    bips_hashedmap_t bips_for_component_list =
-        get_bips_subset(components_casno_list, bips);
-
-    // 4. Строим матрицу BIP по умолчанию
-    Eigen::MatrixXd M = Eigen::MatrixXd::Zero(N, N);
-
-    for (size_t i = 0; i < N; ++i) {
-        for (size_t j = 0; j < N; ++j) {
-            if (i == j) {
-                continue;
-            }
-
-            std::set<std::wstring> key = {
-                components_casno_list[i]
-                , components_casno_list[j] };
-
-            auto it = bips_for_component_list.find(key);
-            if (it != bips_for_component_list.end()) {
-                M(i, j) = it->second;
-            }
-        }
-    }
-
-    // 5. Применяем правила пересчёта
-    for (const auto& rule : bip_recalc_plan) {
-
-        switch (rule.correlation) {
-
-        case bip_correlation_t::nothing:
-            // ничего не делаем
-            break;
-
-        case bip_correlation_t::set_value:
-            for (auto [i, j] : rule.indexes_ranges) {
-                for (size_t ins_index1 = i;ins_index1 <= j;++ins_index1) {
-                    for (size_t ins_index2 = i;ins_index2 <= j;++ins_index2) {
-                        if (ins_index1 == ins_index2) {
-                            continue;
-                        }
-                        M(ins_index1, ins_index2) = rule.value;
-                        M(ins_index2, ins_index1) = rule.value;
-                    }
-                }
-            }
-            break;
-
-        case bip_correlation_t::chueh_prausnitz:
-            for (auto [i, j] : rule.indexes_ranges) {
-                for (size_t ins_index1 = i;ins_index1 <= j;++ins_index1) {
-                    for (size_t ins_index2 = i;ins_index2 <= j;++ins_index2) {
-                        M(ins_index1, ins_index2) =
-                            estimate_bip_ChuehPrausnitz(
-                                *components[ins_index1],
-                                *components[ins_index2]);
-                        M(ins_index2, ins_index1) = M(ins_index1, ins_index2);
-                    }
-                }
-            }
-            break;
-
-        case bip_correlation_t::gao:
-            for (auto [i, j] : rule.indexes_ranges) {
-                for (size_t ins_index1 = i;ins_index1 <= j;++ins_index1) {
-                    for (size_t ins_index2 = i;ins_index2 <= j;++ins_index2) {
-                        M(ins_index1, ins_index2) =
-                            correlation_Gao(
-                                *components[ins_index1],
-                                *components[ins_index2]);
-                        M(ins_index2, ins_index1) = M(ins_index1, ins_index2);
-                    }
-                }
-            }
-            break;
-
-
-        default:
-            throw std::runtime_error("estimate_BIP_formulas: unknown correlation");
-        }
-    }
-
-    return M;
+    throw std::runtime_error("estimate_bip: unknown correlation");
 }
-
 
 double estimate_bip_ChuehPrausnitz(
     const component_properties_t& component1,
@@ -205,7 +65,7 @@ double estimate_bip_ChuehPrausnitz(
 }
 
 
-inline double correlation_Gao(
+double estimate_bip_Gao(
     const component_properties_t& component1,
     const component_properties_t& component2)
 {
@@ -222,3 +82,61 @@ inline double correlation_Gao(
     const double kij = 1.0 - std::pow(term, exponent);
     return kij;
 }
+
+Eigen::MatrixXd estimate_bip_matrix(const std::vector<std::wstring>& components_casno_list, 
+    const std::vector<const component_properties_t*>& components, 
+    const bip_database_t& bip_db, const bip_estimation_plan_t& bip_estimation_plan)
+{
+    const size_t N = components_casno_list.size();
+
+    Eigen::MatrixXd bip_matrix = Eigen::MatrixXd::Zero(N, N);
+    std::unordered_map<std::wstring, std::size_t> local_db;
+    for (std::size_t index = 0; index < components.size(); ++index)
+    {
+        const auto& casno = components[index]->CASno;
+        local_db[casno] = index;
+    }
+
+    for (const bip_estimation_info_t& info : bip_estimation_plan) {
+        if (info.cas_pair.size() != 2) {
+            throw std::runtime_error("estimate_bip_matrix: cas_pair must contain exactly 2 CAS numbers");
+        }
+        std::size_t i = local_db.at(*info.cas_pair.begin());
+        std::size_t j = local_db.at(*info.cas_pair.rbegin());
+        const component_properties_t* comp1 = components[i];
+        const component_properties_t* comp2 = components[j];
+
+        switch (info.rule)
+        {
+        case bip_estimation_rule_t::set_value:
+            bip_matrix(i, j) = bip_matrix(j, i) = info.value;
+            break;
+        case bip_estimation_rule_t::use_correlation_only:
+            bip_matrix(i, j) = bip_matrix(j, i) =
+                estimate_bip(*comp1, *comp2, info.correlation);
+            break;
+        case bip_estimation_rule_t::use_db_only:
+            // BIP взять из БД, если есть, иначе останется нулевым
+            if (bip_db.contains(info.cas_pair)) {
+                bip_matrix(i, j) = bip_matrix(j, i) = bip_db.at(info.cas_pair);
+            }
+            break;
+        case bip_estimation_rule_t::use_db_or_correlation:
+            if (bip_db.contains(info.cas_pair)) {
+                bip_matrix(i, j) = bip_matrix(j, i) =
+                    bip_db.at(info.cas_pair);
+            }
+            else {
+                bip_matrix(i, j) = bip_matrix(j, i) =
+                    estimate_bip(*comp1, *comp2, info.correlation);
+
+            }
+            break;
+        default:
+            throw std::runtime_error("estimate_bip_matrix: unknown estimation rule");
+        }
+    }
+
+    return bip_matrix;
+}
+

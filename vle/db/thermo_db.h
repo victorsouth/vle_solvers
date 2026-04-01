@@ -29,30 +29,68 @@ public:
     /// @brief Возвращает CAS-номер компонента по химической формуле.
     /// Если формула отсутствует или неоднозначна, кидает исключение
     const std::wstring& get_casno_by_formula(const std::wstring& formula) const;
+    /// @brief Возвращает CAS-номера компонентов по списку химических формул.
+    /// Если хотя бы одна формула отсутствует или неоднозначна, кидает исключение.
+    std::vector<std::wstring> get_casno_by_formulas(const std::vector<std::wstring>& formulas) const;
+    /// @brief Возвращает свойства компонентов по списку идентификаторов (CAS или формула).
+    /// Если хотя бы один компонент отсутствует или неоднозначен, кидает исключение.
+    std::vector<const component_properties_t*> get_components(
+        const std::vector<std::wstring>& component_list) const;
     /// @brief Возвращает бинарный коэффициент взаимодействия k_ij по паре формул.
     /// Если коэффициент отсутствует, возвращает NaN.
     double get_bip_pair_formula(const std::wstring& formula1, const std::wstring& formula2) const;
     /// @brief Возвращает бинарный коэффициент взаимодействия k_ij по паре CAS-номеров.
     /// Если коэффициент отсутствует, возвращает NaN.
     double get_bip_pair_casno(const std::wstring& cas1, const std::wstring& cas2) const;
+    /// @brief Возвращает базу бинарных коэффициентов взаимодействия.
+    const bip_database_t& get_bip_db() const;
 
 public:
-    /// @brief Функция создает поток флюида с заданным компонентным составом и мольными долями
-    /// @tparam Fluid
-    /// @param component_formulas Названия компонентов
-    /// @param molar_fractions Мольные доли компонентов
-    template <typename Fluid>
-    inline std::unique_ptr<Fluid> create_fluid(const std::vector<std::wstring>& component_formulas
-        , const std::vector<double>& molar_fractions = std::vector<double>()) const;
 
+    /// @brief Создаёт флюид с пересчётом матрицы бинарных коэффициентов взаимодействия.
+    template <typename Fluid>
+    inline std::unique_ptr<Fluid> create_fluid(const std::vector<std::wstring>& component_list
+        , const std::vector<double>& molar_fractions = std::vector<double>()
+        , const bip_estimation_plan_t& bip_recalc_plan = bip_estimation_plan_t()
+    ) const
+    {
+        // Заложим на будущее
+        // static_assert(
+        //     std::is_same_v<Fluid, vlelib::fluid_peng_robinson_t>,
+        //     "thermo_db_t::create_fluid: BIP recalculation is supported only for fluid_peng_robinson_t"
+        //     );
+
+        std::vector<const component_properties_t*> components_local = get_components(component_list);
+
+        std::vector<std::wstring> components_casno_list;
+        components_casno_list.reserve(component_list.size());
+        for (const auto& comp_cas : components_local) {
+            components_casno_list.push_back(comp_cas->CASno);
+        }
+
+        Eigen::MatrixXd binary_coeffs_local;
+        if (!bip_recalc_plan.empty()) 
+        {
+            binary_coeffs_local = estimate_bip_matrix(
+                components_casno_list, components_local, bip_db, bip_recalc_plan);
+        }
+
+        if (!molar_fractions.empty()) {
+            Eigen::VectorXd fractions = Eigen::VectorXd::Map(
+                molar_fractions.data(),
+                molar_fractions.size()
+            );
+            return std::make_unique<Fluid>(components_local, binary_coeffs_local, fractions);
+        }
+        else {
+            return std::make_unique<Fluid>(components_local, binary_coeffs_local);
+        }
+
+    }
+
+    /// @brief Создаёт флюид из ранее сохраненной стабдаты
     template <typename Fluid>
     inline std::unique_ptr<Fluid> create_fluid(const fluid_stubdata_t& fluid_data) const;
-
-    template <typename Fluid>
-    inline std::unique_ptr<Fluid> create_fluid(const std::vector<std::wstring>& component_formulas
-        , const bip_recalc_plan_t& bip_recalc_plan
-        , const std::vector<double>& molar_fractions = std::vector<double>()
-    ) const;
 
     /// @brief Создаёт копию объекта Fluid с возможной заменой компонентного состава
     /// ***************************************************************************
@@ -84,11 +122,11 @@ private:
     void init_bips(const bip_records_t& bip_records);
 private:
     /// @brief CAS-база компонентов
-    components_database_t cas_components;
+    components_database_t cas_components_db;
     /// @brief Формула -> CAS
     std::unordered_multimap<std::wstring, std::wstring> formula2cas_mapping;
     /// @brief Бинарные коэффициенты взаимодействия
-    bips_hashedmap_t bips;
+    bip_database_t bip_db;
 };
 //*****************************************************************************
 
@@ -103,102 +141,11 @@ extern const bip_records_t& get_bip_records_global();
 extern const thermo_db_t components_database;
 //*****************************************************************************
 
-template <typename Fluid>
-inline std::unique_ptr<Fluid> thermo_db_t::create_fluid(
-    const std::vector<std::wstring>& component_list
-    , const std::vector<double>& molar_fractions) const
-{
-    std::vector<const component_properties_t*> components_local;
-    components_local.reserve(component_list.size());
-
-    for (const auto& component_id : component_list) {
-        if (cas_components.count(component_id) == 1) {
-            // Трактуем component_id как CAS. Дублей CAS нет, поэтому проверяем только на count == 1
-            const component_properties_t& properties = cas_components.at(component_id);
-            components_local.emplace_back(&properties);
-        }
-        else {
-            // Не нашли component_id среди CAS-номеров,
-            // Трактуем component_id как формулу, по которой пробуем получить CAS
-            const std::wstring& cas = get_casno_by_formula(component_id); // здесь будет exception, если формула не найдется
-            const component_properties_t& properties = cas_components.at(cas);
-            components_local.emplace_back(&properties);
-        }
-    }
-
-    if (!molar_fractions.empty()) {
-        Eigen::VectorXd fractions = Eigen::VectorXd::Map(
-            molar_fractions.data(),
-            molar_fractions.size()
-        );
-        return std::make_unique<Fluid>(components_local, fractions);
-    }
-    else {
-        return std::make_unique<Fluid>(components_local);
-    }
-};
+;
 //*****************************************************************************
 
-Eigen::MatrixXd estimate_bip_matrix(
-    const std::vector<std::wstring>& components_casno_list
-    , const std::vector<const component_properties_t*>& components
-    , const bips_hashedmap_t& bips
-    , const bip_recalc_plan_t& bip_recalc_plan);
 
-template <typename Fluid>
-inline std::unique_ptr<Fluid> thermo_db_t::create_fluid(
-    const std::vector<std::wstring>& component_list
-    , const bip_recalc_plan_t& bip_recalc_plan
-    , const std::vector<double>& molar_fractions) const
-{
-    // Заложим на будущее
-    // static_assert(
-    //     std::is_same_v<Fluid, vlelib::fluid_peng_robinson_t>,
-    //     "thermo_db_t::create_fluid: BIP recalculation is supported only for fluid_peng_robinson_t"
-    //     );
 
-    std::vector<const component_properties_t*> components_local;
-    components_local.reserve(component_list.size());
-
-    for (const auto& component_id : component_list) {
-        if (cas_components.count(component_id) == 1) {
-            // Трактуем component_id как CAS. Дублей CAS нет, поэтому проверяем только на count == 1
-            const component_properties_t& properties = cas_components.at(component_id);
-            components_local.emplace_back(&properties);
-        }
-        else {
-            // Не нашли component_id среди CAS-номеров,
-            // Трактуем component_id как формулу, по которой пробуем получить CAS
-            const std::wstring& cas = get_casno_by_formula(component_id); // здесь будет exception, если формула не найдется
-            const component_properties_t& properties = cas_components.at(cas);
-            components_local.emplace_back(&properties);
-        }
-    }
-
-    std::vector<std::wstring> components_casno_list;
-    components_casno_list.reserve(component_list.size());
-    for (const auto& comp_cas : components_local) {
-        components_casno_list.push_back(comp_cas->CASno);
-    }
-
-    Eigen::MatrixXd binary_coeffs_local;
-    if (bip_recalc_plan.size()) {
-        binary_coeffs_local = estimate_bip_matrix(
-            components_casno_list, components_local, bips, bip_recalc_plan);
-    }
-
-    if (!molar_fractions.empty()) {
-        Eigen::VectorXd fractions = Eigen::VectorXd::Map(
-            molar_fractions.data(),
-            molar_fractions.size()
-        );
-        return std::make_unique<Fluid>(components_local, binary_coeffs_local, fractions);
-    }
-    else {
-        return std::make_unique<Fluid>(components_local, binary_coeffs_local);
-    }
-
-}
 //*****************************************************************************
 
 //TODO !рефактор!

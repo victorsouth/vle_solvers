@@ -17,6 +17,8 @@
 #include <vector>
 #include <Eigen/Dense>
 #include <fixed/fixed.h>
+#include "physical_constants.h"
+
 #include "db/db_bip.h"
 #include "db/antoine_model.h"
 #include "db/td_functions.h"
