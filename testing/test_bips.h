@@ -247,40 +247,6 @@ TEST(ThermoDB, BIPDefaultMatchesNishiumi)
 }
 
 
-TEST(ThermoDB, BIPByPlanMatchesNishiumi)
-{
-    const bip_records_t bip_records_verification = bip_records_verification_Nishiumi();
-
-    std::vector<std::wstring> component_formulas;
-    auto add_unique = [&](const std::wstring& s) {
-        if (std::find(component_formulas.begin(), component_formulas.end(), s) == component_formulas.end())
-            component_formulas.push_back(s);
-        };
-    for (const auto& rec : bip_records_verification) {
-        add_unique(rec.cas1);
-        add_unique(rec.cas2);
-    }
-
-    FAIL();
-
-    //bip_recalc_plan_t recalc_plan = {
-    //    {{{0,1},{ 3,3 }}, bip_correlation_t::Nothing}
-    //    // , {{{1,2}}, bip_correlation_t::Nishiumi} будет исключение из-за отсутствия реализации
-    //};
-
-    //// должен быть fluid_peng_robinson_t, а с fluid_rault_dalton_t должен кидать исключение
-    //auto fluid = components_database.create_fluid<vlelib::fluid_rault_dalton_t>(
-    //    component_formulas, recalc_plan);
-
-    //for (auto [formula1, formula2, bip] : bip_records_verification) {
-    //    if (formula1 == formula2) {
-    //        continue;
-    //    }
-
-    //    ASSERT_NEAR(components_database.get_bip_pair_formula(formula1, formula2), bip, 1e-7);
-    //}
-}
-
 
 
 const bip_records_t bip_records_verification_Nishiumi() {
@@ -348,24 +314,56 @@ TEST(BinaryCoefficients, DISABLED_DeniesRaoultDalton)
 /// @brief Проверяет способность верифицировать данные по корреляции Чуи–Праусница на примере от АМ
 TEST(BinaryCoefficients, VerifiesChuehPrausnitz)
 {
+    // Arrange
     bip_matrix_verification_t bip_matrix_verification = get_bip_matrix_verification_ChuehPrausnitz();
-
-    // Берём два компонента, у которых точно есть Tc и Vc
     std::vector<std::wstring> components = bip_matrix_verification.components_formulas;
-
     bip_estimation_plan_t plan = generate_bip_estimation_plan_with_correlation(
         components, bip_correlation_t::ChuehPrausnitz);
 
+    // Act
     auto fluid = components_database.create_fluid<vlelib::fluid_rault_dalton_t>(
         components, {}, plan);
-
-    // Достаём свойства компонентов
     const Eigen::MatrixXd& bip_matrix_evaluated = fluid->get_binary_coeffs_ref();
 
+    // Assert
     ASSERT_TRUE(bip_matrix_evaluated.isApprox(
         bip_matrix_verification.bip_matrix, 1e-4));
 }
 
+
+TEST(ThermoDB, BIPByPlanMatchesNishiumi)
+{
+    const bip_records_t bip_records_verification = bip_records_verification_Nishiumi();
+
+    std::vector<std::wstring> component_formulas;
+    auto add_unique = [&](const std::wstring& s) {
+        if (std::find(component_formulas.begin(), component_formulas.end(), s) == component_formulas.end())
+            component_formulas.push_back(s);
+        };
+    for (const auto& rec : bip_records_verification) {
+        add_unique(rec.cas1);
+        add_unique(rec.cas2);
+    }
+
+    FAIL();
+
+    //bip_recalc_plan_t recalc_plan = {
+    //    {{{0,1},{ 3,3 }}, bip_correlation_t::Nothing}
+    //    // , {{{1,2}}, bip_correlation_t::Nishiumi} будет исключение из-за отсутствия реализации
+    //};
+
+    //// должен быть fluid_peng_robinson_t, а с fluid_rault_dalton_t должен кидать исключение
+    //auto fluid = components_database.create_fluid<vlelib::fluid_rault_dalton_t>(
+    //    component_formulas, recalc_plan);
+
+    //for (auto [formula1, formula2, bip] : bip_records_verification) {
+    //    if (formula1 == formula2) {
+    //        continue;
+    //    }
+
+    //    ASSERT_NEAR(components_database.get_bip_pair_formula(formula1, formula2), bip, 1e-7);
+    //}
+}
 
 
 const CAS_formula_map_t get_target_component_CAS_map()
