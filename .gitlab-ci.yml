@@ -2,10 +2,10 @@ include:
       - local: "ci-ai/docker.yml"
 
 stages:
-  - Static_test
   - Defining_branches
   - Build
   - Unit_Testing
+  - Static_test
 
 #==================================================================================================
 # load branches (utils)
@@ -39,7 +39,7 @@ Unicode:
     - mkdir -p pipeline/pipeline_result
     - touch encoding_error_list.txt pipeline/pipeline_result
     - bash pipeline/pipeline_scripts/unicode_check.sh
-  allow_failure: true
+  allow_failure: false
   artifacts:
     expire_in: 48 hour
     when: on_failure
@@ -54,7 +54,7 @@ Doxygen:
   script:
     - mkdir -p pipeline/pipeline_result
     - bash ./pipeline/pipeline_scripts/doxygen_test.sh
-  allow_failure: true
+  allow_failure: false
   artifacts:
     expire_in: 48 hour
     when: always
