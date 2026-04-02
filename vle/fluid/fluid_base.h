@@ -55,25 +55,6 @@ inline std::istream& operator>>(std::istream&is,fluid_state_t& s){
     return is;
 }
 
-/// @brief Состав потока
-struct fluid_stubdata_t {
-    /// @brief Список чистых компонентов из БД
-    std::vector<std::wstring> component_list;
-    /// @brief Мольный состав смеси
-    std::vector<double> molar_fraction;
-
-#ifdef VLELIB_SERIALIZATION_SUPPORT
-    /// @brief Для сериализации
-    friend class boost::serialization::access;
-    /// @brief Интрузивная сериализация/десериализация
-    template<class Archive>
-    void serialize(Archive& ar, const unsigned int version)
-    {
-        ar& BOOST_SERIALIZATION_NVP(component_list);
-        ar& BOOST_SERIALIZATION_NVP(molar_fraction);
-    }
-#endif
-};
 
 /// @brief Данные для изолированного вызова задачи PT-flash
 struct pt_flash_stub_data_t
@@ -229,7 +210,7 @@ private:
     const std::vector<const component_properties_t*> components_;
     /// @brief Коэффициенты бинарного взаимодействия для компонентов данного флюида
     /// (никогда не меняется, запрещаем на уровне интерфейса)
-    std::shared_ptr<const Eigen::MatrixXd> binary_coeffs;
+    std::shared_ptr<const Eigen::MatrixXd> binary_coeffs_;
 private:
     /// @brief Мольный состав
     Eigen::VectorXd concentration_;
@@ -254,6 +235,11 @@ public:
     /// @brief Инициализация по переченю компонентов и их концентрации (std::vector)
     fluid_fundamental_data_t(const std::vector<const component_properties_t*>& components,
                              const std::vector<double>& components_concentration);
+    /// @brief Инициализация по переченю компонентов, их концентрации (Eigen::VectorXd) 
+    /// и матрице бинарных коэффициентов
+    fluid_fundamental_data_t(const std::vector<const component_properties_t*>& components,
+        const Eigen::VectorXd& components_concentration,
+        const Eigen::MatrixXd& binary_coeffs);
 public:
     /// @brief (потокобезопасно) Возвращает вектор мольных концентраций
     const Eigen::VectorXd get_molar_fraction() const;
@@ -287,6 +273,8 @@ public:
     const std::vector<const component_properties_t*>& get_components() const;
     /// @brief Возвращает количество компонентов
     size_t get_components_count() const;
+    /// @brief Возвращает бинарные коэффициенты компонентов
+    const Eigen::MatrixXd& get_binary_coeffs_ref() const;
 public:
     /// @brief (потокобезопасно)
     /// @return 
@@ -528,6 +516,7 @@ public:
                                      const fluid_components_functions_t& components,
                                      const fluid_composition_functions_t& composition);
 
+
     /// @brief Расчет теплоты фазового перехода. Возвращает NaN, если смесь полностью газовая
     double get_heat_vaporization_mass(double pressure, double temperature) const;
 
@@ -619,178 +608,17 @@ public:
     fluid_t(const std::vector<const component_properties_t*>& components);
     /// @brief Инициализация по переченю компонентов и их концентрации (Eigen::VectorXd)
     fluid_t(const std::vector<const component_properties_t*>& components,
-            const Eigen::VectorXd& components_concentration);
+        const Eigen::VectorXd& components_concentration);
     /// @brief Инициализация по переченю компонентов и их концентрации (std::vector)
     fluid_t(const std::vector<const component_properties_t*>& components,
-            const std::vector<double>& components_concentration);
+        const std::vector<double>& components_concentration);
+    /// @brief Инициализация по переченю компонентов, их концентрации и матрице бинарных коэффициентов
+    fluid_t(const std::vector<const component_properties_t*>& components,
+        const Eigen::VectorXd& components_concentration,
+        const Eigen::MatrixXd& binary_coeffs);
 
     virtual ~fluid_t() = default;
 };
 
-
-/// @brief Функция создает поток флюида с заданным компонентным составом и мольными долями
-/// @tparam Fluid
-/// @param component_formulas Названия компонентов
-/// @param molar_fractions Мольные доли компонентов
-template <typename Fluid>
-inline std::unique_ptr<Fluid> create_fluid(const std::vector<std::wstring>& component_formulas
-    , const std::vector<double>& molar_fractions = std::vector<double>()
-    , const components_database_t& db_components = components_database.get_component_casno_database()
-    , const components_database_t& db_hypocomponents={})
-{
-    std::vector<const component_properties_t*> components;
-    components.reserve(component_formulas.size());
-
-    for (const std::wstring& formula : component_formulas) {
-
-        // 1) Попытка найти компонент в основной БД
-        try {
-            const std::wstring& cas = components_database.get_casno_by_formula(formula);
-            const auto& component_properties = db_components.at(cas);
-            components.emplace_back(&component_properties);
-            continue;
-        }
-        catch (const std::exception&) {
-            // формула не найдена в основной БД
-        }
-
-        // 2) Попытка найти компонент в гипо-БД
-        if(db_hypocomponents.count(formula)==1 ){
-            const auto& component_properties = db_hypocomponents.at(formula);
-            components.emplace_back(&component_properties);
-            continue;
-        }
-
-        // 3) Ошибка
-        std::stringstream msg;
-        msg << "Component is not exist in thermoDB: " 
-            << fixed_solvers::wide2string(formula);
-        throw std::logic_error(msg.str());
-
-    }
-
-    if (molar_fractions.empty()) {
-        return std::make_unique<Fluid>(components);
-    }
-
-    Eigen::VectorXd fractions = Eigen::VectorXd::Map(
-        molar_fractions.data(),
-        molar_fractions.size()
-    );
-
-    return std::make_unique<Fluid>(components, fractions);
-}
-
-/// @brief Функция создает поток флюида с заданным компонентным составом и мольными долями
-/// @tparam Fluid - тип флюида
-/// @tparam Fluid - ComponentDB тип базы (сортированная/несортированная)
-/// @param component_names Названия компонентов
-/// @param molar_fractions Мольные доли компонентов
-template <typename Fluid, typename ComponentDB, typename StringT>
-inline std::unique_ptr<Fluid> create_fluid(const std::vector<StringT>& component_names
-    , const std::vector<double>& molar_fractions
-    , const ComponentDB& db_components
-    , const ComponentDB& db_hypocomponents, std::function<std::string(const StringT&)> strconw)
-{
-    std::vector<const component_properties_t*> components;
-
-    for (const auto& name : component_names) {
-        if (db_components.count(name) == 1) {
-            const auto& component_properties = db_components.at(name);
-            components.emplace_back(&component_properties);
-        }
-        else if (db_hypocomponents.count(name) == 1) {
-            const auto& component_properties = db_hypocomponents.at(name);
-            components.emplace_back(&component_properties);
-        }
-        else {
-            std::stringstream msg;
-            msg << "Component is not exist in thermoDB: " << strconw(name);//fixed_solvers::wide2string(name);
-            throw std::logic_error(msg.str().c_str());
-        }
-
-    }
-
-    if (molar_fractions.empty()) {
-        return std::make_unique<Fluid>(components);
-    }
-    else {
-        Eigen::VectorXd fractions = Eigen::VectorXd::Map(&molar_fractions[0], molar_fractions.size());
-        return std::make_unique<Fluid>(components, fractions);
-    }
-}
-
-//TODO !рефактор!
-/// @brief Функция создает поток из состава потока
-/// @tparam Fluid Тип выходного потока
-/// @param fluid_data Состав потока
-/// @return Уникальный указатель на поток
-template <typename Fluid>
-inline std::unique_ptr<Fluid> create_fluid(const fluid_stubdata_t& fluid_data)
-{
-    return create_fluid<Fluid>(fluid_data.component_list, fluid_data.molar_fraction);
-}
-
-
-
-/// @brief Создаёт объект Fluid на основе списка чистых и гипо-компонентов и их мольных долей 
-/// ***************************************************************************
-/// @detail Функция ищет свойства компонентов сначала в базе чистых веществ (components_database),
-/// а если компонент там отсутствует — в базе псевдокомпонентов (pseudocomponents_db).
-/// Если компонент не найден ни в одной базе, выбрасывается исключение logic_error.
-/// В случае отсутствия мольных долей создаётся объект Fluid только с набором компонентов.
-/// Если мольные доли заданы, они преобразуются в Eigen::Eigen::VectorXd и передаются конструктору Fluid.
-/// @tparam Fluid - тип создаваемого объекта жидкости
-/// @param pseudocomponents_db - база данных псевдокомпонентов, используемая при 
-/// отсутствии компонента в базе чистых веществ.
-/// @param component_formulas - список имён компонентов (wstring), которые должны быть найдены в базе.
-/// @param molar_fractions - вектор мольных долей компонентов. Если пустой, используется конструктор Fluid без долей.
-/// @return unique_ptr<Fluid> - умный указатель на созданный объект Fluid.
-template <typename Fluid>
-inline std::unique_ptr<Fluid> create_fluid(
-    const components_database_t& pseudocomponents_db,
-    const std::vector<std::wstring>& component_formulas,
-    const std::vector<double>& molar_fractions)
-{
-    std::vector<const component_properties_t*> components;
-    components.reserve(component_formulas.size());
-
-    for (const std::wstring& formula : component_formulas) {
-        // 1) Попытка найти компонент в основной БД
-        try {
-            const auto& comp = components_database.get_component_by_formula(formula);
-            components.emplace_back(&comp);
-            continue;
-        }
-        catch (const std::exception&) {
-        }
-
-        // 2) Попытка найти компонент в базе псевдо-компонентов
-        if (pseudocomponents_db.count(formula) == 1) {
-            const auto& comp = pseudocomponents_db.at(formula);
-            components.emplace_back(&comp);
-            continue;
-        }
-
-        // 3) Ошибка
-        std::stringstream msg;
-        msg << "Component does not exist in thermoDB: "
-            << fixed_solvers::wide2string(formula);
-        throw std::logic_error(msg.str());
-    }
-
-    if (molar_fractions.empty()) {
-        return std::make_unique<Fluid>(components);
-    }
-
-    Eigen::VectorXd fractions = Eigen::VectorXd::Map(
-        molar_fractions.data(),
-        molar_fractions.size()
-    );
-
-    // std::move при возврате результата make_unique — это пустая операция.
-    // компилятор сам применит RVO/NRVO.
-    return std::make_unique<Fluid>(components, fractions);
-}
 
 }

@@ -4,7 +4,8 @@
 /// https://ru.wikipedia.org/wiki/Вода
 /// Адаптирован из vlelib/testing/base/thermodyn/test_thermodyn_base.cpp
 TEST(ThermoDB, ValidatesWaterCp_Wiki) {
-    auto fluid = vlelib::create_fluid<vlelib::fluid_rault_dalton_t>({L"H2O"});
+
+    auto fluid = components_database.create_fluid<vlelib::fluid_rault_dalton_t>({L"H2O"});
 
     double error_border = 0.06;
 
