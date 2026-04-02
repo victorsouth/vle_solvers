@@ -75,32 +75,15 @@ fluid_t::fluid_t(const fluid_t& other)
     : fluid_t(other.get_components(), other.get_molar_fraction(), other.get_binary_coeffs_ref())
 { }
 
-fluid_t::fluid_t(const std::vector<const component_properties_t*>& components) 
+fluid_t::fluid_t(const std::vector<const component_properties_t*>& components)
     : fluid_fundamental_data_t(components)
     , fluid_components_functions_t(this->get_components())
     , fluid_composition_functions_t(
-          static_cast<fluid_fundamental_data_t&>(*this),
-          static_cast<fluid_components_functions_t&>(*this))
+        static_cast<fluid_fundamental_data_t&>(*this),
+        static_cast<fluid_components_functions_t&>(*this))
     , fluid_phase_criteria_t(
-          static_cast<fluid_fundamental_data_t&>(*this),
-          static_cast<fluid_composition_functions_t&>(*this))
-    , fluid_flash_functions_t(
-          static_cast<fluid_fundamental_data_t&>(*this),
-          static_cast<fluid_components_functions_t&>(*this),
-          static_cast<fluid_composition_functions_t&>(*this))
-{
-
-}
-
-fluid_t::fluid_t(const std::vector<const component_properties_t*>& components, const Eigen::VectorXd& components_concentration) 
-    : fluid_fundamental_data_t(components, components_concentration)
-    , fluid_components_functions_t(this->get_components())
-    , fluid_composition_functions_t(
-          static_cast<fluid_fundamental_data_t&>(*this),
-          static_cast<fluid_components_functions_t&>(*this))
-    , fluid_phase_criteria_t(
-          static_cast<fluid_fundamental_data_t&>(*this),
-          static_cast<fluid_composition_functions_t&>(*this))
+        static_cast<fluid_fundamental_data_t&>(*this),
+        static_cast<fluid_composition_functions_t&>(*this))
     , fluid_flash_functions_t(
         static_cast<fluid_fundamental_data_t&>(*this),
         static_cast<fluid_components_functions_t&>(*this),
@@ -109,16 +92,15 @@ fluid_t::fluid_t(const std::vector<const component_properties_t*>& components, c
 
 }
 
-fluid_t::fluid_t(const std::vector<const component_properties_t*>& components
-    , const std::vector<double>& components_concentration) 
+fluid_t::fluid_t(const std::vector<const component_properties_t*>& components, const Eigen::VectorXd& components_concentration)
     : fluid_fundamental_data_t(components, components_concentration)
     , fluid_components_functions_t(this->get_components())
     , fluid_composition_functions_t(
-          static_cast<fluid_fundamental_data_t&>(*this),
-          static_cast<fluid_components_functions_t&>(*this))
+        static_cast<fluid_fundamental_data_t&>(*this),
+        static_cast<fluid_components_functions_t&>(*this))
     , fluid_phase_criteria_t(
-          static_cast<fluid_fundamental_data_t&>(*this),
-          static_cast<fluid_composition_functions_t&>(*this))
+        static_cast<fluid_fundamental_data_t&>(*this),
+        static_cast<fluid_composition_functions_t&>(*this))
     , fluid_flash_functions_t(
         static_cast<fluid_fundamental_data_t&>(*this),
         static_cast<fluid_components_functions_t&>(*this),
@@ -127,9 +109,26 @@ fluid_t::fluid_t(const std::vector<const component_properties_t*>& components
 
 }
 
-fluid_t::fluid_t(const std::vector<const component_properties_t*>& components
-    , const Eigen::VectorXd& components_concentration
-    , const Eigen::MatrixXd& binary_coeffs)
+fluid_t::fluid_t(const std::vector<const component_properties_t*>& components, const std::vector<double>& components_concentration)
+    : fluid_fundamental_data_t(components, components_concentration)
+    , fluid_components_functions_t(this->get_components())
+    , fluid_composition_functions_t(
+        static_cast<fluid_fundamental_data_t&>(*this),
+        static_cast<fluid_components_functions_t&>(*this))
+    , fluid_phase_criteria_t(
+        static_cast<fluid_fundamental_data_t&>(*this),
+        static_cast<fluid_composition_functions_t&>(*this))
+    , fluid_flash_functions_t(
+        static_cast<fluid_fundamental_data_t&>(*this),
+        static_cast<fluid_components_functions_t&>(*this),
+        static_cast<fluid_composition_functions_t&>(*this))
+{
+
+}
+
+fluid_t::fluid_t(const std::vector<const component_properties_t*>& components, 
+    const Eigen::VectorXd& components_concentration,
+    const Eigen::MatrixXd& binary_coeffs)
     : fluid_fundamental_data_t(components, components_concentration, binary_coeffs)
     , fluid_components_functions_t(this->get_components())
     , fluid_composition_functions_t(
@@ -137,6 +136,10 @@ fluid_t::fluid_t(const std::vector<const component_properties_t*>& components
         static_cast<fluid_components_functions_t&>(*this))
     , fluid_phase_criteria_t(
         static_cast<fluid_fundamental_data_t&>(*this),
+        static_cast<fluid_composition_functions_t&>(*this))
+    , fluid_flash_functions_t(
+        static_cast<fluid_fundamental_data_t&>(*this),
+        static_cast<fluid_components_functions_t&>(*this),
         static_cast<fluid_composition_functions_t&>(*this))
 {
 
@@ -194,7 +197,7 @@ fluid_fundamental_data_t::fluid_fundamental_data_t(
     const Eigen::MatrixXd& binary_coeffs)
     : components_(components)
     , concentration_(components_concentration)
-    , binary_coeffs_(binary_coeffs)
+    , binary_coeffs_(std::make_shared<Eigen::MatrixXd>(binary_coeffs))
 {
     if (components_concentration.size() == 0) {
         concentration_ = Eigen::VectorXd::Ones(components.size()) / components.size();
@@ -243,7 +246,7 @@ const std::vector<const component_properties_t*>& fluid_fundamental_data_t::get_
 
 const Eigen::MatrixXd& fluid_fundamental_data_t::get_binary_coeffs_ref() const
 {
-    return binary_coeffs_;
+    return *binary_coeffs_;
 }
 
 /// @brief Отладочный запуск мьютексов
