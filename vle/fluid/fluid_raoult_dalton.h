@@ -92,7 +92,7 @@ public:
 
     /// @brief Расчет плотности чистого вещества в жидкой фазе
     /// Можно сделать отдельной функцией, но статический метод
-    /// отражает применный в fluid_rault_dalton_t способ расчета
+    /// отражает применённый в fluid_rault_dalton_t способ расчета
     /// @param component Параметры чистого вещества
     static double get_density_liquid(const component_properties_t& component,
                                      double pressure, double temperature);
