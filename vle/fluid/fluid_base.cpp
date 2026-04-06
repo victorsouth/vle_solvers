@@ -62,6 +62,7 @@ void flash_calculation_result_t::invalidate_calculation()
     has_integrity = false;
     pressure = std::numeric_limits<double>::quiet_NaN();
     temperature = std::numeric_limits<double>::quiet_NaN();
+    k_value.clear();
 }
 
 
