@@ -150,6 +150,7 @@ fluid_t::fluid_t(const std::vector<const component_properties_t*>& components,
 fluid_fundamental_data_t::fluid_fundamental_data_t(const std::vector<const component_properties_t*>& components, 
                                                    const std::vector<double>& components_concentration)
     : components_(components)
+    , binary_coeffs_(std::make_shared<Eigen::MatrixXd>())
 {
     if (components_concentration.empty()) {
         concentration_ = Eigen::VectorXd::Ones(components.size()) / components.size();
@@ -164,6 +165,7 @@ fluid_fundamental_data_t::fluid_fundamental_data_t(
         const std::vector<const component_properties_t*>& components,
         const Eigen::VectorXd& components_concentration)
     : components_(components)
+    , binary_coeffs_(std::make_shared<Eigen::MatrixXd>())
     , concentration_(components_concentration)
 {
     if (components_concentration.size() == 0) {
@@ -172,11 +174,12 @@ fluid_fundamental_data_t::fluid_fundamental_data_t(
     else {
         normalize_concentration(concentration_);
     }
-        
+
 }
 
 fluid_fundamental_data_t::fluid_fundamental_data_t(const std::vector<const component_properties_t*>& components)
     : components_(components)
+    , binary_coeffs_(std::make_shared<Eigen::MatrixXd>())
 
 {
     concentration_ = Eigen::VectorXd::Ones(components.size()) / components.size();
