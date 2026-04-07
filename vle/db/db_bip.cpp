@@ -1,4 +1,4 @@
-#include "../vle_solvers.h"
+﻿#include "../vle_solvers.h"
 
 bip_database_t get_bips_subset(
     const std::vector<std::wstring>& casno_subset
@@ -161,12 +161,12 @@ Eigen::MatrixXd estimate_bip_matrix(const std::vector<std::wstring>& components_
             break;
         case bip_estimation_rule_t::use_db_only:
             // BIP взять из БД, если есть, иначе останется нулевым
-            if (bip_db.contains(info.cas_pair)) {
+            if (bip_db.count(info.cas_pair)) {
                 bip_matrix(i, j) = bip_matrix(j, i) = bip_db.at(info.cas_pair);
             }
             break;
         case bip_estimation_rule_t::use_db_or_correlation:
-            if (bip_db.contains(info.cas_pair)) {
+            if (bip_db.count(info.cas_pair)) {
                 bip_matrix(i, j) = bip_matrix(j, i) =
                     bip_db.at(info.cas_pair);
             }
