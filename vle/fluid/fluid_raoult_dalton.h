@@ -61,12 +61,16 @@ public:
     /// @brief Копирует флюид без мемоизации, т.к. меняется состав, значит расчет некорректен
     virtual std::unique_ptr<fluid_t> create_copy(const Eigen::VectorXd& new_molar_fraction) const override
     {
-        auto result = std::make_unique<fluid_rault_dalton_t>(get_components(), new_molar_fraction);
+        auto result = std::make_unique<fluid_rault_dalton_t>(
+            get_components(), new_molar_fraction, get_binary_coeffs_ref());
         return std::move(result);
     }
     virtual std::unique_ptr<fluid_t> create_copy(const std::vector<double>& new_molar_fraction) const override
     {
-        auto result = std::make_unique<fluid_rault_dalton_t>(get_components(), new_molar_fraction);
+        auto result = std::make_unique<fluid_rault_dalton_t>(
+            get_components(),
+            Eigen::VectorXd::Map(new_molar_fraction.data(), static_cast<Eigen::Index>(new_molar_fraction.size())),
+            get_binary_coeffs_ref());
         return std::move(result);
     }
 public:
