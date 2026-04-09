@@ -1,4 +1,4 @@
-#include "../vle_solvers.h"
+﻿#include "../vle_solvers.h"
 
 #define BOOST_EXCEPTION_DISABLE
 #include "tdb_serialize_2026_02_02.h"
@@ -55,7 +55,8 @@ thermo_db_t::thermo_db_t(const components_database_t& pseudo_db)
     : thermo_db_t(serializer_2026_02_02::
         deserialize_from_string<components_database_t>(std::string(
             get_thermo_db_serialized_by_formula())),
-        get_bip_records_global(),
+        serializer_2026_02_02::deserialize_BIP_from_string(
+            get_components_db_data_BIP()),
         pseudo_db)
 {
 
@@ -65,7 +66,8 @@ thermo_db_t::thermo_db_t()
     : thermo_db_t(serializer_2026_02_02::
         deserialize_from_string<components_database_t>(std::string(
             get_thermo_db_serialized_by_formula())),
-        get_bip_records_global(),
+        serializer_2026_02_02::deserialize_BIP_from_string(
+            get_components_db_data_BIP()),
         components_database_t())
 {
 }

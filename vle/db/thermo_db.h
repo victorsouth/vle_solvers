@@ -134,8 +134,8 @@ private:
 //extern const char* thermo_db_serialized_by_formula;
 extern const char* get_thermo_db_serialized_by_formula();
 
-/// @brief Глобальный набор бинарных коэффициентов взаимодействия.
-extern const bip_records_t& get_bip_records_global();
+/// @brief Сериализованная в JSON база бинарных коэффициентов взаимодействия.
+extern const char* get_components_db_data_BIP();
 
 /// @brief Глобальная термодинамическая база данных (CAS-база).
 extern const thermo_db_t components_database;
