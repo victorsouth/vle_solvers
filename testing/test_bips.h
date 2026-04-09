@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 /// @brief Сравнивает получение BIP по формулам и по CAS-номерам.
 TEST(BinaryCoefficients, BipsByFormulaAndCas_ReturnSameValue) {
@@ -30,9 +30,9 @@ TEST(BinaryCoefficientsPlan, HandlesOptionDbOnly) {
 
     bip_estimation_plan_t plan;
     plan.push_back({
-        .cas_pair = { casno_list[0], casno_list[1] },
-        .rule = bip_estimation_rule_t::use_db_only,
-        .correlation = bip_correlation_t::Gao
+        /*cas_pair=*/{casno_list[0], casno_list[1]},
+        /*rule=*/bip_estimation_rule_t::use_db_only,
+        /*correlation=*/bip_correlation_t::Gao
         });
 
     // Act
@@ -61,9 +61,9 @@ TEST(BinaryCoefficientsPlan, HandlesOptionChuehPrausnitz) {
 
     bip_estimation_plan_t plan;
     plan.push_back({
-        .cas_pair = { casno_list[0], casno_list[1] },
-        .rule = bip_estimation_rule_t::use_correlation_only,
-        .correlation = bip_correlation_t::ChuehPrausnitz
+        /*cas_pair=*/{ casno_list[0], casno_list[1] },
+        /*rule=*/bip_estimation_rule_t::use_correlation_only,
+        /*correlation=*/bip_correlation_t::ChuehPrausnitz
         });
 
     // Act
@@ -90,9 +90,9 @@ TEST(BinaryCoefficientsPlan, HandlesOptionGao) {
 
     bip_estimation_plan_t plan;
     plan.push_back({
-        .cas_pair = { casno_list[0], casno_list[1] },
-        .rule = bip_estimation_rule_t::use_correlation_only,
-        .correlation = bip_correlation_t::Gao
+        /*cas_pair=*/{ casno_list[0], casno_list[1] },
+        /*rule=*/bip_estimation_rule_t::use_correlation_only,
+        /*correlation=*/bip_correlation_t::Gao
         });
 
     // Act
@@ -120,11 +120,13 @@ TEST(BinaryCoefficientsPlan, HandlesOptionSetValue) {
     constexpr double custom_bip = 0.12345;
 
     bip_estimation_plan_t plan;
-    plan.push_back({
-        .cas_pair = { casno_list[0], casno_list[1] },
-        .rule = bip_estimation_rule_t::set_value,
-        .value = custom_bip
-        });
+
+    bip_estimation_plan_entry_t entry;
+    entry.cas_pair = { casno_list[0], casno_list[1] };
+    entry.rule = bip_estimation_rule_t::set_value;
+    entry.value = custom_bip;
+
+    plan.push_back(entry);
 
     // Act
     const auto& bip_db = components_database.get_bip_db();
@@ -148,9 +150,9 @@ TEST(BinaryCoefficientsPlan, HandlesOptionDbOrCorrelationWithEmptyDb) {
 
     bip_estimation_plan_t plan;
     plan.push_back({
-        .cas_pair = { casno_list[0], casno_list[1] },
-        .rule = bip_estimation_rule_t::use_db_or_correlation,
-        .correlation = bip_correlation_t::Gao
+        /*cas_pair=*/{ casno_list[0], casno_list[1] },
+        /*rule=*/bip_estimation_rule_t::use_db_or_correlation,
+        /*correlation=*/bip_correlation_t::Gao
         });
 
     // Act
