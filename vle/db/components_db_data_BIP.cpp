@@ -1,4 +1,15 @@
-#include "../vle_solvers.h"
+﻿#include "../vle_solvers.h"
+
+#define BOOST_EXCEPTION_DISABLE
+#include "tdb_serialize_2026_02_02.h"
+
+const char* get_components_db_data_BIP();
+
+const bip_records_t& get_bip_records_global() {
+    static const bip_records_t bip_records_parsed = serializer_2026_02_02::deserialize_BIP_from_string(
+        get_components_db_data_BIP());
+    return bip_records_parsed;
+}
 
 const char* get_components_db_data_BIP() {
     static const char* components_db_data_BIP = 
@@ -10227,3 +10238,4 @@ const char* get_components_db_data_BIP() {
 ;
     return components_db_data_BIP;
 };
+

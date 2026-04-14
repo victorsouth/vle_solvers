@@ -55,8 +55,7 @@ thermo_db_t::thermo_db_t(const components_database_t& pseudo_db)
     : thermo_db_t(serializer_2026_02_02::
         deserialize_from_string<components_database_t>(std::string(
             get_thermo_db_serialized_by_formula())),
-        serializer_2026_02_02::deserialize_BIP_from_string(
-            get_components_db_data_BIP()),
+        get_bip_records_global(),
         pseudo_db)
 {
 
@@ -66,8 +65,7 @@ thermo_db_t::thermo_db_t()
     : thermo_db_t(serializer_2026_02_02::
         deserialize_from_string<components_database_t>(std::string(
             get_thermo_db_serialized_by_formula())),
-        serializer_2026_02_02::deserialize_BIP_from_string(
-            get_components_db_data_BIP()),
+        get_bip_records_global(),
         components_database_t())
 {
 }
