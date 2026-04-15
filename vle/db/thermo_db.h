@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #ifndef __THERMO_DB__
 #define __THERMO_DB__
 
@@ -134,7 +134,10 @@ private:
 //extern const char* thermo_db_serialized_by_formula;
 extern const char* get_thermo_db_serialized_by_formula();
 
-/// @brief Глобальный набор бинарных коэффициентов взаимодействия.
+/// @brief Сериализованная в JSON база бинарных коэффициентов взаимодействия.
+extern const char* get_components_db_data_BIP();
+
+/// @brief Десериализованный из JSON глобальный набор бинарных коэффициентов взаимодействия.
 extern const bip_records_t& get_bip_records_global();
 
 /// @brief Глобальная термодинамическая база данных (CAS-база).
