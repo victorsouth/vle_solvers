@@ -194,7 +194,7 @@ TEST(BinaryCoefficients, VerifiesChuehPrausnitz)
 
     // Assert
     ASSERT_TRUE(bip_matrix_evaluated.isApprox(
-        bip_matrix_verification.bip_matrix, 1e-4));
+        bip_matrix_verification.bip_matrix, 1e-6));
 }
 
 
@@ -214,7 +214,7 @@ TEST(BinaryCoefficients, VerifiesGao)
 
     // Assert
     ASSERT_TRUE(bip_matrix_evaluated.isApprox(
-        bip_matrix_verification.bip_matrix, 1e-4));
+        bip_matrix_verification.bip_matrix, 1e-6));
 }
 
 
@@ -233,7 +233,7 @@ TEST(BinaryCoefficients, VerifiesNishiumi)
 
     // Assert
     ASSERT_TRUE(bip_matrix_evaluated.isApprox(
-        bip_matrix_verification.bip_matrix, 1e-4));
+        bip_matrix_verification.bip_matrix, 1e-6));
 }
 
 const CAS_formula_map_t get_target_component_CAS_map()
