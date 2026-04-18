@@ -78,12 +78,12 @@ public:
     virtual Eigen::VectorXd get_densities_vapor(double pressure, double temperature) const override
     {
         Eigen::VectorXd result(get_components_count());
-        const auto& components = get_components();
+        const auto& components_local = get_components();
 
         if (pressure != 0)
         {
             for (size_t index = 0; index < (size_t)result.size(); ++index) {
-                result(index) = density_ideal_gas(pressure, temperature, components[index]->molar_mass);
+                result(index) = density_ideal_gas(pressure, temperature, components_local[index]->molar_mass);
             }
         }
         else //pressure == 0
