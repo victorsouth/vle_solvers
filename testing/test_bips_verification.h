@@ -46,13 +46,12 @@ TEST(BinaryCoefficients, ThrowsIfFormulaIsDuplicated)
 TEST(BinaryCoefficients, BIPUsesOnlyKnownCASNumbers)
 {
     auto ref = get_target_component_CAS_map();
-    auto bip_records_global = get_bip_records_global();
-    for (const auto& rec : bip_records_global) {
-        ASSERT_NE(ref.find(rec.cas1), ref.end())
-            << "Unknown CAS " << rec.cas1;
-
-        ASSERT_NE(ref.find(rec.cas2), ref.end())
-            << "Unknown CAS " << rec.cas2;
+    const auto& bip_db = components_database.get_bip_db();
+    for (const auto& [pair_cas, _] : bip_db) {
+        for (const auto& cas : pair_cas) {
+            ASSERT_NE(ref.find(cas), ref.end())
+                << "Unknown CAS " << cas;
+        }
     }
 }
 
