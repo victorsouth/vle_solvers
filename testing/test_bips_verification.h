@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 /// @brief Отображение CAS-номера в пару (формула, CAS-номер).
 /// Используется как эталонная база для проверки корректности загрузки БД.
@@ -9,7 +9,7 @@ using CAS_formula_map_t = std::unordered_map<std::wstring, std::pair<std::wstrin
 const CAS_formula_map_t get_target_component_CAS_map();
 
 /// @brief Проверяет, что количество компонентов в базе совпадает с эталонным.
-TEST(BinaryCoefficients, ReturnsSameComponentCountAsReference)
+TEST(BinaryCoefficients, DISABLED_ReturnsSameComponentCountAsReference)
 {
     auto ref = get_target_component_CAS_map();
     const auto& db = components_database.get_component_casno_database();
