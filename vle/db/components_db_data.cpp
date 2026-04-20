@@ -1,3 +1,4 @@
+const char* get_thermo_db_serialized_by_formula() {
 const char* thermo_db_serialized_by_formula = 
 "{"
 "    \"n_C18H38\": {"
@@ -3707,3 +3708,5 @@ const char* thermo_db_serialized_by_formula =
 "    }"
 "}"
 ;
+    return thermo_db_serialized_by_formula;
+};
