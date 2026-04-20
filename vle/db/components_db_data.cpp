@@ -1600,7 +1600,7 @@ const char* thermo_db_serialized_by_formula =
 "    \"H2S\": {"
 "        \"molar_mass\": \"0.034079999999999999\","
 "        \"component_name\": \"hydrogen sulfide\","
-"        \"CASno\": \"7783-6-4\","
+"        \"CASno\": \"7783-06-4\","
 "        \"acentric_factor\": \"0.10000000000000001\","
 "        \"critical_pressure\": \"8936865\","
 "        \"critical_molarvolume\": \"9.8499999999999995e-05\","
