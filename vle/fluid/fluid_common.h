@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 //using hydraulics::celcium2kelvin;
 //using hydraulics::kelvin2celcium;
@@ -34,6 +34,15 @@ struct amounts_per_phase {
     /// @brief Величина для смеси
     double mix{ std::numeric_limits<double>::quiet_NaN() };
 };
+
+/// @brief Скаляр по фазам (жидкость / пар): например Z или молярный объём, м^3/моль.
+struct amounts_per_two_phases_t {
+    /// @brief Величина для жидкой фазы.
+    double liquid{ std::numeric_limits<double>::quiet_NaN() };
+    /// @brief Величина для паровой фазы.
+    double vapor{ std::numeric_limits<double>::quiet_NaN() };
+};
+
 
 /// @brief Величины в мольном и массовом выражении
 struct amounts_molar_and_mass {

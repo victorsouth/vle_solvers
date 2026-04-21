@@ -3,6 +3,7 @@ include:
 
 stages:
   - Defining_branches
+  - Static_test_warning
   - Build
   - Unit_Testing
   - Static_test
@@ -29,6 +30,22 @@ stages:
 # Static_test
 #==================================================================================================
  
+Doxygen_warning:
+  stage: Static_test_warning
+  tags:
+    - docker
+  image: $DOCKER_REGISTRY/$DOCKER_REPO/greenbone/doxygen:latest
+  script:
+    - mkdir -p pipeline/pipeline_result
+    - bash ./pipeline/pipeline_scripts/doxygen_test.sh
+  allow_failure: true
+  artifacts:
+    expire_in: 48 hour
+    when: always
+    paths:
+      - pipeline/pipeline_result
+
+
 #Проверка кодировки файлов с расширением .m .cpp .h на соответствие UTF-8
 Unicode:
   stage: Static_test

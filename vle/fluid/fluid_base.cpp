@@ -62,6 +62,7 @@ void flash_calculation_result_t::invalidate_calculation()
     has_integrity = false;
     pressure = std::numeric_limits<double>::quiet_NaN();
     temperature = std::numeric_limits<double>::quiet_NaN();
+    k_value.clear();
 }
 
 
@@ -306,7 +307,8 @@ flash_calculation_result_t fluid_fundamental_data_t::get_last_flash_result() con
     }
 }
 
-const flash_calculation_result_t fluid_fundamental_data_t::flash(double pressure, double temperature, double initial_estimation /*= std::numeric_limits<double>::quiet_NaN()*/) const
+const flash_calculation_result_t fluid_fundamental_data_t::flash(double pressure
+    , double temperature, double initial_estimation /*= std::numeric_limits<double>::quiet_NaN()*/) const
 {
     if constexpr (debug_disable_locks == false) {
         std::lock_guard lk(concentration_mutex);
