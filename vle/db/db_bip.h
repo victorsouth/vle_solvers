@@ -82,11 +82,14 @@ double estimate_bip(
     bip_correlation_t bip_correlation);
 
 
-/// @brief Корреляция Чуэ–Праусница (AIChE Journal, 1967).
+/// @brief Корреляция Чуэ–Праусница для оценки коэффициента парного взаимодействия.
+/// American Institute of Chemical Engineers Journal, Vol. 13, No. 6, 1967,
+/// pp. 1099–1113.
 double estimate_bip_ChuehPrausnitz(
     const component_properties_t& component1, const component_properties_t& component2);
 
-/// @brief Корреляция Гао (Fluid Phase Equilibria, 1992).
+/// @brief Корреляция Гао для оценки коэффициента парного взаимодействия.
+/// Fluid Phase Equilibria, 74 (1992) 85–93.
 double estimate_bip_Gao(
     const component_properties_t& component1, const component_properties_t& component2);
 
