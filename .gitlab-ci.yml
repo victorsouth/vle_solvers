@@ -2,8 +2,8 @@ include:
       - local: "ci-ai/docker.yml"
 
 stages:
-  - Static_test_warning
   - Defining_branches
+  - Static_test_warning
   - Build
   - Unit_Testing
   - Static_test
