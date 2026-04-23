@@ -23,7 +23,6 @@ inline void print_errors(const std::wstring& prefix, double a, double b, double 
 #include "test_bips_verification.h"
 #include "test_fluid.h"
 
-
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
 #if defined(_WIN32) && !defined(__MINGW32__)
