@@ -79,6 +79,7 @@ set(SOURCE_FLUID_SOLVERS
 
 set(HEADER_HELPERS
     vle/helpers/physical_helpers.h
+    vle/helpers/string_helpers.h
 )
 
 # Организация папок с исходниками в сгенерированном проекте VS
