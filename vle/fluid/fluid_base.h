@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 namespace vlelib {
 ;
@@ -18,7 +18,7 @@ struct fluid_state_t {
     virtual void deserialize_text(std::istream& stream){
         std::string str;
         stream>>str;
-        if(str!=fixed_solvers::get_class_as_string(*this))throw std::logic_error("wrong type:"+str);
+        if(str!=vle_solvers::get_class_as_string(*this))throw std::logic_error("wrong type:"+str);
         fixed_solvers::load_vector(stream,concentration);
         stream>>flash>>pressure>>temperature;
         /// вызываем исключение в случае неудачного чтения из потока
@@ -30,7 +30,7 @@ struct fluid_state_t {
     /// @brief запись данных класса в выходной поток
     /// @param stream выходной поток
     virtual void serialize_text(std::ostream& stream)const{
-        stream<< fixed_solvers::get_class_as_string(*this)<<std::endl;
+        stream<< vle_solvers::get_class_as_string(*this)<<std::endl;
         fixed_solvers::save_vector(stream,concentration);
         stream<<flash<<' '<<pressure<<' '<<temperature<<'\n';
     }
