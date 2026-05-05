@@ -1,0 +1,96 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Windows MSVC Debug (testing_vle_solvers)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/build/windows-msvc-debug/Debug/testing_vle_solvers.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "CMake: Build windows-msvc-debug"
+        },
+        {
+            "name": "Windows GCC Debug (testing_vle_solvers)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/build/windows-gcc-debug/testing_vle_solvers.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "C:/msys64/ucrt64/bin/gdb.exe",
+            "preLaunchTask": "CMake: Build windows-gcc-debug"
+        },
+        {
+            "name": "Windows Clang Debug (gdb, testing_vle_solvers)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/build/windows-clang-debug/testing_vle_solvers.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "C:/msys64/ucrt64/bin/gdb.exe",
+            "preLaunchTask": "CMake: Build windows-clang-debug"
+        },
+        {
+            "name": "Windows Clang Debug (lldb, testing_vle_solvers)",
+            "type": "lldb-dap",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/build/windows-clang-debug/testing_vle_solvers.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "debugAdapterPath": "C:/msys64/ucrt64/bin/lldb-dap.exe",
+            "preLaunchTask": "CMake: Build windows-clang-debug"
+        },
+        {
+            "name": "Linux GCC Debug (testing_vle_solvers)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/build/linux-gcc-debug/testing_vle_solvers",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/bin/gdb",
+            "preLaunchTask": "CMake: Build linux-gcc-debug"
+        },
+        {
+            "name": "Linux Clang Debug (testing_vle_solvers)",
+            "type": "lldb-dap",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/build/linux-clang-debug/testing_vle_solvers",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "debugAdapterPath": "/usr/bin/lldb-dap",
+            "preLaunchTask": "CMake: Build linux-clang-debug"
+        },
+        {
+            "name": "macOS Clang Debug (testing_vle_solvers)",
+            "type": "lldb-dap",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/build/macos-clang-debug/testing_vle_solvers",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "debugAdapterPath": "/usr/bin/lldb-dap",
+            "preLaunchTask": "CMake: Build macos-clang-debug"
+        }
+    ]
+}
