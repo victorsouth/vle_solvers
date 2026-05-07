@@ -1,4 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
+if(POLICY CMP0091)
+    cmake_policy(SET CMP0091 NEW)
+endif()
 
 project(vle_solvers)
 
@@ -24,6 +27,7 @@ if(MSVC)
     cmake_policy(SET CMP0167 NEW)
     add_compile_options("/MP")     # включает многопроцессорную компиляцию
     add_compile_options("/bigobj")
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 endif()
 if(MINGW)
     cmake_policy(SET CMP0167 NEW)
