@@ -10,7 +10,7 @@
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "visualizerFile": "${workspaceFolder}/../eigen-pretty-printers/natvis/Eigen.natvis",
-            "preLaunchTask": "CMake: Build windows-msvc-debug"
+            "preLaunchTask": "${input:preLaunchWindowsMsvcDebug}"
         },
         {
             "name": "Windows GCC Debug (testing_vle_solvers)",
@@ -41,7 +41,7 @@
                     "ignoreFailures": false
                 }
             ],
-            "preLaunchTask": "CMake: Build windows-gcc-debug"
+            "preLaunchTask": "${input:preLaunchWindowsGccDebug}"
         },
         {
             "name": "Windows Clang Debug (gdb, testing_vle_solvers)",
@@ -72,7 +72,7 @@
                     "ignoreFailures": false
                 }
             ],
-            "preLaunchTask": "CMake: Build windows-clang-debug"
+            "preLaunchTask": "${input:preLaunchWindowsClangGdbDebug}"
         },
         {
             "name": "Windows Clang Debug (lldb, testing_vle_solvers)",
@@ -93,7 +93,7 @@
             "initCommands": [
                 "command script import ${workspaceFolder}/../eigen-pretty-printers/lldb/eigen_printers.py"
             ],
-            "preLaunchTask": "CMake: Build windows-clang-debug"
+            "preLaunchTask": "${input:preLaunchWindowsClangLldbDebug}"
         },
         {
             "name": "Linux GCC Debug (testing_vle_solvers)",
@@ -124,7 +124,7 @@
                     "ignoreFailures": false
                 }
             ],
-            "preLaunchTask": "CMake: Build linux-gcc-debug"
+            "preLaunchTask": "${input:preLaunchLinuxGccDebug}"
         },
         {
             "name": "Linux Clang Debug (testing_vle_solvers)",
@@ -145,7 +145,7 @@
             "initCommands": [
                 "command script import ${workspaceFolder}/../eigen-pretty-printers/lldb/eigen_printers.py"
             ],
-            "preLaunchTask": "CMake: Build linux-clang-debug"
+            "preLaunchTask": "${input:preLaunchLinuxClangDebug}"
         },
         {
             "name": "macOS Clang Debug (testing_vle_solvers)",
@@ -166,7 +166,79 @@
             "initCommands": [
                 "command script import ${workspaceFolder}/../eigen-pretty-printers/lldb/eigen_printers.py"
             ],
-            "preLaunchTask": "CMake: Build macos-clang-debug"
+            "preLaunchTask": "${input:preLaunchMacosClangDebug}"
+        }
+    ],
+    "inputs": [
+        {
+            "id": "preLaunchWindowsMsvcDebug",
+            "type": "pickString",
+            "description": "Before launch (Windows MSVC Debug)",
+            "options": [
+                "CMake: Build windows-msvc-debug",
+                "CMake: Skip build"
+            ],
+            "default": "CMake: Build windows-msvc-debug"
+        },
+        {
+            "id": "preLaunchWindowsGccDebug",
+            "type": "pickString",
+            "description": "Before launch (Windows GCC Debug)",
+            "options": [
+                "CMake: Build windows-gcc-debug",
+                "CMake: Skip build"
+            ],
+            "default": "CMake: Build windows-gcc-debug"
+        },
+        {
+            "id": "preLaunchWindowsClangGdbDebug",
+            "type": "pickString",
+            "description": "Before launch (Windows Clang Debug, gdb)",
+            "options": [
+                "CMake: Build windows-clang-debug",
+                "CMake: Skip build"
+            ],
+            "default": "CMake: Build windows-clang-debug"
+        },
+        {
+            "id": "preLaunchWindowsClangLldbDebug",
+            "type": "pickString",
+            "description": "Before launch (Windows Clang Debug, lldb)",
+            "options": [
+                "CMake: Build windows-clang-debug",
+                "CMake: Skip build"
+            ],
+            "default": "CMake: Build windows-clang-debug"
+        },
+        {
+            "id": "preLaunchLinuxGccDebug",
+            "type": "pickString",
+            "description": "Before launch (Linux GCC Debug)",
+            "options": [
+                "CMake: Build linux-gcc-debug",
+                "CMake: Skip build"
+            ],
+            "default": "CMake: Build linux-gcc-debug"
+        },
+        {
+            "id": "preLaunchLinuxClangDebug",
+            "type": "pickString",
+            "description": "Before launch (Linux Clang Debug)",
+            "options": [
+                "CMake: Build linux-clang-debug",
+                "CMake: Skip build"
+            ],
+            "default": "CMake: Build linux-clang-debug"
+        },
+        {
+            "id": "preLaunchMacosClangDebug",
+            "type": "pickString",
+            "description": "Before launch (macOS Clang Debug)",
+            "options": [
+                "CMake: Build macos-clang-debug",
+                "CMake: Skip build"
+            ],
+            "default": "CMake: Build macos-clang-debug"
         }
     ]
 }
