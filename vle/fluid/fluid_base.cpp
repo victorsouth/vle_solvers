@@ -63,6 +63,7 @@ void flash_calculation_result_t::invalidate_calculation()
     pressure = std::numeric_limits<double>::quiet_NaN();
     temperature = std::numeric_limits<double>::quiet_NaN();
     k_value.clear();
+    liquid_volume_shift_mix = std::numeric_limits<double>::quiet_NaN();
 }
 
 

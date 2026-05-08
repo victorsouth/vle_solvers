@@ -175,6 +175,9 @@ struct flash_calculation_result_t {
     amounts_molar_and_mass enthalpy;
     /// @brief Внутренняя энергия для газа, жидкости (по массе и по молям)
     amounts_molar_and_mass inner_energy;
+    /// @brief Смесевой объёмный сдвиг жидкости sum_i x_i dv_i (м^3/моль): тот же состав x,
+    ///        что при расчёте molar_volume.liquid в PR flash
+    double liquid_volume_shift_mix{ std::numeric_limits<double>::quiet_NaN() };
     /// @brief Возвращает тип состояния флюида
     flash_type_t get_flash_status() const;
     /// @brief Состоит ли флюид только из жидкости
