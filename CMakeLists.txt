@@ -241,6 +241,7 @@ if(VLE_SOLVERS_BUILD_TESTS)
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/testing>
     )
     #target_precompile_headers(testing_vle_solvers REUSE_FROM ${PROJECT_NAME})
+    install(TARGETS testing_vle_solvers DESTINATION bin)
 
 endif()
 
