@@ -5,7 +5,7 @@
             "name": "Windows MSVC Debug (testing_vle_solvers)",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/out/build/windows-msvc-debug/Debug/testing_vle_solvers.exe",
+            "program": "${workspaceFolder}/out/windows-msvc-debug/Debug/testing_vle_solvers.exe",
             "args": [
                 
             ],
@@ -18,7 +18,7 @@
             "name": "Windows GCC Debug (testing_vle_solvers)",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/out/build/windows-gcc-debug/testing_vle_solvers.exe",
+            "program": "${workspaceFolder}/out/windows-gcc-debug/testing_vle_solvers.exe",
             "args": [
                 
             ],
@@ -51,7 +51,7 @@
             "name": "Windows Clang Debug (gdb, testing_vle_solvers)",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/out/build/windows-clang-debug/testing_vle_solvers.exe",
+            "program": "${workspaceFolder}/out/windows-clang-debug/testing_vle_solvers.exe",
             "args": [
                 
             ],
@@ -84,7 +84,7 @@
             "name": "Windows Clang Debug (lldb, testing_vle_solvers)",
             "type": "lldb-dap",
             "request": "launch",
-            "program": "${workspaceFolder}/out/build/windows-clang-debug/testing_vle_solvers.exe",
+            "program": "${workspaceFolder}/out/windows-clang-debug/testing_vle_solvers.exe",
             "args": [
                 
             ],
@@ -107,7 +107,7 @@
             "name": "Linux GCC Debug (testing_vle_solvers)",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/out/build/linux-gcc-debug/testing_vle_solvers",
+            "program": "${workspaceFolder}/out/linux-gcc-debug/testing_vle_solvers",
             "args": [
                 
             ],
@@ -140,7 +140,7 @@
             "name": "Linux Clang Debug (testing_vle_solvers)",
             "type": "lldb-dap",
             "request": "launch",
-            "program": "${workspaceFolder}/out/build/linux-clang-debug/testing_vle_solvers",
+            "program": "${workspaceFolder}/out/linux-clang-debug/testing_vle_solvers",
             "args": [
                 
             ],
@@ -163,7 +163,7 @@
             "name": "macOS Clang Debug (testing_vle_solvers)",
             "type": "lldb-dap",
             "request": "launch",
-            "program": "${workspaceFolder}/out/build/macos-clang-debug/testing_vle_solvers",
+            "program": "${workspaceFolder}/out/macos-clang-debug/testing_vle_solvers",
             "args": [
                 
             ],
