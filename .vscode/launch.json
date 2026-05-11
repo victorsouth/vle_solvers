@@ -42,7 +42,7 @@
                 {
                     "description": "Load Eigen pretty-printers (shared root)",
                     "text": "python import importlib.util; p=r'C:/install/eigen-pretty-printers/gdb/printers.py'; s=importlib.util.spec_from_file_location('eigen_printers', p); m=importlib.util.module_from_spec(s); s.loader.exec_module(m); m.register_eigen_printers(gdb)",
-                    "ignoreFailures": false
+                    "ignoreFailures": true
                 }
             ],
             "preLaunchTask": "CMake: Build windows-gcc-debug"
@@ -75,7 +75,7 @@
                 {
                     "description": "Load Eigen pretty-printers (shared root)",
                     "text": "python import importlib.util; p=r'C:/install/eigen-pretty-printers/gdb/printers.py'; s=importlib.util.spec_from_file_location('eigen_printers', p); m=importlib.util.module_from_spec(s); s.loader.exec_module(m); m.register_eigen_printers(gdb)",
-                    "ignoreFailures": false
+                    "ignoreFailures": true
                 }
             ],
             "preLaunchTask": "CMake: Build windows-clang-debug"
@@ -99,7 +99,7 @@
             "externalConsole": false,
             "debugAdapterPath": "C:/msys64/ucrt64/bin/lldb-dap.exe",
             "initCommands": [
-                "command script import C:/install/eigen-pretty-printers/lldb/eigen_printers.py"
+                "script import os, lldb; p=r'C:/install/eigen-pretty-printers/lldb/eigen_printers.py'; lldb.debugger.HandleCommand('command script import ' + p) if os.path.isfile(p) else None"
             ],
             "preLaunchTask": "CMake: Build windows-clang-debug"
         },
@@ -131,7 +131,7 @@
                 {
                     "description": "Load Eigen pretty-printers (shared root)",
                     "text": "python import importlib.util; p=r'${env:HOME}/install/eigen-pretty-printers/gdb/printers.py'; s=importlib.util.spec_from_file_location('eigen_printers', p); m=importlib.util.module_from_spec(s); s.loader.exec_module(m); m.register_eigen_printers(gdb)",
-                    "ignoreFailures": false
+                    "ignoreFailures": true
                 }
             ],
             "preLaunchTask": "CMake: Build linux-gcc-debug"
@@ -155,7 +155,7 @@
             "externalConsole": false,
             "debugAdapterPath": "/usr/bin/lldb-dap",
             "initCommands": [
-                "command script import ${env:HOME}/install/eigen-pretty-printers/lldb/eigen_printers.py"
+                "script import os, lldb; p=r'${env:HOME}/install/eigen-pretty-printers/lldb/eigen_printers.py'; lldb.debugger.HandleCommand('command script import ' + p) if os.path.isfile(p) else None"
             ],
             "preLaunchTask": "CMake: Build linux-clang-debug"
         },
@@ -178,7 +178,7 @@
             "externalConsole": false,
             "debugAdapterPath": "/usr/bin/lldb-dap",
             "initCommands": [
-                "command script import ${env:HOME}/install/eigen-pretty-printers/lldb/eigen_printers.py"
+                "script import os, lldb; p=r'${env:HOME}/install/eigen-pretty-printers/lldb/eigen_printers.py'; lldb.debugger.HandleCommand('command script import ' + p) if os.path.isfile(p) else None"
             ],
             "preLaunchTask": "CMake: Build macos-clang-debug"
         }
