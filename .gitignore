@@ -366,3 +366,5 @@ FodyWeavers.xsd
 /ANALYSIS.md
 
 build*/
+out/
+compile_commands.json
