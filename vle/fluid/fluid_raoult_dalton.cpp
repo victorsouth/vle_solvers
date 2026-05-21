@@ -251,6 +251,9 @@ const vlelib::flash_calculation_result_t fluid_rault_dalton_t::flash_vapor_only(
         }
     }
 
+    result.z_factor.vapor = 1.0;
+    result.z_factor.mix = 1.0;
+
     result.fluid_liquid = nullptr;
     result.fluid_vapor = create_copy(false);
 
@@ -341,6 +344,7 @@ void two_phase_result_builder::build(double pressure, double temperature,
 
     result.enthalpy = get_enthalpies(result, flash_in);
     result.inner_energy = get_inner_energies(result, flash_in);
+    result.z_factor.vapor = 1.0;
     result.has_integrity = true;
 
     // по сравнению с fluid_rault_dalton_t::build_twophase_result
