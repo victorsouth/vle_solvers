@@ -63,6 +63,9 @@ void flash_calculation_result_t::invalidate_calculation()
     pressure = std::numeric_limits<double>::quiet_NaN();
     temperature = std::numeric_limits<double>::quiet_NaN();
     k_value.clear();
+    z_factor.liquid = std::numeric_limits<double>::quiet_NaN();
+    z_factor.vapor = std::numeric_limits<double>::quiet_NaN();
+    z_factor.mix = std::numeric_limits<double>::quiet_NaN();
 }
 
 
