@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 namespace vlelib {
 ;
@@ -168,6 +168,8 @@ struct flash_calculation_result_t {
     amounts_per_phase density;
     /// @brief Молярный объем пара, жидкости, смеси (на 1 моль пара, жидкости, смеси соответственно)
     amounts_per_phase molar_volume;
+    /// @brief Фактор сжимаемости Z пара, жидкости, смеси (корни EOS PR; для идеального газа vapor = 1).
+    amounts_per_phase z_factor;
     /// @brief Коэффициенты равновесия по PR: K_i = phi_l,i / phi_v,i (фугитивности смеси при том же
     ///        мольном составе, что и у flash, Z жидкости и Z пара — минимальный и максимальный корни куба).
     std::vector<double> k_value;
