@@ -428,7 +428,7 @@ public:
     /// @brief Возвращает вектор K-значений для всех компонентов
     /// Формально не зависит от состава, но в get_saturated_pressures
     /// есть важный костыль, учитывающий состав, поэтому K-values тоже тут
-    Eigen::VectorXd get_K_values(double pressure, double temperature) const;
+    virtual Eigen::VectorXd get_K_values(double pressure, double temperature) const;
     /// @brief Массовые (не мольные) доли компонентов смеси
     virtual Eigen::VectorXd get_mass_fraction() const;
     /// @brief Возвращает молярную массу смеси
