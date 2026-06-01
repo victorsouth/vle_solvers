@@ -46,6 +46,18 @@ rachford_rice2_t::rachford_rice2_t(const fluid_t* fluid, double pressure,
 
 }
 
+rachford_rice2_t::rachford_rice2_t(const fluid_t* fluid,
+    const Eigen::VectorXd& K_values,
+    double vapor_fraction_initial)
+    : fluid(fluid)
+    , K_values(K_values)
+    , pressure(std::numeric_limits<double>::quiet_NaN())
+    , temperature(std::numeric_limits<double>::quiet_NaN())
+    , vapor_fraction_initial(vapor_fraction_initial)
+{
+
+}
+
 std::pair<double, double> rachford_rice2_t::get_k_boundaries() const
 {
     double minimum = std::numeric_limits<double>::max();
@@ -114,6 +126,12 @@ double rachford_rice2_t::jacobian_dense(const double& split)
 
 rachford_rice_result_t rachford_rice2_t::build_result(double vapor_split) const
 {
+    if (!std::isfinite(pressure) || !std::isfinite(temperature)) {
+        throw std::runtime_error(
+            "rachford_rice2_t::build_result: pressure or temperature is not finite; "
+            "likely a logic error — build_result was called after construction with "
+            "given K_values without valid P and T");
+    }
     const Eigen::VectorXd& molar_fraction = fluid->get_molar_fraction();
 
     rachford_rice_result_t result;
