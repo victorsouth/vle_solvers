@@ -99,6 +99,10 @@ public:
     /// @brief Запоминает флюид, термобарические условия. Предподсчитывает K_values
     rachford_rice2_t(const fluid_t* fluid, double pressure, double temperature,
         double vapor_fraction_initial = std::numeric_limits<double>::quiet_NaN());
+    /// @brief Запоминает флюид и заданный вектор K_i. Не вызывает get_K_values.
+    rachford_rice2_t(const fluid_t* fluid,
+        const Eigen::VectorXd& K_values,
+        double vapor_fraction_initial = std::numeric_limits<double>::quiet_NaN());
     /// @brief Уравнение Речфорда-Райса 
     /// @param split Доля газа
     /// @return Невязка
