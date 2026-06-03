@@ -423,6 +423,19 @@ double fluid_composition_functions_t::get_pseudocritical_pressure() const
     return result;
 }
 
+double fluid_composition_functions_t::get_pseudocritical_molar_volume() const
+{
+    size_t components_count = composition.get_components_count();
+    auto molar_fraction = composition.get_molar_fraction();
+    const auto& components = composition.get_components();
+
+    double result = 0;
+    for (size_t index = 0; index < components_count; ++index) {
+        result += components[index]->critical_molarvolume * molar_fraction(index);
+    }
+    return result;
+}
+
 double fluid_composition_functions_t::get_molar_volume_vapor(double pressure, double temperature) const
 {
     auto molar_fraction = composition.get_molar_fraction();

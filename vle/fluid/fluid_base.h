@@ -443,6 +443,9 @@ public:
     /// @brief Расчет (псевдо)критического давления
     /// @return Псевдо(еритическое) давление
     double get_pseudocritical_pressure() const;
+    /// @brief Возвращает псевдокритический мольный объём
+    /// - средний критический мольный объём, взвешенный по концентрациям
+    double get_pseudocritical_molar_volume() const;
     /// Возвращает мольный объем флюида, считая, что он находится в газообразном состоянии
     double get_molar_volume_vapor(double pressure, double temperature) const;
     /// Возвращает мольный объем флюида, считая, что он находится в жидком состоянии
