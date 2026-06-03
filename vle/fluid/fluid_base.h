@@ -625,6 +625,9 @@ public:
         const Eigen::VectorXd& components_concentration,
         const Eigen::MatrixXd& binary_coeffs);
 
+    /// @brief Метод должен возврщать true для идеального газа и false для флюидов с другими EOS
+    virtual bool is_ideal_gas() const = 0;
+
     virtual ~fluid_t() = default;
 };
 
