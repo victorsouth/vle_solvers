@@ -69,6 +69,9 @@
     <ClCompile Include="..\vle\fluid\solvers\rachford_rice.cpp">
       <Filter>Source Files\Fluid\Solvers</Filter>
     </ClCompile>
+    <ClCompile Include="..\vle\fluid\solvers\rachford_rice_am.cpp">
+      <Filter>Source Files\Fluid\Solvers</Filter>
+    </ClCompile>
     <ClCompile Include="..\vle\fluid\solvers\uv_flash.cpp">
       <Filter>Source Files\Fluid\Solvers</Filter>
     </ClCompile>
@@ -129,6 +132,9 @@
       <Filter>Header Files\Fluid\Solvers</Filter>
     </ClInclude>
     <ClInclude Include="..\vle\fluid\solvers\rachford_rice.h">
+      <Filter>Header Files\Fluid\Solvers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vle\fluid\solvers\rachford_rice_am.h">
       <Filter>Header Files\Fluid\Solvers</Filter>
     </ClInclude>
     <ClInclude Include="..\vle\fluid\solvers\uv_flash.h">

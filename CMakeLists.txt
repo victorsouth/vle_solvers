@@ -71,6 +71,7 @@ set(SOURCE_FLUID
 set(HEADER_FLUID_SOLVERS
     vle/fluid/solvers/ph_flash.h
     vle/fluid/solvers/rachford_rice.h
+    vle/fluid/solvers/rachford_rice_am.h
     vle/fluid/solvers/uv_flash.h
     vle/fluid/solvers/phase_boundaries.h
 )
@@ -78,6 +79,7 @@ set(HEADER_FLUID_SOLVERS
 set(SOURCE_FLUID_SOLVERS
     vle/fluid/solvers/ph_flash.cpp
     vle/fluid/solvers/rachford_rice.cpp
+    vle/fluid/solvers/rachford_rice_am.cpp
     vle/fluid/solvers/uv_flash.cpp
 )
 
