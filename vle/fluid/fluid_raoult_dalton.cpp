@@ -252,7 +252,6 @@ const vlelib::flash_calculation_result_t fluid_rault_dalton_t::flash_vapor_only(
     }
 
     result.z_factor.vapor = 1.0;
-    result.z_factor.mix = 1.0;
 
     result.fluid_liquid = nullptr;
     result.fluid_vapor = create_copy(false);
