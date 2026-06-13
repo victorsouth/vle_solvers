@@ -125,6 +125,12 @@ public:
     rachford_rice_result_t build_result(double vapor_split) const;
     /// @brief Решение уравнения Речфорда-Райса
     fixed_solver_result_t<1> solve(fixed_solver_result_analysis_t<1>* solver_analysis = nullptr);
+    /// @brief Попытка найти вырожденное решение V=0 или V=1 без численного solve.
+    /// @return 0.0, 1.0 или NaN, если двухфазный корень возможен.
+    double try_nonphysical_solve() const;
+    /// @brief Решение RR с быстрым возвратом вырожденных V=0/V=1.
+    fixed_solver_result_t<1> solve_physical_constrained(
+        fixed_solver_result_analysis_t<1>* solver_analysis = nullptr);
 };
 
 }

@@ -27,6 +27,7 @@
     <ClInclude Include="..\testing\test_bips.h" />
     <ClInclude Include="..\testing\test_bips_verification.h" />
     <ClInclude Include="..\testing\test_fluid.h" />
+    <ClInclude Include="..\testing\test_rachford_physical_constrained.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

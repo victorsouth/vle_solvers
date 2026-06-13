@@ -199,5 +199,43 @@ fixed_solver_result_t<1> rachford_rice2_t::solve(fixed_solver_result_analysis_t<
     return solver_result;
 }
 
+double rachford_rice2_t::try_nonphysical_solve() const
+{
+    auto [k_min, k_max] = get_k_boundaries();
+
+    if (k_max < 1.0) {
+        return 0.0;
+    }
+    if (k_min > 1.0) {
+        return 1.0;
+    }
+
+    const auto& molar_fraction = fluid->get_molar_fraction();
+    double f0 = rr_equation(0.0, molar_fraction, K_values);
+    double f1 = rr_equation(1.0, molar_fraction, K_values);
+
+    if (f0 > 0.0 && f1 > 0.0) {
+        return 1.0;
+    }
+    if (f0 < 0.0 && f1 < 0.0) {
+        return 0.0;
+    }
+
+    double result = std::numeric_limits<double>::quiet_NaN();
+    return result;
+}
+
+fixed_solver_result_t<1> rachford_rice2_t::solve_physical_constrained(
+    fixed_solver_result_analysis_t<1>* solver_analysis)
+{
+    double V = try_nonphysical_solve();
+    if (!std::isnan(V)) {
+        fixed_solver_result_t<1> result;
+        result.argument = V;
+        result.result_code = numerical_result_code_t::Converged;
+        return result;
+    }
+    return solve(solver_analysis);
+}
 
 }
