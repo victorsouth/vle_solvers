@@ -235,7 +235,15 @@ fixed_solver_result_t<1> rachford_rice2_t::solve_physical_constrained(
         result.result_code = numerical_result_code_t::Converged;
         return result;
     }
-    return solve(solver_analysis);
+    else {
+        fixed_solver_result_t<1> result;
+        result = solve(solver_analysis);
+        if (result.result_code == numerical_result_code_t::Converged) {
+            // срезка до физичного диапазона [0, 1]
+            result.argument = std::min(1.0, std::max(0.0, result.argument));
+        }
+        return result;
+    }
 }
 
 }
