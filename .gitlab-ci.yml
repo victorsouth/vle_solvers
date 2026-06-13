@@ -169,6 +169,8 @@ MinGW_build:
   stage: Build
   tags:
     - ktk-dev-build
+  rules:
+    - when: manual
   script:
     - !reference [.load_branches_ps, script]
     - git clone https://gitlab-ci-token:${CI_FIXED_SOLVERS_TOKEN}@git.ktk.gubkin.ru/solvers/fixed_solvers.git --depth 1 -b $env:FIXED_SOLVERS_BRANCH
