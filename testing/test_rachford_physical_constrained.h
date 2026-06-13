@@ -39,8 +39,8 @@ TEST(RachfordRicePhysicalConstrained, ReturnsVapor_WhenKValuesAboveOne)
     EXPECT_DOUBLE_EQ(V, 1.0);
 }
 
-/// @brief Возвращает 0.0 при одинаковом положительном знаке граничных невязок.
-TEST(RachfordRicePhysicalConstrained, ReturnsZero_WhenBoundaryResidualsHaveSamePositiveSign)
+/// @brief Возвращает 1.0 при одинаковом положительном знаке граничных невязок.
+TEST(RachfordRicePhysicalConstrained, ReturnsVapor_WhenBoundaryResidualsHaveSamePositiveSign)
 {
     // Arrange: z=[0.1, 0.9], K=[0.2, 2.0]; F(0)=0.82>0, F(1)=0.05>0
     auto [fluid, rr] = make_rr_with_k_values({ 0.1, 0.9 }, { 0.2, 2.0 });
@@ -53,14 +53,14 @@ TEST(RachfordRicePhysicalConstrained, ReturnsZero_WhenBoundaryResidualsHaveSameP
     // Act: быстрый путь без численного solve
     double V = rr.try_nonphysical_solve();
 
-    // Assert: F(0)>0, F(1)>0 — корня в (0, 1) нет, жидкость
+    // Assert: F(0)>0, F(1)>0 — корня в (0, 1) нет, однофазный пар
     ASSERT_GT(f0, 0.0);
     ASSERT_GT(f1, 0.0);
-    EXPECT_DOUBLE_EQ(V, 0.0);
+    EXPECT_DOUBLE_EQ(V, 1.0);
 }
 
-/// @brief Возвращает 1.0 при одинаковом отрицательном знаке граничных невязок.
-TEST(RachfordRicePhysicalConstrained, ReturnsOne_WhenBoundaryResidualsHaveSameNegativeSign)
+/// @brief Возвращает 0.0 при одинаковом отрицательном знаке граничных невязок.
+TEST(RachfordRicePhysicalConstrained, ReturnsLiquid_WhenBoundaryResidualsHaveSameNegativeSign)
 {
     // Arrange: z=[0.9, 0.1], K=[0.5, 1.5]; F(0)=-0.4<0, F(1)<0
     auto [fluid, rr] = make_rr_with_k_values({ 0.9, 0.1 }, { 0.5, 1.5 });
@@ -73,10 +73,10 @@ TEST(RachfordRicePhysicalConstrained, ReturnsOne_WhenBoundaryResidualsHaveSameNe
     // Act: быстрый путь без численного solve
     double V = rr.try_nonphysical_solve();
 
-    // Assert: F(0)<0, F(1)<0 — корня в (0, 1) нет, пар
+    // Assert: F(0)<0, F(1)<0 — корня в (0, 1) нет, однофазная жидкость
     ASSERT_LT(f0, 0.0);
     ASSERT_LT(f1, 0.0);
-    EXPECT_DOUBLE_EQ(V, 1.0);
+    EXPECT_DOUBLE_EQ(V, 0.0);
 }
 
 /// @brief Возвращает NaN, если на границах невязки разных знаков (двухфазный корень).
