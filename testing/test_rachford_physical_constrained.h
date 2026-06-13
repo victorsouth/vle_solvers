@@ -1,14 +1,15 @@
 #pragma once
 
 /// @brief Создаёт rachford_rice2_t с заданным составом z и явным вектором K.
-std::pair<std::unique_ptr<vlelib::fluid_rault_dalton_t>, vlelib::rachford_rice2_t>
-make_rr_with_k_values(const std::vector<double>& z, const std::vector<double>& K)
+std::pair<
+    std::unique_ptr<vlelib::fluid_rault_dalton_t>, 
+    vlelib::rachford_rice2_t
+> make_rr_with_k_values(const std::vector<double>& z, const std::vector<double>& K)
 {
     std::vector<std::wstring> components = { L"CH4", L"C2H6" };
     auto fluid = components_database.create_fluid<vlelib::fluid_rault_dalton_t>(components, z);
-    Eigen::VectorXd K_values(2);
-    K_values(0) = K[0];
-    K_values(1) = K[1];
+    Eigen::VectorXd K_values = Eigen::VectorXd::Map(
+        K.data(), static_cast<Eigen::Index>(K.size()));
     vlelib::rachford_rice2_t rr(fluid.get(), K_values);
     return { std::move(fluid), std::move(rr) };
 }
