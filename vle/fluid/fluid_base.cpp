@@ -66,7 +66,6 @@ void flash_calculation_result_t::invalidate_calculation()
     liquid_volume_shift_mix = std::numeric_limits<double>::quiet_NaN();
     z_factor.liquid = std::numeric_limits<double>::quiet_NaN();
     z_factor.vapor = std::numeric_limits<double>::quiet_NaN();
-    z_factor.mix = std::numeric_limits<double>::quiet_NaN();
 }
 
 

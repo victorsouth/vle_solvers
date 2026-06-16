@@ -74,6 +74,9 @@ public:
         return std::move(result);
     }
 public:
+    /// @brief Возврщает true - модель Рауля-Дальтона подразумевает идеальный газ
+    virtual bool is_ideal_gas() const override { return true; }
+
     /// @brief Вектор плотностей газа. Идеально-газовый расчет
     virtual Eigen::VectorXd get_densities_vapor(double pressure, double temperature) const override
     {
