@@ -97,7 +97,7 @@ public:
             numerical_result = &res;
 
         fixed_bisectional_parameters_t p;
-        p.argument_limit_min = 10;
+        p.argument_limit_min = 2;
         p.argument_limit_max = 5000;
         // correcting limits by estimation if applicable
         if (std::isfinite(initial_temperature)) {
