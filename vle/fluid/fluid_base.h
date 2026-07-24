@@ -2,6 +2,42 @@
 
 namespace vlelib {
 ;
+
+/// @brief Сохраняет вектор в поток
+/// @param os выходной поток
+/// @param v вектор для сохранения
+/// @return ссылка на поток
+template <typename T>
+inline std::ostream& save_vector(std::ostream& os, const std::vector<T>& v) {
+    os << v.size() << '\n';
+    os.precision(12);
+    for (auto val : v) {
+        os << std::setprecision(12)<< val << '\n';
+    }
+    return os << '\n';
+}
+
+/// @brief Загружает вектор из потока
+/// @param is входной поток
+/// @param v вектор для загрузки
+/// @return ссылка на поток
+template <typename T>
+inline std::istream& load_vector(std::istream& is, std::vector<T>& v) {
+    size_t v_size;
+    is >> v_size;
+    if (is.fail()) {
+        throw std::runtime_error("bad v_size");
+    }
+    v.resize(v_size);
+    for (auto& val : v) {
+        is >> val;
+    }
+    if (is.fail()) {
+        throw std::runtime_error("v read error");
+    }
+    return is;
+}
+
 /// @brief Состояние флюида и flash-расчета
 struct fluid_state_t {
     /// @brief Концентрации
@@ -19,7 +55,7 @@ struct fluid_state_t {
         std::string str;
         stream>>str;
         if(str!=vle_solvers::get_class_as_string(*this))throw std::logic_error("wrong type:"+str);
-        fixed_solvers::load_vector(stream,concentration);
+        vlelib::load_vector(stream,concentration);
         stream>>flash>>pressure>>temperature;
         /// вызываем исключение в случае неудачного чтения из потока
         if(stream.fail()){
@@ -31,7 +67,8 @@ struct fluid_state_t {
     /// @param stream выходной поток
     virtual void serialize_text(std::ostream& stream)const{
         stream<< vle_solvers::get_class_as_string(*this)<<std::endl;
-        fixed_solvers::save_vector(stream,concentration);
+        stream.precision(12);
+        vlelib::save_vector(stream,concentration);
         stream<<flash<<' '<<pressure<<' '<<temperature<<'\n';
     }
     virtual ~fluid_state_t() = default;
