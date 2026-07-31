@@ -43,6 +43,16 @@ struct amounts_per_two_phases_t {
     double vapor{ std::numeric_limits<double>::quiet_NaN() };
 };
 
+/// @brief Псевдокритические свойства смеси (Kay): P, T, мольный объём.
+struct fluid_pseudocritical_properties_t {
+    /// @brief Псевдокритическое давление.
+    double pressure = std::numeric_limits<double>::quiet_NaN();
+    /// @brief Псевдокритическая температура.
+    double temperature = std::numeric_limits<double>::quiet_NaN();
+    /// @brief Псевдокритический мольный объём.
+    double molar_volume = std::numeric_limits<double>::quiet_NaN();
+};
+
 
 /// @brief Величины в мольном и массовом выражении
 struct amounts_molar_and_mass {

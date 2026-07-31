@@ -446,6 +446,8 @@ public:
     /// @brief Возвращает псевдокритический мольный объём
     /// - средний критический мольный объём, взвешенный по концентрациям
     double get_pseudocritical_molar_volume() const;
+    /// @brief Псевдокритические свойства смеси (Kay): давление, температура, мольный объём
+    fluid_pseudocritical_properties_t get_pseudocritical_properties() const;
     /// Возвращает мольный объем флюида, считая, что он находится в газообразном состоянии
     double get_molar_volume_vapor(double pressure, double temperature) const;
     /// Возвращает мольный объем флюида, считая, что он находится в жидком состоянии

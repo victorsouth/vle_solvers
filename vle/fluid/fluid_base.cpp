@@ -435,6 +435,16 @@ double fluid_composition_functions_t::get_pseudocritical_molar_volume() const
     return result;
 }
 
+fluid_pseudocritical_properties_t fluid_composition_functions_t::get_pseudocritical_properties() const
+{
+    fluid_pseudocritical_properties_t result{
+        get_pseudocritical_pressure(),
+        get_pseudocritical_temperature(),
+        get_pseudocritical_molar_volume(),
+    };
+    return result;
+}
+
 double fluid_composition_functions_t::get_molar_volume_vapor(double pressure, double temperature) const
 {
     auto molar_fraction = composition.get_molar_fraction();
