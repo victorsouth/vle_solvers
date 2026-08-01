@@ -64,6 +64,7 @@
     <ClCompile Include="..\vle\fluid\fluid_raoult_dalton.cpp" />
     <ClCompile Include="..\vle\fluid\solvers\ph_flash.cpp" />
     <ClCompile Include="..\vle\fluid\solvers\rachford_rice.cpp" />
+    <ClCompile Include="..\vle\fluid\solvers\rachford_rice_am.cpp" />
     <ClCompile Include="..\vle\fluid\solvers\uv_flash.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -85,6 +86,7 @@
     <ClInclude Include="..\vle\fluid\solvers\ph_flash.h" />
     <ClInclude Include="..\vle\fluid\solvers\phase_boundaries.h" />
     <ClInclude Include="..\vle\fluid\solvers\rachford_rice.h" />
+    <ClInclude Include="..\vle\fluid\solvers\rachford_rice_am.h" />
     <ClInclude Include="..\vle\fluid\solvers\uv_flash.h" />
     <ClInclude Include="..\vle\helpers\physical_helpers.h" />
   </ItemGroup>
