@@ -22,6 +22,7 @@ inline void print_errors(const std::wstring& prefix, double a, double b, double 
 #include "test_bips.h"
 #include "test_bips_verification.h"
 #include "test_fluid.h"
+#include "test_rachford_physical_constrained.h"
 
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);

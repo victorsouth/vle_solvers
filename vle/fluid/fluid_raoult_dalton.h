@@ -18,7 +18,8 @@ public:
     fluid_rault_dalton_t(const fluid_rault_dalton_t& other)
         : fluid_t(other)
     {
-        /*if (other.last_flash_result.has_integrity) {
+        /*if (std::isfinite(other.last_flash_result.pressure)
+            && std::isfinite(other.last_flash_result.temperature)) {
         last_flash_result = other.last_flash_result;
         }*/
     }

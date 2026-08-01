@@ -136,15 +136,15 @@ enum class state_of_matter_t { Undefined, Gas, Liquid, TwoPhase, Critical };
 
 /// @brief Результаты flash-расчета
 struct flash_calculation_result_t {
-    /// @brief Целостность данных
-    bool has_integrity{ false };
     /// @brief Паровая фаза
     std::shared_ptr<fluid_t> fluid_vapor;
     /// @brief Жидкая фаза
     std::shared_ptr<fluid_t> fluid_liquid;
-    /// @brief Давление последнего расчета (мемоизация)
+    /// @brief Давление последнего расчета (мемоизация).
+    /// NaN означает, что результат невалиден / не рассчитан.
     double pressure{ std::numeric_limits<double>::quiet_NaN() };
-    /// @brief Температура последнего расчета (мемоизация)
+    /// @brief Температура последнего расчета (мемоизация).
+    /// NaN означает, что результат невалиден / не рассчитан.
     double temperature{ std::numeric_limits<double>::quiet_NaN() };
     /// @brief Молярная масса смеси, молярная масса газовой фазы (на 1 моль газа), молярная масса жидкой фазы (на один моль жидкости)
     amounts_per_phase molar_mass;
@@ -196,10 +196,10 @@ struct flash_calculation_result_t {
     /// @brief Возвращает массовую долю остатка
     double get_liquid_mass_fraction() const;
 
-    /// @brief Проверяет несколько условий для принятия решения, что результат сформирован (является валидным)
+    /// @brief Проверяет, что результат сформирован и совпадает с заданными P, T
     /// @param _pressure Давление должно совпасть с давлением флюида
     /// @param _temperature Температура должно совпасть с температурой флюида
-    /// @result Также проверяется has_integrity и конечность давления и температуры флюида
+    /// @result Валидность кодируется конечностью pressure и temperature (NaN — невалидно)
     bool was_calculated(double _pressure, double _temperature) const;
     /// @brief Состояние флюида делается невалидным
     void invalidate_calculation();
@@ -443,6 +443,11 @@ public:
     /// @brief Расчет (псевдо)критического давления
     /// @return Псевдо(еритическое) давление
     double get_pseudocritical_pressure() const;
+    /// @brief Возвращает псевдокритический мольный объём
+    /// - средний критический мольный объём, взвешенный по концентрациям
+    double get_pseudocritical_molar_volume() const;
+    /// @brief Псевдокритические свойства смеси (Kay): давление, температура, мольный объём
+    fluid_pseudocritical_properties_t get_pseudocritical_properties() const;
     /// Возвращает мольный объем флюида, считая, что он находится в газообразном состоянии
     double get_molar_volume_vapor(double pressure, double temperature) const;
     /// Возвращает мольный объем флюида, считая, что он находится в жидком состоянии
