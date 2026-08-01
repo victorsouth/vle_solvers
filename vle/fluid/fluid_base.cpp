@@ -49,8 +49,6 @@ double flash_calculation_result_t::get_liquid_mass_fraction() const
 
 bool flash_calculation_result_t::was_calculated(double _pressure, double _temperature) const
 {
-    if (!has_integrity)
-        return false;
     if (!std::isfinite(pressure) || !std::isfinite(temperature))
         return false;
     return pressure == _pressure && temperature == _temperature;
@@ -59,7 +57,6 @@ bool flash_calculation_result_t::was_calculated(double _pressure, double _temper
 
 void flash_calculation_result_t::invalidate_calculation()
 {
-    has_integrity = false;
     pressure = std::numeric_limits<double>::quiet_NaN();
     temperature = std::numeric_limits<double>::quiet_NaN();
     k_value.clear();
