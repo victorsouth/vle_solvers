@@ -101,7 +101,8 @@ void fill_concentration_from_fluid(fluid_t* fluid, vector<double>* vector_concen
 
 /// @brief Нормировка концентраций
 /// @param molar_fraction Вектор концентраций
-void normalize_concentration(Eigen::VectorXd& molar_fraction);
+/// @param min_sum_threshold Порог минимальной суммы для нормировки
+void normalize_concentration(Eigen::VectorXd& molar_fraction, double min_sum_threshold = 1e-8);
 
 
 Eigen::VectorXd get_fracs_as_VectorXd(const vector<double>& amounts);
