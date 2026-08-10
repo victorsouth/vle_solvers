@@ -48,12 +48,17 @@ public:
 public:
 
     /// @brief Создаёт флюид с пересчётом матрицы бинарных коэффициентов взаимодействия.
-    template <typename Fluid>
+    /// @tparam ExtraArgs Опциональный хвост конструктора Fluid (например, `peng_robinson_settings_t` для PR).
+    template <typename Fluid, typename... ExtraArgs>
     inline std::unique_ptr<Fluid> create_fluid(const std::vector<std::wstring>& component_list
         , const std::vector<double>& molar_fractions = std::vector<double>()
         , const bip_estimation_plan_t& bip_recalc_plan = bip_estimation_plan_t()
+        , ExtraArgs&&... extra_args
     ) const
     {
+        static_assert(sizeof...(ExtraArgs) <= 1,
+            "thermo_db_t::create_fluid: at most one extra constructor argument is supported");
+
         // Заложим на будущее
         // static_assert(
         //     std::is_same_v<Fluid, vlelib::fluid_peng_robinson_t>,
@@ -80,10 +85,18 @@ public:
                 molar_fractions.data(),
                 molar_fractions.size()
             );
-            return std::make_unique<Fluid>(components_local, fractions, binary_coeffs_local);
+            return std::make_unique<Fluid>(
+                components_local,
+                fractions,
+                binary_coeffs_local,
+                std::forward<ExtraArgs>(extra_args)...);
         }
         else {
-            return std::make_unique<Fluid>(components_local, Eigen::VectorXd(), binary_coeffs_local);
+            return std::make_unique<Fluid>(
+                components_local,
+                Eigen::VectorXd(),
+                binary_coeffs_local,
+                std::forward<ExtraArgs>(extra_args)...);
         }
 
     }

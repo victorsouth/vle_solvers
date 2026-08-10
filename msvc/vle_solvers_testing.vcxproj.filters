@@ -35,5 +35,8 @@
     <ClInclude Include="..\testing\test_fluid.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\testing\test_rachford_physical_constrained.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
