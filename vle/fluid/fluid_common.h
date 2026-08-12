@@ -43,6 +43,16 @@ struct amounts_per_two_phases_t {
     double vapor{ std::numeric_limits<double>::quiet_NaN() };
 };
 
+/// @brief Псевдокритические свойства смеси (Kay): P, T, мольный объём.
+struct fluid_pseudocritical_properties_t {
+    /// @brief Псевдокритическое давление.
+    double pressure = std::numeric_limits<double>::quiet_NaN();
+    /// @brief Псевдокритическая температура.
+    double temperature = std::numeric_limits<double>::quiet_NaN();
+    /// @brief Псевдокритический мольный объём.
+    double molar_volume = std::numeric_limits<double>::quiet_NaN();
+};
+
 
 /// @brief Величины в мольном и массовом выражении
 struct amounts_molar_and_mass {
@@ -91,7 +101,8 @@ void fill_concentration_from_fluid(fluid_t* fluid, vector<double>* vector_concen
 
 /// @brief Нормировка концентраций
 /// @param molar_fraction Вектор концентраций
-void normalize_concentration(Eigen::VectorXd& molar_fraction);
+/// @param min_sum_threshold Порог минимальной суммы для нормировки
+void normalize_concentration(Eigen::VectorXd& molar_fraction, double min_sum_threshold = 1e-8);
 
 
 Eigen::VectorXd get_fracs_as_VectorXd(const vector<double>& amounts);

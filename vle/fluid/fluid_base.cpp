@@ -49,8 +49,6 @@ double flash_calculation_result_t::get_liquid_mass_fraction() const
 
 bool flash_calculation_result_t::was_calculated(double _pressure, double _temperature) const
 {
-    if (!has_integrity)
-        return false;
     if (!std::isfinite(pressure) || !std::isfinite(temperature))
         return false;
     return pressure == _pressure && temperature == _temperature;
@@ -59,13 +57,14 @@ bool flash_calculation_result_t::was_calculated(double _pressure, double _temper
 
 void flash_calculation_result_t::invalidate_calculation()
 {
-    has_integrity = false;
     pressure = std::numeric_limits<double>::quiet_NaN();
     temperature = std::numeric_limits<double>::quiet_NaN();
     k_value.clear();
     liquid_volume_shift_mix = std::numeric_limits<double>::quiet_NaN();
     z_factor.liquid = std::numeric_limits<double>::quiet_NaN();
     z_factor.vapor = std::numeric_limits<double>::quiet_NaN();
+    fluid_vapor.reset();
+    fluid_liquid.reset();
 }
 
 
@@ -419,6 +418,29 @@ double fluid_composition_functions_t::get_pseudocritical_pressure() const
     for (size_t index = 0; index < components_count; ++index) {
         result += components[index]->critical_pressure * molar_fraction(index);
     }
+    return result;
+}
+
+double fluid_composition_functions_t::get_pseudocritical_molar_volume() const
+{
+    size_t components_count = composition.get_components_count();
+    auto molar_fraction = composition.get_molar_fraction();
+    const auto& components = composition.get_components();
+
+    double result = 0;
+    for (size_t index = 0; index < components_count; ++index) {
+        result += components[index]->critical_molarvolume * molar_fraction(index);
+    }
+    return result;
+}
+
+fluid_pseudocritical_properties_t fluid_composition_functions_t::get_pseudocritical_properties() const
+{
+    fluid_pseudocritical_properties_t result{
+        get_pseudocritical_pressure(),
+        get_pseudocritical_temperature(),
+        get_pseudocritical_molar_volume(),
+    };
     return result;
 }
 

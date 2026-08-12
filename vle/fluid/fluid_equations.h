@@ -3,6 +3,7 @@
 
 
 #include "solvers/rachford_rice.h"
+#include "solvers/rachford_rice_am.h"
 #include "solvers/ph_flash.h"
 #include "solvers/phase_boundaries.h"
 #include "solvers/uv_flash.h"
