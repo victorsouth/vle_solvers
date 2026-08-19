@@ -177,6 +177,8 @@ struct flash_calculation_result_t {
     amounts_molar_and_mass enthalpy;
     /// @brief Внутренняя энергия для газа, жидкости (по массе и по молям)
     amounts_molar_and_mass inner_energy;
+    /// @brief Энтропия пара, жидкости, смеси (по массе и по молям)
+    amounts_molar_and_mass entropy;
     /// @brief Смесевой объёмный сдвиг жидкости sum_i x_i dv_i (м^3/моль): тот же состав x,
     ///        что при расчёте molar_volume.liquid в PR flash
     double liquid_volume_shift_mix{ std::numeric_limits<double>::quiet_NaN() };
