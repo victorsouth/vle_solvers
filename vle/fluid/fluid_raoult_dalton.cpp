@@ -698,8 +698,7 @@ std::pair<double, double> fluid_rault_dalton_t::fill_volume_with_total_moles2(
         double initial_temp = std::isfinite(initial_temperature) ? initial_temperature : Tliq;
 
         double min_temperature = vlelib::get_min_antoine_bound(this);
-        double pressure = 1e5; // для идеального газа не зависит от давления, берем любое
-        if (get_inner_energy_as_vapor<AmountType::Molar>(pressure, min_temperature) < inner_energy_molar) {
+        if (get_ideal_gas_inner_energy<AmountType::Molar>(min_temperature) < inner_energy_molar) {
             /*double Tgas2 = estimate_temperature_for_inner_energy<AmountType::Molar>(
                 this, inner_energy_molar, initial_temp, 1e5);*/
 
