@@ -452,15 +452,6 @@ public:
     double get_molar_volume_vapor(double pressure, double temperature) const;
     /// Возвращает мольный объем флюида, считая, что он находится в жидком состоянии
     double get_molar_volume_liquid(double pressure, double temperature) const;
-    /// @brief Термодинамическая энтальпия смеси в предположении газообразного фазового сосотояния
-    /// @param pressure Игнорируется, реализация для идеального газа
-    double get_enthalpy_td_mass_as_vapor(double /*pressure*/, double temperature) const;
-    /// @brief Термодинамическая энтальпия смеси в предположении жидкофазного сосотояния
-    /// @param pressure Игнорируется, реализация для идеального газа
-    double get_enthalpy_td_mass_as_liquid(double pressure, double temperature) const;
-    /// @brief Расчет удельной мольной внутренней в предположении, что вся смесь в паровом фазовом состоянии
-    template <AmountType amount_type>
-    double get_inner_energy_as_vapor(double pressure, double temperature) const;
     /// @brief Возвращает среднюю по составу минимальную температурную границу
     /// области определения модели давления насыщенных паров Антуана
     /// Средняя берется по коцентрациям компонентов в составе
@@ -469,6 +460,15 @@ public:
     /// области определения модели давления насыщенных паров Антуана
     /// Средняя берется по коцентрациям компонентов в составе
     double get_max_antoine_bound() const;
+    /// @brief Идеально-газовая энтальпия смеси по текущему составу.
+    template <AmountType amount_type>
+    double get_ideal_gas_enthalpy(double temperature) const;
+    /// @brief Идеально-газовая энтропия смеси по текущему составу.
+    template <AmountType amount_type>
+    double get_ideal_gas_entropy(double temperature) const;
+    /// @brief Идеально-газовая внутренняя энергия смеси по текущему составу.
+    template <AmountType amount_type>
+    double get_ideal_gas_inner_energy(double temperature) const;
 
 };
 
