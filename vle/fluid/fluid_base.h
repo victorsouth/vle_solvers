@@ -465,9 +465,12 @@ public:
     /// @brief Идеально-газовая энтальпия смеси по текущему составу.
     template <AmountType amount_type>
     double get_ideal_gas_enthalpy(double temperature) const;
-    /// @brief Идеально-газовая энтропия смеси по текущему составу.
+    /// @brief Идеально-газовая энтропия смеси S^0 по текущему составу (Савельев 5.7):
+    ///     Σ y_i S_i(T) - R Σ y_i ln y_i - R ln(P/P°), P° = ATMOSPHERIC_PRESSURE.
+    /// @param pressure Давление, Па.
+    /// @param temperature Температура, K.
     template <AmountType amount_type>
-    double get_ideal_gas_entropy(double temperature) const;
+    double get_ideal_gas_entropy(double pressure, double temperature) const;
     /// @brief Идеально-газовая внутренняя энергия смеси по текущему составу.
     template <AmountType amount_type>
     double get_ideal_gas_inner_energy(double temperature) const;
