@@ -507,23 +507,34 @@ double fluid_composition_functions_t::get_ideal_gas_enthalpy(double temperature)
 
 
 template <AmountType amount_type>
-double fluid_composition_functions_t::get_ideal_gas_entropy(double temperature) const
+double fluid_composition_functions_t::get_ideal_gas_entropy(
+    double pressure, double temperature) const
 {
+    // S^0 = Σ y_i S_i(T) - R Σ y_i ln y_i - R ln(P/P°); Савельев (5.7)
     const auto& components = composition.get_components();
     size_t components_count = composition.get_components_count();
     auto molar_fraction = composition.get_molar_fraction();
 
-    Eigen::VectorXd values(components_count);
-    for (int i = 0; i < values.size(); ++i) {
-        if constexpr (amount_type == AmountType::Mass)
-            values(i) = components[i]->get_entropy_gas_mass(temperature);
-        else
-            values(i) = components[i]->get_entropy_gas_molar(temperature);
+    double s_temperature = 0.0;
+    for (int i = 0; i < static_cast<int>(components_count); ++i) {
+        s_temperature += molar_fraction(i)
+            * components[i]->get_entropy_gas_molar(temperature);
     }
-    if constexpr (amount_type == AmountType::Mass)
-        return values.dot(get_mass_fraction());
-    else
-        return values.dot(molar_fraction);
+    double s_mix = 0.0;
+    for (int i = 0; i < molar_fraction.size(); ++i) {
+        if (molar_fraction(i) > 0.0) {
+            s_mix -= M_R * molar_fraction(i) * std::log(molar_fraction(i));
+        }
+    }
+    double s_ln_p = -M_R * std::log(pressure / ATMOSPHERIC_PRESSURE);
+    double s_molar = s_temperature + s_mix + s_ln_p;
+    if constexpr (amount_type == AmountType::Mass) {
+        double result = s_molar / get_molar_mass();
+        return result;
+    }
+    else {
+        return s_molar;
+    }
 }
 
 
@@ -795,8 +806,8 @@ double fluid_flash_functions_t::get_adiabatic_exponent(double pressure, double t
 
 template double fluid_composition_functions_t::get_ideal_gas_enthalpy<AmountType::Molar>(double temperature) const;
 template double fluid_composition_functions_t::get_ideal_gas_enthalpy<AmountType::Mass>(double temperature) const;
-template double fluid_composition_functions_t::get_ideal_gas_entropy<AmountType::Molar>(double temperature) const;
-template double fluid_composition_functions_t::get_ideal_gas_entropy<AmountType::Mass>(double temperature) const;
+template double fluid_composition_functions_t::get_ideal_gas_entropy<AmountType::Molar>(double pressure, double temperature) const;
+template double fluid_composition_functions_t::get_ideal_gas_entropy<AmountType::Mass>(double pressure, double temperature) const;
 template double fluid_composition_functions_t::get_ideal_gas_inner_energy<AmountType::Molar>(double temperature) const;
 template double fluid_composition_functions_t::get_ideal_gas_inner_energy<AmountType::Mass>(double temperature) const;
 
