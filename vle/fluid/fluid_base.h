@@ -465,6 +465,10 @@ public:
     /// @brief Идеально-газовая энтальпия смеси по текущему составу.
     template <AmountType amount_type>
     double get_ideal_gas_enthalpy(double temperature) const;
+    /// @brief Идеально-газовая теплоёмкость c_p^0 смеси по текущему составу:
+    /// Σ y_i c_{p,i}^{gas}(T). Всегда газовый полином (и для жидкой фазы flash).
+    template <AmountType amount_type>
+    double get_ideal_gas_heat_capacity(double temperature) const;
     /// @brief Идеально-газовая энтропия смеси S^0 по текущему составу (Савельев 5.7):
     ///     Σ y_i S_i(T) - R Σ y_i ln y_i - R ln(P/P°), P° = ATMOSPHERIC_PRESSURE.
     /// @param pressure Давление, Па.
