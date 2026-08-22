@@ -35,6 +35,15 @@ struct amounts_per_phase {
     double mix{ std::numeric_limits<double>::quiet_NaN() };
 };
 
+/// @brief Любые значения
+template <typename T>
+struct values_per_two_phases_t {
+    /// @brief Величина для жидкой фазы.
+    T liquid;
+    /// @brief Величина для паровой фазы.
+    T vapor;
+};
+
 /// @brief Скаляр по фазам (жидкость / пар): например Z или молярный объём, м^3/моль.
 struct amounts_per_two_phases_t {
     /// @brief Величина для жидкой фазы.
@@ -42,6 +51,7 @@ struct amounts_per_two_phases_t {
     /// @brief Величина для паровой фазы.
     double vapor{ std::numeric_limits<double>::quiet_NaN() };
 };
+
 
 /// @brief Псевдокритические свойства смеси (Kay): P, T, мольный объём.
 struct fluid_pseudocritical_properties_t {

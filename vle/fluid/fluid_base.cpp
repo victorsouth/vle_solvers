@@ -463,52 +463,11 @@ double fluid_composition_functions_t::get_molar_volume_liquid(double pressure, d
     return result;
 }
 
-double fluid_composition_functions_t::get_enthalpy_td_mass_as_vapor(double /*pressure*/, double temperature) const
-{
-    const auto& components = composition.get_components();
-    size_t components_count = composition.get_components_count();
-    auto molar_fraction = composition.get_molar_fraction();
-
-    Eigen::VectorXd result(components_count);
-    for (int index = 0; index < result.size(); ++index) {
-        result(index) = components[index]->get_enthalpy_gas<AmountType::Mass>(temperature);
-    }
-    return result.dot(molar_fraction);
-}
-
-double fluid_composition_functions_t::get_enthalpy_td_mass_as_liquid(double pressure, double temperature) const
-{
-    const auto& components = composition.get_components();
-    size_t components_count = composition.get_components_count();
-    auto molar_fraction = composition.get_molar_fraction();
-
-    Eigen::VectorXd result(components_count);
-    for (int index = 0; index < result.size(); ++index) {
-        result(index) = components[index]->get_enthalpy_liquid<AmountType::Mass>(pressure, temperature);
-    }
-    return result.dot(molar_fraction);
-}
 
 /// @brief Возвращает удельную внутренню энергию газа на заданную единицу вещества
 /// @tparam amount_type Используемые единицы количества вещества (мольные, массовые)
 /// @param pressure Давление
 /// @param temperature Температура
-template <AmountType amount_type>
-double fluid_composition_functions_t::get_inner_energy_as_vapor(double pressure, double temperature) const
-{
-    const auto& components = composition.get_components();
-    size_t components_count = composition.get_components_count();
-    auto molar_fraction = composition.get_molar_fraction();
-
-    Eigen::VectorXd result(components_count);
-    for (int index = 0; index < result.size(); ++index) {
-        result(index) = components[index]->get_inner_energy_gas<amount_type>(temperature);
-    }
-    if constexpr (amount_type == AmountType::Mass)
-            return result.dot(get_mass_fraction());
-    else
-    return result.dot(molar_fraction);
-}
 
 
 double fluid_composition_functions_t::get_max_antoine_bound() const
@@ -526,6 +485,74 @@ double fluid_composition_functions_t::get_max_antoine_bound() const
     // сколько бы ни было его в смеси
     double max = *std::min_element(max_antoine_bound.begin(), max_antoine_bound.end());
     return mean_max;
+}
+
+
+template <AmountType amount_type>
+double fluid_composition_functions_t::get_ideal_gas_enthalpy(double temperature) const
+{
+    const auto& components = composition.get_components();
+    size_t components_count = composition.get_components_count();
+    auto molar_fraction = composition.get_molar_fraction();
+
+    Eigen::VectorXd values(components_count);
+    for (int i = 0; i < values.size(); ++i) {
+        values(i) = components[i]->get_enthalpy_gas<amount_type>(temperature);
+    }
+    if constexpr (amount_type == AmountType::Mass)
+        return values.dot(get_mass_fraction());
+    else
+        return values.dot(molar_fraction);
+}
+
+
+template <AmountType amount_type>
+double fluid_composition_functions_t::get_ideal_gas_entropy(
+    double pressure, double temperature) const
+{
+    // S^0 = Σ y_i S_i(T) - R Σ y_i ln y_i - R ln(P/P°); Савельев (5.7)
+    const auto& components = composition.get_components();
+    size_t components_count = composition.get_components_count();
+    auto molar_fraction = composition.get_molar_fraction();
+
+    double s_temperature = 0.0;
+    for (int i = 0; i < static_cast<int>(components_count); ++i) {
+        s_temperature += molar_fraction(i)
+            * components[i]->get_entropy_gas_molar(temperature);
+    }
+    double s_mix = 0.0;
+    for (int i = 0; i < molar_fraction.size(); ++i) {
+        if (molar_fraction(i) > 0.0) {
+            s_mix -= M_R * molar_fraction(i) * std::log(molar_fraction(i));
+        }
+    }
+    double s_ln_p = -M_R * std::log(pressure / ATMOSPHERIC_PRESSURE);
+    double s_molar = s_temperature + s_mix + s_ln_p;
+    if constexpr (amount_type == AmountType::Mass) {
+        double result = s_molar / get_molar_mass();
+        return result;
+    }
+    else {
+        return s_molar;
+    }
+}
+
+
+template <AmountType amount_type>
+double fluid_composition_functions_t::get_ideal_gas_inner_energy(double temperature) const
+{
+    const auto& components = composition.get_components();
+    size_t components_count = composition.get_components_count();
+    auto molar_fraction = composition.get_molar_fraction();
+
+    Eigen::VectorXd values(components_count);
+    for (int i = 0; i < values.size(); ++i) {
+        values(i) = components[i]->get_inner_energy_gas<amount_type>(temperature);
+    }
+    if constexpr (amount_type == AmountType::Mass)
+        return values.dot(get_mass_fraction());
+    else
+        return values.dot(molar_fraction);
 }
 
 double fluid_composition_functions_t::get_min_antoine_bound() const
@@ -777,14 +804,12 @@ double fluid_flash_functions_t::get_adiabatic_exponent(double pressure, double t
     return get_heat_capacity_molar(pressure, temperature) / get_heat_capacity_isochoric(pressure, temperature);
 }
 
-/// @brief Специализация get_inner_energy_as_vapor для AmountType::Mass
-template double
-fluid_composition_functions_t::get_inner_energy_as_vapor<AmountType::Mass>
-(double pressure, double temperature) const;
-/// @brief Специализация get_inner_energy_as_vapor для AmountType::Molar
-template double
-fluid_composition_functions_t::get_inner_energy_as_vapor<AmountType::Molar>
-(double pressure, double temperature) const;
+template double fluid_composition_functions_t::get_ideal_gas_enthalpy<AmountType::Molar>(double temperature) const;
+template double fluid_composition_functions_t::get_ideal_gas_enthalpy<AmountType::Mass>(double temperature) const;
+template double fluid_composition_functions_t::get_ideal_gas_entropy<AmountType::Molar>(double pressure, double temperature) const;
+template double fluid_composition_functions_t::get_ideal_gas_entropy<AmountType::Mass>(double pressure, double temperature) const;
+template double fluid_composition_functions_t::get_ideal_gas_inner_energy<AmountType::Molar>(double temperature) const;
+template double fluid_composition_functions_t::get_ideal_gas_inner_energy<AmountType::Mass>(double temperature) const;
 
 /// @brief Специализация fluid_components_functions_t::get_enthalpy_liquid_by_components для AmountType::Mass
 template Eigen::VectorXd
