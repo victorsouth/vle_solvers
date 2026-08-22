@@ -69,7 +69,7 @@ public:
     /// \return невязка
     virtual function_type residuals(const var_type& x) override
     {
-        return given_enthalpy - fluid->get_enthalpy_td_mass(given_pressure, x);
+        return given_enthalpy - fluid->flash(given_pressure, x).enthalpy.mass.mix;
     }
     /// \brief
     /// конструктор desired_enthalpy
@@ -101,13 +101,13 @@ public:
         p.argument_limit_max = 5000;
         // correcting limits by estimation if applicable
         if (std::isfinite(initial_temperature)) {
-            double enthalpy_at_initial_temperature = fluid->get_enthalpy_td_mass(given_pressure, initial_temperature);
+            double enthalpy_at_initial_temperature = fluid->flash(given_pressure, initial_temperature).enthalpy.mass.mix;
             if (enthalpy_at_initial_temperature < given_enthalpy)p.argument_limit_min = initial_temperature;
             if (enthalpy_at_initial_temperature > given_enthalpy)p.argument_limit_max = initial_temperature;
         }
         double T_critical = fluid->get_pseudocritical_temperature();
         {
-            double enthalpy_at_critical_temperature = fluid->get_enthalpy_td_mass(given_pressure, T_critical);
+            double enthalpy_at_critical_temperature = fluid->flash(given_pressure, T_critical).enthalpy.mass.mix;
             if (enthalpy_at_critical_temperature < given_enthalpy)p.argument_limit_min = T_critical;
             if (enthalpy_at_critical_temperature > given_enthalpy)p.argument_limit_max = T_critical;
         }
@@ -613,8 +613,8 @@ double estimate_temperature_for_inner_energy(
     double initial_temperature = std::numeric_limits<double>::quiet_NaN(),
     double pressure = 1e5)
 {
-    auto get_inner_energy = [pressure](const fluid_t* fluid, double T) -> double {
-        return fluid->get_inner_energy_as_vapor<amount_type>(pressure, T);
+    auto get_inner_energy = [](const fluid_t* fluid, double T) -> double {
+        return fluid->get_ideal_gas_inner_energy<amount_type>(T);
     };
     
     vle_desired_fluid_function_equation eq(fluid, target_inner_energy, get_inner_energy);
@@ -663,8 +663,7 @@ double estimate_temperature_for_inner_energy_fixed(
     double initial_temperature = std::numeric_limits<double>::quiet_NaN())
 {
     auto get_inner_energy = [](const fluid_t* fluid, double T) -> double {
-        double pressure = 1e5; // для идеального газа не зависит от давления, берем любое
-        return fluid->get_inner_energy_as_vapor<amount_type>(pressure, T);
+        return fluid->get_ideal_gas_inner_energy<amount_type>(T);
         };
 
     vle_desired_fluid_function_equation_fixed eq(fluid, target_inner_energy, get_inner_energy);

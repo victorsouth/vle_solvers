@@ -23,18 +23,17 @@
 #include "physical_constants.h"
 
 #include "helpers/physical_helpers.h"
+#include "helpers/string_helpers.h"
 
 
 /// включение локали для чтения nan inf -inf
 #include <boost/math/special_functions/nonfinite_num_facets.hpp>
-#include <boost/type_index.hpp>
 #ifdef VLELIB_SERIALIZATION_SUPPORT
 #include <boost/archive/xml_iarchive.hpp>
 #include <boost/archive/xml_oarchive.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/vector.hpp>
 #endif
-
 
 
 

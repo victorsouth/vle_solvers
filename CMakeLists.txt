@@ -1,9 +1,12 @@
-﻿cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.10)
+if(POLICY CMP0091)
+    cmake_policy(SET CMP0091 NEW)
+endif()
 
 project(vle_solvers)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 message("CXX standard: " ${CMAKE_CXX_STANDARD})
 
@@ -11,13 +14,16 @@ if(MSVC)
     cmake_policy(SET CMP0167 NEW)
     add_compile_options("/MP")     # включает многопроцессорную компиляцию
     add_compile_options("/bigobj")
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 endif()
 if(MINGW)
     cmake_policy(SET CMP0167 NEW)
     add_compile_options("-Wa,-mbig-obj")
 endif()
 
+if(NOT TARGET fixed_solvers::fixed_solvers)
 find_package(fixed_solvers REQUIRED)
+endif()
 find_package(Boost REQUIRED COMPONENTS serialization)
 option(VLESOLVERS_WITH_PCH "Use Prcompiled Headers" ON)
 # Установка путей к файлам в папках в переменные
@@ -28,14 +34,24 @@ set(HEADER
 )
 
 set(HEADER_DB
+    vle/db/db_bip.h
+    vle/db/antoine_model.h
+    vle/db/component_properties.h
+    vle/db/fluid_stubdata.h
+    vle/db/thermo_db.h
+    vle/db/td_functions.h
     vle/db/tdb_serialize_common.h
     vle/db/tdb_serialize_2026_02_02.h
 )
 
 set(SOURCE_DB
-    vle/db/components_db.cpp
+    vle/db/antoine_model.cpp
+    vle/db/component_properties.cpp
+    vle/db/db_bip.cpp
     vle/db/components_db_data.cpp
-    vle/db/components_db_init.cpp
+	vle/db/components_db_data_BIP.cpp
+    vle/db/thermo_db.cpp
+    vle/db/td_functions.cpp
 )
 
 set(HEADER_FLUID
@@ -55,6 +71,7 @@ set(SOURCE_FLUID
 set(HEADER_FLUID_SOLVERS
     vle/fluid/solvers/ph_flash.h
     vle/fluid/solvers/rachford_rice.h
+    vle/fluid/solvers/rachford_rice_am.h
     vle/fluid/solvers/uv_flash.h
     vle/fluid/solvers/phase_boundaries.h
 )
@@ -62,11 +79,13 @@ set(HEADER_FLUID_SOLVERS
 set(SOURCE_FLUID_SOLVERS
     vle/fluid/solvers/ph_flash.cpp
     vle/fluid/solvers/rachford_rice.cpp
+    vle/fluid/solvers/rachford_rice_am.cpp
     vle/fluid/solvers/uv_flash.cpp
 )
 
 set(HEADER_HELPERS
     vle/helpers/physical_helpers.h
+    vle/helpers/string_helpers.h
 )
 
 # Организация папок с исходниками в сгенерированном проекте VS
@@ -166,6 +185,9 @@ if(VLE_SOLVERS_BUILD_TESTS)
         testing/test_database.h
         testing/test_fluid.h
         testing/test_components.h
+        testing/test_bips.h
+        testing/test_bips_verification.h
+        testing/test_rachford_physical_constrained.h
     )
 
     source_group("Header Files" FILES ${TESTING_HEADERS})
@@ -184,4 +206,5 @@ if(VLE_SOLVERS_BUILD_TESTS)
     install(TARGETS testing_vle_solvers DESTINATION bin)
 
 endif()
+
 

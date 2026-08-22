@@ -24,7 +24,10 @@
   <ItemGroup>
     <ClInclude Include="..\testing\test_database.h" />
     <ClInclude Include="..\testing\test_components.h" />
+    <ClInclude Include="..\testing\test_bips.h" />
+    <ClInclude Include="..\testing\test_bips_verification.h" />
     <ClInclude Include="..\testing\test_fluid.h" />
+    <ClInclude Include="..\testing\test_rachford_physical_constrained.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -147,7 +150,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>vle_solvers64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>vle_solvers64.lib;gtest.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

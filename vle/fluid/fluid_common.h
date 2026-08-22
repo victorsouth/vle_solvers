@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 //using hydraulics::celcium2kelvin;
 //using hydraulics::kelvin2celcium;
@@ -34,6 +34,35 @@ struct amounts_per_phase {
     /// @brief Величина для смеси
     double mix{ std::numeric_limits<double>::quiet_NaN() };
 };
+
+/// @brief Любые значения
+template <typename T>
+struct values_per_two_phases_t {
+    /// @brief Величина для жидкой фазы.
+    T liquid;
+    /// @brief Величина для паровой фазы.
+    T vapor;
+};
+
+/// @brief Скаляр по фазам (жидкость / пар): например Z или молярный объём, м^3/моль.
+struct amounts_per_two_phases_t {
+    /// @brief Величина для жидкой фазы.
+    double liquid{ std::numeric_limits<double>::quiet_NaN() };
+    /// @brief Величина для паровой фазы.
+    double vapor{ std::numeric_limits<double>::quiet_NaN() };
+};
+
+
+/// @brief Псевдокритические свойства смеси (Kay): P, T, мольный объём.
+struct fluid_pseudocritical_properties_t {
+    /// @brief Псевдокритическое давление.
+    double pressure = std::numeric_limits<double>::quiet_NaN();
+    /// @brief Псевдокритическая температура.
+    double temperature = std::numeric_limits<double>::quiet_NaN();
+    /// @brief Псевдокритический мольный объём.
+    double molar_volume = std::numeric_limits<double>::quiet_NaN();
+};
+
 
 /// @brief Величины в мольном и массовом выражении
 struct amounts_molar_and_mass {
@@ -82,7 +111,8 @@ void fill_concentration_from_fluid(fluid_t* fluid, vector<double>* vector_concen
 
 /// @brief Нормировка концентраций
 /// @param molar_fraction Вектор концентраций
-void normalize_concentration(Eigen::VectorXd& molar_fraction);
+/// @param min_sum_threshold Порог минимальной суммы для нормировки
+void normalize_concentration(Eigen::VectorXd& molar_fraction, double min_sum_threshold = 1e-8);
 
 
 Eigen::VectorXd get_fracs_as_VectorXd(const vector<double>& amounts);
@@ -109,15 +139,15 @@ vector<std::tuple<double, double, double>> phase_diagram(
 
 /// @brief Рассчитывает давление насыщенных паров для заданного чистого вещества 
 /// в заданном диапазоне по модели Антуана
-/// @param component_name 
+/// @param component_formula 
 /// @param Tfrom Начало диапазона
 /// @param Tto Конец диапазона
 /// @param Tstep Шаг по температурному диапазону
 /// @return Рассчитанные значения 
 inline std::tuple<std::vector<double>, std::vector<double>, std::vector<double>> plot_antoine(
-    const std::wstring& component_name, double Tfrom, double Tto, double Tstep)
+    const std::wstring& component_formula, double Tfrom, double Tto, double Tstep)
 {
-    const auto& component = components_database.at(component_name);
+    const auto& component = components_database.get_component_by_formula(component_formula);
 
     double alpha = component.estimate_antoine_extrapolation_coeff();
 

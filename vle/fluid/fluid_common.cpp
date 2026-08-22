@@ -72,16 +72,15 @@ void fill_concentration_from_fluid(fluid_t* fluid, std::vector<double>* vector_c
         vector_concentration->begin());
 }
 
-void normalize_concentration(Eigen::VectorXd& molar_fraction)
+void normalize_concentration(Eigen::VectorXd& molar_fraction, double min_sum_threshold)
 {
     double sum = molar_fraction.sum();
     if (std::abs(sum - 1.0) > std::numeric_limits<double>::epsilon()) {
-        if (std::abs(sum) < 1e-8) {
+        if (std::abs(sum) < min_sum_threshold) {
             throw std::logic_error("wrong component concentrations");
         }
         molar_fraction /= sum;
     }
-
 }
 
 Eigen::VectorXd get_fracs_as_VectorXd(const std::vector<double>& amounts)
