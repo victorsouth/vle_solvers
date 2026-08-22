@@ -99,6 +99,10 @@ public:
     /// @brief Запоминает флюид, термобарические условия. Предподсчитывает K_values
     rachford_rice2_t(const fluid_t* fluid, double pressure, double temperature,
         double vapor_fraction_initial = std::numeric_limits<double>::quiet_NaN());
+    /// @brief Запоминает флюид и заданный вектор K_i. Не вызывает get_K_values.
+    rachford_rice2_t(const fluid_t* fluid,
+        const Eigen::VectorXd& K_values,
+        double vapor_fraction_initial = std::numeric_limits<double>::quiet_NaN());
     /// @brief Уравнение Речфорда-Райса 
     /// @param split Доля газа
     /// @return Невязка
@@ -121,6 +125,13 @@ public:
     rachford_rice_result_t build_result(double vapor_split) const;
     /// @brief Решение уравнения Речфорда-Райса
     fixed_solver_result_t<1> solve(fixed_solver_result_analysis_t<1>* solver_analysis = nullptr);
+    /// @brief Попытка найти вырожденное решение V=0 или V=1 без численного solve.
+    /// @return 0.0, 1.0 или NaN, если двухфазный корень возможен.
+    double try_nonphysical_solve() const;
+    /// @brief Решение RR с быстрым возвратом вырожденных V=0/V=1; при сходимости
+    ///     `argument` приводится к [0, 1].
+    fixed_solver_result_t<1> solve_physical_constrained(
+        fixed_solver_result_analysis_t<1>* solver_analysis = nullptr);
 };
 
 }

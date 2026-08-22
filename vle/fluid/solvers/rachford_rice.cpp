@@ -46,6 +46,18 @@ rachford_rice2_t::rachford_rice2_t(const fluid_t* fluid, double pressure,
 
 }
 
+rachford_rice2_t::rachford_rice2_t(const fluid_t* fluid,
+    const Eigen::VectorXd& K_values,
+    double vapor_fraction_initial)
+    : fluid(fluid)
+    , K_values(K_values)
+    , pressure(std::numeric_limits<double>::quiet_NaN())
+    , temperature(std::numeric_limits<double>::quiet_NaN())
+    , vapor_fraction_initial(vapor_fraction_initial)
+{
+
+}
+
 std::pair<double, double> rachford_rice2_t::get_k_boundaries() const
 {
     double minimum = std::numeric_limits<double>::max();
@@ -114,6 +126,12 @@ double rachford_rice2_t::jacobian_dense(const double& split)
 
 rachford_rice_result_t rachford_rice2_t::build_result(double vapor_split) const
 {
+    if (!std::isfinite(pressure) || !std::isfinite(temperature)) {
+        throw std::runtime_error(
+            "rachford_rice2_t::build_result: pressure or temperature is not finite; "
+            "likely a logic error — build_result was called after construction with "
+            "given K_values without valid P and T");
+    }
     const Eigen::VectorXd& molar_fraction = fluid->get_molar_fraction();
 
     rachford_rice_result_t result;
@@ -181,5 +199,51 @@ fixed_solver_result_t<1> rachford_rice2_t::solve(fixed_solver_result_analysis_t<
     return solver_result;
 }
 
+double rachford_rice2_t::try_nonphysical_solve() const
+{
+    auto [k_min, k_max] = get_k_boundaries();
+
+    if (k_max < 1.0) {
+        return 0.0;
+    }
+    if (k_min > 1.0) {
+        return 1.0;
+    }
+
+    const auto& molar_fraction = fluid->get_molar_fraction();
+    double f0 = rr_equation(0.0, molar_fraction, K_values);
+    double f1 = rr_equation(1.0, molar_fraction, K_values);
+
+    if (f0 > 0.0 && f1 > 0.0) {
+        return 1.0;
+    }
+    if (f0 < 0.0 && f1 < 0.0) {
+        return 0.0;
+    }
+
+    double result = std::numeric_limits<double>::quiet_NaN();
+    return result;
+}
+
+fixed_solver_result_t<1> rachford_rice2_t::solve_physical_constrained(
+    fixed_solver_result_analysis_t<1>* solver_analysis)
+{
+    double V = try_nonphysical_solve();
+    if (!std::isnan(V)) {
+        fixed_solver_result_t<1> result;
+        result.argument = V;
+        result.result_code = numerical_result_code_t::Converged;
+        return result;
+    }
+    else {
+        fixed_solver_result_t<1> result;
+        result = solve(solver_analysis);
+        if (result.result_code == numerical_result_code_t::Converged) {
+            // срезка до физичного диапазона [0, 1]
+            result.argument = std::min(1.0, std::max(0.0, result.argument));
+        }
+        return result;
+    }
+}
 
 }

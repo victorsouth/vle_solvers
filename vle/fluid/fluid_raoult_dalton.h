@@ -18,7 +18,8 @@ public:
     fluid_rault_dalton_t(const fluid_rault_dalton_t& other)
         : fluid_t(other)
     {
-        /*if (other.last_flash_result.has_integrity) {
+        /*if (std::isfinite(other.last_flash_result.pressure)
+            && std::isfinite(other.last_flash_result.temperature)) {
         last_flash_result = other.last_flash_result;
         }*/
     }
@@ -37,6 +38,15 @@ public:
         : fluid_t(components, molar_fraction)
     {
     }
+    /// @brief Конструктор на основе векторов компонентов (std::vector), мольных 
+    /// долей (Eigen::VectorXd) и матрицы бинарных коэффициентов (Eigen::MatrixXd)
+    fluid_rault_dalton_t(const std::vector<const component_properties_t*>& components,
+        const Eigen::VectorXd& molar_fraction,
+        const Eigen::MatrixXd& binary_coeffs)
+        : fluid_t(components, molar_fraction, binary_coeffs)
+    {
+    }
+
     /// @brief Копирует флюид вместе с данными мемоизации,
     /// вызывает копирующий конструктор, в котором проверяется целостность данных мемоизации
     virtual std::unique_ptr<fluid_t> create_copy(bool copy_memoization = true) const override
@@ -52,25 +62,32 @@ public:
     /// @brief Копирует флюид без мемоизации, т.к. меняется состав, значит расчет некорректен
     virtual std::unique_ptr<fluid_t> create_copy(const Eigen::VectorXd& new_molar_fraction) const override
     {
-        auto result = std::make_unique<fluid_rault_dalton_t>(get_components(), new_molar_fraction);
+        auto result = std::make_unique<fluid_rault_dalton_t>(
+            get_components(), new_molar_fraction, get_binary_coeffs_ref());
         return std::move(result);
     }
     virtual std::unique_ptr<fluid_t> create_copy(const std::vector<double>& new_molar_fraction) const override
     {
-        auto result = std::make_unique<fluid_rault_dalton_t>(get_components(), new_molar_fraction);
+        auto result = std::make_unique<fluid_rault_dalton_t>(
+            get_components(),
+            Eigen::VectorXd::Map(new_molar_fraction.data(), static_cast<Eigen::Index>(new_molar_fraction.size())),
+            get_binary_coeffs_ref());
         return std::move(result);
     }
 public:
+    /// @brief Возврщает true - модель Рауля-Дальтона подразумевает идеальный газ
+    virtual bool is_ideal_gas() const override { return true; }
+
     /// @brief Вектор плотностей газа. Идеально-газовый расчет
     virtual Eigen::VectorXd get_densities_vapor(double pressure, double temperature) const override
     {
         Eigen::VectorXd result(get_components_count());
-        const auto& components = get_components();
+        const auto& components_local = get_components();
 
         if (pressure != 0)
         {
             for (size_t index = 0; index < (size_t)result.size(); ++index) {
-                result(index) = density_ideal_gas(pressure, temperature, components[index]->molar_mass);
+                result(index) = density_ideal_gas(pressure, temperature, components_local[index]->molar_mass);
             }
         }
         else //pressure == 0
@@ -83,7 +100,7 @@ public:
 
     /// @brief Расчет плотности чистого вещества в жидкой фазе
     /// Можно сделать отдельной функцией, но статический метод
-    /// отражает применный в fluid_rault_dalton_t способ расчета
+    /// отражает применённый в fluid_rault_dalton_t способ расчета
     /// @param component Параметры чистого вещества
     static double get_density_liquid(const component_properties_t& component,
                                      double pressure, double temperature);
@@ -193,56 +210,6 @@ public:
     /// @return Температура
     template <AmountType amount_type>
     double find_liquid_temperature_with_inner_energy(double inner_energy) const;
-
-
-    //// todo: Выпилить, все есть в flash_calc
-    virtual double get_enthalpy_td_mass(double pressure, double temperature) const override
-    {
-        const auto& vle = flash(pressure, temperature);
-        return vle.enthalpy.mass.mix;
-    }
-    virtual double get_enthalpy_td_mass_vapor(double pressure, double temperature) const override
-    {
-        const auto& vle = flash(pressure, temperature);
-        return vle.enthalpy.mass.vapor;
-    }
-    virtual double get_enthalpy_td_mass_liquid(double pressure, double temperature) const override
-    {
-        const auto& vle = flash(pressure, temperature);
-        return vle.enthalpy.mass.liquid;
-    }
-
-    // Расчет удельной мольной энтальпии смеси
-    virtual double get_enthalpy_td_molar(double pressure, double temperature) const override
-    {
-        const auto& vle = flash(pressure, temperature);
-
-        return vle.enthalpy.mass.mix * get_molar_mass();
-    }
-    // Расчет удельной мольной энтальпии пара
-    virtual double get_enthalpy_td_molar_vapor(double pressure, double temperature) const override
-    {
-        const auto& vle = flash(pressure, temperature);
-
-        if (vle.is_gas_only() || vle.is_two_phase())
-            return vle.enthalpy.mass.vapor * vle.fluid_vapor->get_molar_mass();
-        else
-            return 0;
-    }
-    // Расчет удельной мольной энтальпии жидкости
-    virtual double get_enthalpy_td_molar_liquid(double pressure, double temperature) const override
-    {
-        const auto& vle = flash(pressure, temperature);
-
-        if (vle.is_liquid_only() || vle.is_two_phase())
-            return vle.enthalpy.mass.liquid * vle.fluid_liquid->get_molar_mass();
-        else
-            return 0;
-    }
-
-    // Расчет температуры под заданную энтальпию и давление
-
-
 
 };   // end class fluid_rault_dalton_t
 

@@ -18,7 +18,7 @@ struct fluid_state_t {
     virtual void deserialize_text(std::istream& stream){
         std::string str;
         stream>>str;
-        if(str!=fixed_solvers::get_class_as_string(*this))throw std::logic_error("wrong type:"+str);
+        if(str!=vle_solvers::get_class_as_string(*this))throw std::logic_error("wrong type:"+str);
         fixed_solvers::load_vector(stream,concentration);
         stream>>flash>>pressure>>temperature;
         /// вызываем исключение в случае неудачного чтения из потока
@@ -30,7 +30,7 @@ struct fluid_state_t {
     /// @brief запись данных класса в выходной поток
     /// @param stream выходной поток
     virtual void serialize_text(std::ostream& stream)const{
-        stream<< fixed_solvers::get_class_as_string(*this)<<std::endl;
+        stream<< vle_solvers::get_class_as_string(*this)<<std::endl;
         fixed_solvers::save_vector(stream,concentration);
         stream<<flash<<' '<<pressure<<' '<<temperature<<'\n';
     }
@@ -55,25 +55,6 @@ inline std::istream& operator>>(std::istream&is,fluid_state_t& s){
     return is;
 }
 
-/// @brief Состав потока
-struct fluid_stubdata_t {
-    /// @brief Список чистых компонентов из БД
-    std::vector<std::wstring> component_list;
-    /// @brief Мольный состав смеси
-    std::vector<double> molar_fraction;
-
-#ifdef VLELIB_SERIALIZATION_SUPPORT
-    /// @brief Для сериализации
-    friend class boost::serialization::access;
-    /// @brief Интрузивная сериализация/десериализация
-    template<class Archive>
-    void serialize(Archive& ar, const unsigned int version)
-    {
-        ar& BOOST_SERIALIZATION_NVP(component_list);
-        ar& BOOST_SERIALIZATION_NVP(molar_fraction);
-    }
-#endif
-};
 
 /// @brief Данные для изолированного вызова задачи PT-flash
 struct pt_flash_stub_data_t
@@ -155,15 +136,15 @@ enum class state_of_matter_t { Undefined, Gas, Liquid, TwoPhase, Critical };
 
 /// @brief Результаты flash-расчета
 struct flash_calculation_result_t {
-    /// @brief Целостность данных
-    bool has_integrity{ false };
     /// @brief Паровая фаза
     std::shared_ptr<fluid_t> fluid_vapor;
     /// @brief Жидкая фаза
     std::shared_ptr<fluid_t> fluid_liquid;
-    /// @brief Давление последнего расчета (мемоизация)
+    /// @brief Давление последнего расчета (мемоизация).
+    /// NaN означает, что результат невалиден / не рассчитан.
     double pressure{ std::numeric_limits<double>::quiet_NaN() };
-    /// @brief Температура последнего расчета (мемоизация)
+    /// @brief Температура последнего расчета (мемоизация).
+    /// NaN означает, что результат невалиден / не рассчитан.
     double temperature{ std::numeric_limits<double>::quiet_NaN() };
     /// @brief Молярная масса смеси, молярная масса газовой фазы (на 1 моль газа), молярная масса жидкой фазы (на один моль жидкости)
     amounts_per_phase molar_mass;
@@ -187,10 +168,20 @@ struct flash_calculation_result_t {
     amounts_per_phase density;
     /// @brief Молярный объем пара, жидкости, смеси (на 1 моль пара, жидкости, смеси соответственно)
     amounts_per_phase molar_volume;
+    /// @brief Фактор сжимаемости Z жидкости и пара (корни EOS PR; для идеального газа vapor = 1).
+    amounts_per_two_phases_t z_factor;
+    /// @brief Коэффициенты равновесия по PR: K_i = phi_l,i / phi_v,i (фугитивности смеси при том же
+    ///        мольном составе, что и у flash, Z жидкости и Z пара — минимальный и максимальный корни куба).
+    std::vector<double> k_value;
     /// @brief Энтальпия пара, жидкости, смеси (по массе и по молям)
     amounts_molar_and_mass enthalpy;
     /// @brief Внутренняя энергия для газа, жидкости (по массе и по молям)
     amounts_molar_and_mass inner_energy;
+    /// @brief Энтропия пара, жидкости, смеси (по массе и по молям)
+    amounts_molar_and_mass entropy;
+    /// @brief Смесевой объёмный сдвиг жидкости sum_i x_i dv_i (м^3/моль): тот же состав x,
+    ///        что при расчёте molar_volume.liquid в PR flash
+    double liquid_volume_shift_mix{ std::numeric_limits<double>::quiet_NaN() };
     /// @brief Возвращает тип состояния флюида
     flash_type_t get_flash_status() const;
     /// @brief Состоит ли флюид только из жидкости
@@ -207,33 +198,39 @@ struct flash_calculation_result_t {
     /// @brief Возвращает массовую долю остатка
     double get_liquid_mass_fraction() const;
 
-    /// @brief Проверяет несколько условий для принятия решения, что результат сформирован (является валидным)
+    /// @brief Проверяет, что результат сформирован и совпадает с заданными P, T
     /// @param _pressure Давление должно совпасть с давлением флюида
     /// @param _temperature Температура должно совпасть с температурой флюида
-    /// @result Также проверяется has_integrity и конечность давления и температуры флюида
+    /// @result Валидность кодируется конечностью pressure и temperature (NaN — невалидно)
     bool was_calculated(double _pressure, double _temperature) const;
     /// @brief Состояние флюида делается невалидным
     void invalidate_calculation();
 };
 
-/// @brief Состав и потокобезопасный доступ к нему. 
-/// Также мемоизация flash-расчета и потокобезопасный интерфейс к этому
+/// @brief Класс для хранения и потокобезопасного доступа к данных флюида и результатам flash-расчета
+///
+/// Класс намеренно объединяет несколько зон ответственности:
+/// - потокобезопасное хранение и доступ к данным флюида
+/// - интерфейс для выполнения flash-расчетов
+/// - кэширование результатов расчетов с потокобезопасным доступом
 class fluid_fundamental_data_t {
 private:
     /// @brief Параметры компонентов флюида. Ссылка на БД
     /// (никогда не меняется, запрещаем на уровне интерфейса)
     const std::vector<const component_properties_t*> components_;
-    /// тут место для бинарных коэффициентов
-    std::shared_ptr<Eigen::MatrixXd> binary_coeffs;
+    /// @brief Коэффициенты бинарного взаимодействия для компонентов данного флюида
+    /// (никогда не меняется, запрещаем на уровне интерфейса)
+    std::shared_ptr<const Eigen::MatrixXd> binary_coeffs_;
+private:
     /// @brief Мольный состав
     Eigen::VectorXd concentration_;
     /// @brief Общий мьютекс для состава
     mutable std::recursive_mutex concentration_mutex;
-    /// @brief Мемоизация (кэш) последнего расчета
+private:
+    /// @brief Мемоизация (кэш) последнего flash-расчета
     mutable flash_calculation_result_t last_flash_result_;
-    /// @brief Мьютекс на кэш последнего расчета
+    /// @brief Мьютекс на кэш последнего flash-расчета
     mutable std::recursive_mutex flash_and_cache_mutex;
-
 public:
     /// @brief Конструктор копирования.
     /// Копирует состав и список компонентов
@@ -248,6 +245,11 @@ public:
     /// @brief Инициализация по переченю компонентов и их концентрации (std::vector)
     fluid_fundamental_data_t(const std::vector<const component_properties_t*>& components,
                              const std::vector<double>& components_concentration);
+    /// @brief Инициализация по переченю компонентов, их концентрации (Eigen::VectorXd) 
+    /// и матрице бинарных коэффициентов
+    fluid_fundamental_data_t(const std::vector<const component_properties_t*>& components,
+        const Eigen::VectorXd& components_concentration,
+        const Eigen::MatrixXd& binary_coeffs);
 public:
     /// @brief (потокобезопасно) Возвращает вектор мольных концентраций
     const Eigen::VectorXd get_molar_fraction() const;
@@ -281,6 +283,8 @@ public:
     const std::vector<const component_properties_t*>& get_components() const;
     /// @brief Возвращает количество компонентов
     size_t get_components_count() const;
+    /// @brief Возвращает бинарные коэффициенты компонентов
+    const Eigen::MatrixXd& get_binary_coeffs_ref() const;
 public:
     /// @brief (потокобезопасно)
     /// @return 
@@ -426,7 +430,7 @@ public:
     /// @brief Возвращает вектор K-значений для всех компонентов
     /// Формально не зависит от состава, но в get_saturated_pressures
     /// есть важный костыль, учитывающий состав, поэтому K-values тоже тут
-    Eigen::VectorXd get_K_values(double pressure, double temperature) const;
+    virtual Eigen::VectorXd get_K_values(double pressure, double temperature) const;
     /// @brief Массовые (не мольные) доли компонентов смеси
     virtual Eigen::VectorXd get_mass_fraction() const;
     /// @brief Возвращает молярную массу смеси
@@ -441,19 +445,15 @@ public:
     /// @brief Расчет (псевдо)критического давления
     /// @return Псевдо(еритическое) давление
     double get_pseudocritical_pressure() const;
+    /// @brief Возвращает псевдокритический мольный объём
+    /// - средний критический мольный объём, взвешенный по концентрациям
+    double get_pseudocritical_molar_volume() const;
+    /// @brief Псевдокритические свойства смеси (Kay): давление, температура, мольный объём
+    fluid_pseudocritical_properties_t get_pseudocritical_properties() const;
     /// Возвращает мольный объем флюида, считая, что он находится в газообразном состоянии
     double get_molar_volume_vapor(double pressure, double temperature) const;
     /// Возвращает мольный объем флюида, считая, что он находится в жидком состоянии
     double get_molar_volume_liquid(double pressure, double temperature) const;
-    /// @brief Термодинамическая энтальпия смеси в предположении газообразного фазового сосотояния
-    /// @param pressure Игнорируется, реализация для идеального газа
-    double get_enthalpy_td_mass_as_vapor(double /*pressure*/, double temperature) const;
-    /// @brief Термодинамическая энтальпия смеси в предположении жидкофазного сосотояния
-    /// @param pressure Игнорируется, реализация для идеального газа
-    double get_enthalpy_td_mass_as_liquid(double pressure, double temperature) const;
-    /// @brief Расчет удельной мольной внутренней в предположении, что вся смесь в паровом фазовом состоянии
-    template <AmountType amount_type>
-    double get_inner_energy_as_vapor(double pressure, double temperature) const;
     /// @brief Возвращает среднюю по составу минимальную температурную границу
     /// области определения модели давления насыщенных паров Антуана
     /// Средняя берется по коцентрациям компонентов в составе
@@ -462,6 +462,18 @@ public:
     /// области определения модели давления насыщенных паров Антуана
     /// Средняя берется по коцентрациям компонентов в составе
     double get_max_antoine_bound() const;
+    /// @brief Идеально-газовая энтальпия смеси по текущему составу.
+    template <AmountType amount_type>
+    double get_ideal_gas_enthalpy(double temperature) const;
+    /// @brief Идеально-газовая энтропия смеси S^0 по текущему составу (Савельев 5.7):
+    ///     Σ y_i S_i(T) - R Σ y_i ln y_i - R ln(P/P°), P° = ATMOSPHERIC_PRESSURE.
+    /// @param pressure Давление, Па.
+    /// @param temperature Температура, K.
+    template <AmountType amount_type>
+    double get_ideal_gas_entropy(double pressure, double temperature) const;
+    /// @brief Идеально-газовая внутренняя энергия смеси по текущему составу.
+    template <AmountType amount_type>
+    double get_ideal_gas_inner_energy(double temperature) const;
 
 };
 
@@ -490,30 +502,57 @@ public:
     /// @param temperature Температура
     /// @return Булево значение, которое показывает находится ли вещество в однофазном газовом состоянии
     bool is_vapor_only(double pressure, double temperature) const;
+public:
+    /// @brief Точка росы при данной температуре
+    virtual double get_dew_point_at_given_temperature(double temperature) const = 0;
+    /// @brief Точка росы при данном давлении
+    virtual double get_dew_point_at_given_pressure(double pressure) const = 0;
+    /// @brief Точка росы по воде при данном давлении
+    virtual double get_water_dew_point_at_given_pressure(double pressure) const = 0;
+    /// @brief Давления начала кипения при данной температуре
+    virtual double get_bubble_point_at_given_temperature(double temperature) const = 0;
+    /// @brief Давления начала кипения при данном давлении
+    virtual double get_bubble_point_at_given_pressure(double pressure) const = 0;
 };
 
-/// @brief Абстрактный базовый класс флюида
-class fluid_t 
-        : public fluid_fundamental_data_t
-        , public fluid_components_functions_t
-        , public fluid_composition_functions_t
-        , public fluid_phase_criteria_t
-{
+/// @brief Геттеры, требующие однократного flash-расчета,
+/// являющиеся функциями составов жидкой и/или газообразной фазы
+//TODO: Все эти методы обязаны быть методами flash_calculation_result_t
+class fluid_flash_functions_t {
+private:
+    /// @brief Ссылка на класс для flash-расчета
+    const fluid_fundamental_data_t& fluid_fundamental;
+    /// @brief Ссылка на геттеры компонентов
+    const fluid_components_functions_t& components;
+    /// @brief Ссылка на геттеры от состава
+    const fluid_composition_functions_t& composition;
 public:
-    /// @brief Конструктор копирования
-    fluid_t(const fluid_t& other);
-    /// @brief Инициализация по перечню компонентов.
-    /// Состав инициализируется поровну между компонентами
-    fluid_t(const std::vector<const component_properties_t*>& components);
-    /// @brief Инициализация по переченю компонентов и их концентрации (Eigen::VectorXd)
-    fluid_t(const std::vector<const component_properties_t*>& components,
-            const Eigen::VectorXd& components_concentration);
-    /// @brief Инициализация по переченю компонентов и их концентрации (std::vector)
-    fluid_t(const std::vector<const component_properties_t*>& components,
-            const std::vector<double>& components_concentration);
+    /// @brief Удаляем конструктор копирования
+    fluid_flash_functions_t(const fluid_flash_functions_t&) = delete;
+    /// @brief Инициализация состава и геттеров от состава
+    explicit fluid_flash_functions_t(const fluid_fundamental_data_t& fluid_fundamental,
+                                     const fluid_components_functions_t& components,
+                                     const fluid_composition_functions_t& composition);
 
-    virtual ~fluid_t() = default;
 
+    /// @brief Расчет теплоты фазового перехода. Возвращает NaN, если смесь полностью газовая
+    double get_heat_vaporization_mass(double pressure, double temperature) const;
+
+    /// @brief Удельная мольная изобарная теплоемкость смеси
+    virtual double get_heat_capacity_molar(double pressure, double temperature) const;
+
+    /// @brief Удельная массовая изобарная теплоемкость смеси
+    double get_heat_capacity_mass(double pressure, double temperature) const;
+
+    /// @brief Изохорная теплоемкость смеси, мольная
+    double get_heat_capacity_isochoric(double pressure, double temperature) const;
+
+    /// @brief Показатель адиабаты
+    double get_adiabatic_exponent(double pressure, double temperature) const;
+};
+
+/// @brief Методы для создания копий флюидов
+class fluid_copy_functions_t {
 private:
     /// @brief Создает копию потока с теми же веществами и компонентным составом
     virtual std::unique_ptr<fluid_t> create_copy(bool copy_memoization = true) const = 0;
@@ -525,98 +564,25 @@ private:
     virtual std::unique_ptr<fluid_t> create_copy(const std::vector<double>& new_molar_fraction) const = 0;
 public:
     /// @brief Создает копию потока с теми же веществами и компонентным составом. Только в конструкторах!
-    virtual std::unique_ptr<fluid_t> create_initial_copy(bool copy_memoization = true)const{
+    virtual std::unique_ptr<fluid_t> create_initial_copy(bool copy_memoization = true) const {
         return create_copy(copy_memoization);
     }
     /// @brief Создает копию потока с теми же веществами, но другим компонентным составом. Только в конструкторах!
     /// @param new_molar_fraction Новый компонентный состав
-    virtual std::unique_ptr<fluid_t> create_initial_copy(const std::vector<double>& new_molar_fraction) const{
+    virtual std::unique_ptr<fluid_t> create_initial_copy(const std::vector<double>& new_molar_fraction) const {
         return create_copy(new_molar_fraction);
     }
     /// @brief Создает копию потока с теми же веществами, но другим компонентным составом
     /// @param new_molar_fraction Новый компонентный состав
-    virtual std::unique_ptr<fluid_t> create_initial_copy(const Eigen::VectorXd& new_molar_fraction) const{
+    virtual std::unique_ptr<fluid_t> create_initial_copy(const Eigen::VectorXd& new_molar_fraction) const {
         return create_copy(new_molar_fraction);
     }
+};
 
-public: // нужен рефакторинг
-    /// @brief Точка росы при данной температуре
-    virtual double get_dew_point_at_given_temperature(double temperature) const = 0;
-    /// @brief Точка росы при данном давлении
-    virtual double get_dew_point_at_given_pressure(double pressure) const = 0;
-    /// \brief Точка росы по воде при данном давлении
-    virtual double get_water_dew_point_at_given_pressure(double pressure) const = 0;
-    /// @brief Давления начала кипения при данной температуре
-    virtual double get_bubble_point_at_given_temperature(double temperature) const = 0;
-    /// @brief Давления начала кипения при данном давлении
-    virtual double get_bubble_point_at_given_pressure(double pressure) const = 0;
-
-public: // итеративные расчетные задачи, нужен рефакторинг
-
-    /// @brief Расчет теплоты фазового перехода. Возвращает NaN, если смесь полностью газовая
-    double get_heat_vaporization_mass(double pressure, double temperature) const
-    {
-        // Сколько нужно энергии на парообразование для 1 кг жидкости
-        // Коэффициент в уравнении Клапейрона — Клаузиуса
-        const auto& vle = flash(pressure, temperature);
-
-        if (vle.is_gas_only()) {
-            return std::numeric_limits<double>::quiet_NaN();
-        }
-
-        Eigen::VectorXd frac = vle.fluid_liquid->get_mass_fraction();
-        Eigen::VectorXd dH = get_heat_vaporization_by_component(pressure, temperature);
-        double result = frac.dot(dH);
-        return result;
-    }
-
-    /// @brief Удельная мольная изобарная теплоемкость смеси
-    virtual double get_heat_capacity_molar(double pressure, double temperature) const
-    {
-        const flash_calculation_result_t calc = flash(pressure, temperature);
-
-        Eigen::VectorXd Cp_vapor_vector = get_Cp_molar_vapor_by_components(pressure, temperature);
-        Eigen::VectorXd Cp_liquid_vector = get_Cp_molar_liquid_by_components(pressure, temperature);
-
-        if (calc.fluid_vapor.get() != nullptr && calc.fluid_liquid.get() != nullptr) {
-            double Cp_vapor = calc.fluid_vapor->get_molar_fraction().dot(Cp_vapor_vector);
-            double Cp_liquid = calc.fluid_liquid->get_molar_fraction().dot(Cp_liquid_vector);
-
-            double Cp = calc.flash * Cp_vapor + (1 - calc.flash) * Cp_liquid;
-            return Cp;
-        }
-        else if (calc.fluid_vapor.get() != nullptr) {
-            double Cp_vapor = calc.fluid_vapor->get_molar_fraction().dot(Cp_vapor_vector);
-            return Cp_vapor;
-
-        }
-        else {
-            double Cp_liquid = calc.fluid_liquid->get_molar_fraction().dot(Cp_liquid_vector);
-            return Cp_liquid;
-        }
-
-    }
-
-    /// @brief Удельная массовая изобарная теплоемкость смеси
-    double get_heat_capacity_mass(double pressure, double temperature) const
-    {
-        double Cp_molar = get_heat_capacity_molar(pressure, temperature);
-        double M = get_molar_mass();
-        return Cp_molar / M;
-    }
-
-    /// @brief Изохорная теплоемкость смеси, мольная
-    double get_heat_capacity_isochoric(double pressure, double temperature) const
-    {
-        return get_heat_capacity_molar(pressure, temperature) - M_R;
-    }
-
-    /// @brief Показатель адиабаты
-    double get_adiabatic_exponent(double pressure, double temperature) const
-    {
-        return get_heat_capacity_molar(pressure, temperature) / get_heat_capacity_isochoric(pressure, temperature);
-    }
-
+/// @brief Методы для решения задач фазового равновесия при заданном объеме.
+/// Могут не являться VT-flash задачами и требовать итеративного решения
+class fluid_fill_functions_t {
+public:
     /// @brief Заполнить заданный объем веществом с заданной температурой так, чтобы объем жидкости был равен заданному
     /// Выдать давление в заданном объеме
     virtual double fill_volume_with_liquid(double total_volume, double temperature, double liquid_volume) const = 0;
@@ -627,131 +593,53 @@ public: // итеративные расчетные задачи, нужен р
     /// @param total_volume Объем емкости
     /// @return Количество вещества
     virtual double fill_volume_with_pressure(double pressure, double temperature,
-                                             double total_volume) const = 0;
-    /// @brief Изменить объем жидкости за счет газа, сохранив при этом составы жидкости и газа
-    /// Если жидкости нет, то выдать ошибку
-    virtual void change_liquid_volume_fraction(
-            double pressure, double temperature, double liquid_volume_fraction) = 0;
+        double total_volume) const = 0;
+
     /// @brief Заполнить заданный объем заданным количеством вещества данного состава с заданной температурой
     /// @return давление и температура в заданном объеме
     virtual std::pair<double, double> fill_volume_with_total_moles2(
-            double volume, double inner_energy_molar, double molar_amount,
-            double initial_pressure = std::numeric_limits<double>::quiet_NaN(),
-            double initial_temperature = std::numeric_limits<double>::quiet_NaN()) const = 0;
-    /// @brief Расчет удельной массовой энтальпии смеси
-    virtual double get_enthalpy_td_mass(double pressure, double temperature) const = 0;
-    /// @brief Расчет удельной массовой энтальпии пара
-    /// @param pressure Рабочее давление
-    /// @param temperature Рабочая температура
-    virtual double get_enthalpy_td_mass_vapor(double pressure, double temperature) const = 0;
-    /// @brief Расчет удельной массовой энтальпии жидкости
-    virtual double get_enthalpy_td_mass_liquid(double pressure, double temperature) const = 0;
-    /// @brief Расчет удельной мольной энтальпии смеси
-    virtual double get_enthalpy_td_molar(double pressure, double temperature) const = 0;
-    /// @brief Расчет удельной мольной энтальпии пара
-    virtual double get_enthalpy_td_molar_vapor(double pressure, double temperature) const = 0;
-    /// @brief Расчет удельной мольной энтальпии жидкости
-    virtual double get_enthalpy_td_molar_liquid(double pressure, double temperature) const = 0;
+        double volume, double inner_energy_molar, double molar_amount,
+        double initial_pressure = std::numeric_limits<double>::quiet_NaN(),
+        double initial_temperature = std::numeric_limits<double>::quiet_NaN()) const = 0;
+
+    /// @brief Изменить объем жидкости за счет газа, сохранив при этом составы жидкости и газа
+    /// Если жидкости нет, то выдать ошибку
+    virtual void change_liquid_volume_fraction(
+        double pressure, double temperature, double liquid_volume_fraction) = 0;
 };
 
-
-/// @brief Функция создает поток флюида с заданным компонентным составом и мольными долями
-/// @tparam Fluid
-/// @param component_names Названия компонентов
-/// @param molar_fractions Мольные доли компонентов
-template <typename Fluid>
-inline std::unique_ptr<Fluid> create_fluid(const std::vector<std::wstring>& component_names,
-                                      const std::vector<double>& molar_fractions = std::vector<double>()
-        ,const components_database_t& db_components=components_database
-        ,const components_database_t& db_hypocomponents={})
+/// @brief Абстрактный базовый класс флюида
+class fluid_t 
+        : public fluid_fundamental_data_t
+        , public fluid_components_functions_t
+        , public fluid_composition_functions_t
+        , public fluid_phase_criteria_t
+        , public fluid_flash_functions_t
+        , public fluid_copy_functions_t
+        , public fluid_fill_functions_t
 {
-    std::vector<const component_properties_t*> components;
+public:
+    /// @brief Конструктор копирования
+    fluid_t(const fluid_t& other);
+    /// @brief Инициализация по перечню компонентов.
+    /// Состав инициализируется поровну между компонентами
+    fluid_t(const std::vector<const component_properties_t*>& components);
+    /// @brief Инициализация по переченю компонентов и их концентрации (Eigen::VectorXd)
+    fluid_t(const std::vector<const component_properties_t*>& components,
+        const Eigen::VectorXd& components_concentration);
+    /// @brief Инициализация по переченю компонентов и их концентрации (std::vector)
+    fluid_t(const std::vector<const component_properties_t*>& components,
+        const std::vector<double>& components_concentration);
+    /// @brief Инициализация по переченю компонентов, их концентрации и матрице бинарных коэффициентов
+    fluid_t(const std::vector<const component_properties_t*>& components,
+        const Eigen::VectorXd& components_concentration,
+        const Eigen::MatrixXd& binary_coeffs);
 
-    for (const std::wstring& name : component_names) {
+    /// @brief Метод должен возврщать true для идеального газа и false для флюидов с другими EOS
+    virtual bool is_ideal_gas() const = 0;
 
-        if(db_components.count(name)==1 ){
-            const auto& component_properties = db_components.at(name);
-            components.emplace_back(&component_properties);
-        } else if(db_hypocomponents.count(name)==1 ){
-            const auto& component_properties = db_hypocomponents.at(name);
-            components.emplace_back(&component_properties);
-        } else {
-            std::stringstream msg;
-            msg << "Component is not exist in thermoDB: " << fixed_solvers::wide2string(name);
-            throw std::logic_error(msg.str().c_str());
-        }
-
-    }
-
-    if (molar_fractions.empty()) {
-        return std::move(std::make_unique<Fluid>(components));
-    }
-    else {
-        Eigen::VectorXd fractions = Eigen::VectorXd::Map(&molar_fractions[0], molar_fractions.size());
-        return std::move(std::make_unique<Fluid>(components, fractions));
-    }
-}
-
-//TODO !рефактор!
-/// @brief Функция создает поток из состава потока
-/// @tparam Fluid Тип выходного потока
-/// @param fluid_data Состав потока
-/// @return Уникальный указатель на поток
-template <typename Fluid>
-inline std::unique_ptr<Fluid> create_fluid(const fluid_stubdata_t& fluid_data)
-{
-    return create_fluid<Fluid>(fluid_data.component_list, fluid_data.molar_fraction);
-}
-
-
-
-/// @brief Создаёт объект Fluid на основе списка чистых и гипо-компонентов и их мольных долей 
-/// ***************************************************************************
-/// @detail Функция ищет свойства компонентов сначала в базе чистых веществ (components_database),
-/// а если компонент там отсутствует — в базе псевдокомпонентов (pseudocomponents_db).
-/// Если компонент не найден ни в одной базе, выбрасывается исключение logic_error.
-/// В случае отсутствия мольных долей создаётся объект Fluid только с набором компонентов.
-/// Если мольные доли заданы, они преобразуются в Eigen::Eigen::VectorXd и передаются конструктору Fluid.
-/// @tparam Fluid - тип создаваемого объекта жидкости
-/// @param pseudocomponents_db - база данных псевдокомпонентов, используемая при 
-/// отсутствии компонента в базе чистых веществ.
-/// @param component_names - список имён компонентов (wstring), которые должны быть найдены в базе.
-/// @param molar_fractions - вектор мольных долей компонентов. Если пустой, используется конструктор Fluid без долей.
-/// @return unique_ptr<Fluid> - умный указатель на созданный объект Fluid.
-template <typename Fluid>
-inline std::unique_ptr<Fluid> create_fluid(
-    const components_database_t& pseudocomponents_db,
-    const std::vector<std::wstring>& component_names,
-    const std::vector<double>& molar_fractions)
-{
-    std::vector<const component_properties_t*> components;
-    for (const std::wstring& name : component_names) {
-        try {
-            auto it = components_database.find(name);
-            if (it != components_database.end()) {
-                components.emplace_back(&it->second);
-                continue;
-            }
-            // Контракт. Если компонент не из базы чистых, то он из базы псевдо.
-            components.emplace_back(&pseudocomponents_db.at(name));
-
-        }
-        catch (std::exception&) {
-            std::stringstream msg;
-            msg << "Component is not exist in thermoDB: " << fixed_solvers::wide2string(name);
-            throw std::logic_error(msg.str().c_str());
-        }
-
-    }
-
-    if (molar_fractions.empty()) {
-        return std::move(std::make_unique<Fluid>(components));
-    }
-    else {
-        Eigen::VectorXd fractions = Eigen::VectorXd::Map(&molar_fractions[0], molar_fractions.size());
-        return std::move(std::make_unique<Fluid>(components, fractions));
-    }
-}
+    virtual ~fluid_t() = default;
+};
 
 
 }

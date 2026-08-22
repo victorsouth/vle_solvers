@@ -310,7 +310,7 @@ private:
             serialize_component(kvp.first, kvp.second, root);
         }
         std::string str_result =
-            std::string("const char* thermo_db_serialized = \n") +
+            std::string("const char* thermo_db_serialized_by_formula = \n") +
             serialize_as_string(root) + ";";
 
         std::ofstream code_file(fixed_solvers::wide2string(path) + "components_db_data.cpp");
@@ -341,4 +341,27 @@ private:
         return deserialize<components_database_type>(root);
     }
 
+    /// @brief Десериализует базу бинарных коэффициентов из JSON строки
+    static bip_records_t deserialize_BIP_from_string(const std::string& serialized_str)
+    {
+        boost::property_tree::ptree root;
+        std::stringstream serialized_stream;
+        serialized_stream << serialized_str;
+        boost::property_tree::read_json(serialized_stream, root);
+
+        bip_records_t records;
+        records.reserve(root.size());
+
+        for (const auto& child : root) {
+            const auto& node = child.second;
+
+            bip_record_t record;
+            record.cas1 = fixed_solvers::string2wide(node.get<std::string>("CAS1"));
+            record.cas2 = fixed_solvers::string2wide(node.get<std::string>("CAS2"));
+            record.bip_value = node.get<double>("BIP");
+            records.push_back(std::move(record));
+        }
+
+        return records;
+    }
 };

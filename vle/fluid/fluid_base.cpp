@@ -1,4 +1,4 @@
-﻿#include "../vle_solvers.h"
+#include "../vle_solvers.h"
 
 
 namespace vlelib {
@@ -49,8 +49,6 @@ double flash_calculation_result_t::get_liquid_mass_fraction() const
 
 bool flash_calculation_result_t::was_calculated(double _pressure, double _temperature) const
 {
-    if (!has_integrity)
-        return false;
     if (!std::isfinite(pressure) || !std::isfinite(temperature))
         return false;
     return pressure == _pressure && temperature == _temperature;
@@ -59,9 +57,14 @@ bool flash_calculation_result_t::was_calculated(double _pressure, double _temper
 
 void flash_calculation_result_t::invalidate_calculation()
 {
-    has_integrity = false;
     pressure = std::numeric_limits<double>::quiet_NaN();
     temperature = std::numeric_limits<double>::quiet_NaN();
+    k_value.clear();
+    liquid_volume_shift_mix = std::numeric_limits<double>::quiet_NaN();
+    z_factor.liquid = std::numeric_limits<double>::quiet_NaN();
+    z_factor.vapor = std::numeric_limits<double>::quiet_NaN();
+    fluid_vapor.reset();
+    fluid_liquid.reset();
 }
 
 
@@ -72,79 +75,144 @@ void flash_calculation_result_t::invalidate_calculation()
 
 
 fluid_t::fluid_t(const fluid_t& other)
-    : fluid_t(other.get_components(), other.get_molar_fraction())
+    : fluid_t(other.get_components(), other.get_molar_fraction(), other.get_binary_coeffs_ref())
 { }
 
-fluid_t::fluid_t(const std::vector<const component_properties_t*>& components) 
+fluid_t::fluid_t(const std::vector<const component_properties_t*>& components)
     : fluid_fundamental_data_t(components)
     , fluid_components_functions_t(this->get_components())
     , fluid_composition_functions_t(
-          static_cast<fluid_fundamental_data_t&>(*this),
-          static_cast<fluid_components_functions_t&>(*this))
+        static_cast<fluid_fundamental_data_t&>(*this),
+        static_cast<fluid_components_functions_t&>(*this))
     , fluid_phase_criteria_t(
-          static_cast<fluid_fundamental_data_t&>(*this),
-          static_cast<fluid_composition_functions_t&>(*this))
+        static_cast<fluid_fundamental_data_t&>(*this),
+        static_cast<fluid_composition_functions_t&>(*this))
+    , fluid_flash_functions_t(
+        static_cast<fluid_fundamental_data_t&>(*this),
+        static_cast<fluid_components_functions_t&>(*this),
+        static_cast<fluid_composition_functions_t&>(*this))
 {
 
 }
 
-fluid_t::fluid_t(const std::vector<const component_properties_t*>& components, const Eigen::VectorXd& components_concentration) 
+fluid_t::fluid_t(const std::vector<const component_properties_t*>& components, const Eigen::VectorXd& components_concentration)
     : fluid_fundamental_data_t(components, components_concentration)
     , fluid_components_functions_t(this->get_components())
     , fluid_composition_functions_t(
-          static_cast<fluid_fundamental_data_t&>(*this),
-          static_cast<fluid_components_functions_t&>(*this))
+        static_cast<fluid_fundamental_data_t&>(*this),
+        static_cast<fluid_components_functions_t&>(*this))
     , fluid_phase_criteria_t(
-          static_cast<fluid_fundamental_data_t&>(*this),
-          static_cast<fluid_composition_functions_t&>(*this))
+        static_cast<fluid_fundamental_data_t&>(*this),
+        static_cast<fluid_composition_functions_t&>(*this))
+    , fluid_flash_functions_t(
+        static_cast<fluid_fundamental_data_t&>(*this),
+        static_cast<fluid_components_functions_t&>(*this),
+        static_cast<fluid_composition_functions_t&>(*this))
 {
 
 }
 
-fluid_t::fluid_t(const std::vector<const component_properties_t*>& components, const std::vector<double>& components_concentration) 
+fluid_t::fluid_t(const std::vector<const component_properties_t*>& components, const std::vector<double>& components_concentration)
     : fluid_fundamental_data_t(components, components_concentration)
     , fluid_components_functions_t(this->get_components())
     , fluid_composition_functions_t(
-          static_cast<fluid_fundamental_data_t&>(*this),
-          static_cast<fluid_components_functions_t&>(*this))
+        static_cast<fluid_fundamental_data_t&>(*this),
+        static_cast<fluid_components_functions_t&>(*this))
     , fluid_phase_criteria_t(
-          static_cast<fluid_fundamental_data_t&>(*this),
-          static_cast<fluid_composition_functions_t&>(*this))
+        static_cast<fluid_fundamental_data_t&>(*this),
+        static_cast<fluid_composition_functions_t&>(*this))
+    , fluid_flash_functions_t(
+        static_cast<fluid_fundamental_data_t&>(*this),
+        static_cast<fluid_components_functions_t&>(*this),
+        static_cast<fluid_composition_functions_t&>(*this))
 {
 
 }
+
+fluid_t::fluid_t(const std::vector<const component_properties_t*>& components, 
+    const Eigen::VectorXd& components_concentration,
+    const Eigen::MatrixXd& binary_coeffs)
+    : fluid_fundamental_data_t(components, components_concentration, binary_coeffs)
+    , fluid_components_functions_t(this->get_components())
+    , fluid_composition_functions_t(
+        static_cast<fluid_fundamental_data_t&>(*this),
+        static_cast<fluid_components_functions_t&>(*this))
+    , fluid_phase_criteria_t(
+        static_cast<fluid_fundamental_data_t&>(*this),
+        static_cast<fluid_composition_functions_t&>(*this))
+    , fluid_flash_functions_t(
+        static_cast<fluid_fundamental_data_t&>(*this),
+        static_cast<fluid_components_functions_t&>(*this),
+        static_cast<fluid_composition_functions_t&>(*this))
+{
+
+}
+
 
 
 fluid_fundamental_data_t::fluid_fundamental_data_t(const std::vector<const component_properties_t*>& components, 
                                                    const std::vector<double>& components_concentration)
     : components_(components)
+    , binary_coeffs_(std::make_shared<Eigen::MatrixXd>())
 {
-    concentration_ = Eigen::VectorXd::Map(&components_concentration[0], components_concentration.size());
-    normalize_concentration(concentration_);
+    if (components_concentration.empty()) {
+        concentration_ = Eigen::VectorXd::Ones(components.size()) / components.size();
+    }
+    else {
+        concentration_ = Eigen::VectorXd::Map(&components_concentration[0], components_concentration.size());
+        normalize_concentration(concentration_);
+    }
 }
 
 fluid_fundamental_data_t::fluid_fundamental_data_t(
         const std::vector<const component_properties_t*>& components,
         const Eigen::VectorXd& components_concentration)
     : components_(components)
+    , binary_coeffs_(std::make_shared<Eigen::MatrixXd>())
     , concentration_(components_concentration)
 {
-    normalize_concentration(concentration_);
+    if (components_concentration.size() == 0) {
+        concentration_ = Eigen::VectorXd::Ones(components.size()) / components.size();
+    }
+    else {
+        normalize_concentration(concentration_);
+    }
+
 }
 
 fluid_fundamental_data_t::fluid_fundamental_data_t(const std::vector<const component_properties_t*>& components)
     : components_(components)
+    , binary_coeffs_(std::make_shared<Eigen::MatrixXd>())
 
 {
     concentration_ = Eigen::VectorXd::Ones(components.size()) / components.size();
 }
 
 fluid_fundamental_data_t::fluid_fundamental_data_t(const fluid_fundamental_data_t& other)
-    : concentration_(other.get_molar_fraction())
-    , components_(other.get_components())
+    : concentration_(other.concentration_)
+    , components_(other.components_)
+    , binary_coeffs_(other.binary_coeffs_)
+    , last_flash_result_()
 {
 
 }
+
+fluid_fundamental_data_t::fluid_fundamental_data_t(
+    const std::vector<const component_properties_t*>& components,
+    const Eigen::VectorXd& components_concentration,
+    const Eigen::MatrixXd& binary_coeffs)
+    : components_(components)
+    , concentration_(components_concentration)
+    , binary_coeffs_(std::make_shared<Eigen::MatrixXd>(binary_coeffs))
+{
+    if (components_concentration.size() == 0) {
+        concentration_ = Eigen::VectorXd::Ones(components.size()) / components.size();
+    }
+    else {
+        normalize_concentration(concentration_);
+    }
+}
+
 
 void fluid_fundamental_data_t::fill_state(fluid_state_t* state) const
 {
@@ -182,6 +250,10 @@ const std::vector<const component_properties_t*>& fluid_fundamental_data_t::get_
     return components_;
 }
 
+const Eigen::MatrixXd& fluid_fundamental_data_t::get_binary_coeffs_ref() const
+{
+    return *binary_coeffs_;
+}
 
 /// @brief Отладочный запуск мьютексов
 constexpr bool debug_disable_locks = false;
@@ -237,7 +309,8 @@ flash_calculation_result_t fluid_fundamental_data_t::get_last_flash_result() con
     }
 }
 
-const flash_calculation_result_t fluid_fundamental_data_t::flash(double pressure, double temperature, double initial_estimation /*= std::numeric_limits<double>::quiet_NaN()*/) const
+const flash_calculation_result_t fluid_fundamental_data_t::flash(double pressure
+    , double temperature, double initial_estimation /*= std::numeric_limits<double>::quiet_NaN()*/) const
 {
     if constexpr (debug_disable_locks == false) {
         std::lock_guard lk(concentration_mutex);
@@ -348,6 +421,29 @@ double fluid_composition_functions_t::get_pseudocritical_pressure() const
     return result;
 }
 
+double fluid_composition_functions_t::get_pseudocritical_molar_volume() const
+{
+    size_t components_count = composition.get_components_count();
+    auto molar_fraction = composition.get_molar_fraction();
+    const auto& components = composition.get_components();
+
+    double result = 0;
+    for (size_t index = 0; index < components_count; ++index) {
+        result += components[index]->critical_molarvolume * molar_fraction(index);
+    }
+    return result;
+}
+
+fluid_pseudocritical_properties_t fluid_composition_functions_t::get_pseudocritical_properties() const
+{
+    fluid_pseudocritical_properties_t result{
+        get_pseudocritical_pressure(),
+        get_pseudocritical_temperature(),
+        get_pseudocritical_molar_volume(),
+    };
+    return result;
+}
+
 double fluid_composition_functions_t::get_molar_volume_vapor(double pressure, double temperature) const
 {
     auto molar_fraction = composition.get_molar_fraction();
@@ -367,52 +463,11 @@ double fluid_composition_functions_t::get_molar_volume_liquid(double pressure, d
     return result;
 }
 
-double fluid_composition_functions_t::get_enthalpy_td_mass_as_vapor(double /*pressure*/, double temperature) const
-{
-    const auto& components = composition.get_components();
-    size_t components_count = composition.get_components_count();
-    auto molar_fraction = composition.get_molar_fraction();
-
-    Eigen::VectorXd result(components_count);
-    for (int index = 0; index < result.size(); ++index) {
-        result(index) = components[index]->get_enthalpy_gas<AmountType::Mass>(temperature);
-    }
-    return result.dot(molar_fraction);
-}
-
-double fluid_composition_functions_t::get_enthalpy_td_mass_as_liquid(double pressure, double temperature) const
-{
-    const auto& components = composition.get_components();
-    size_t components_count = composition.get_components_count();
-    auto molar_fraction = composition.get_molar_fraction();
-
-    Eigen::VectorXd result(components_count);
-    for (int index = 0; index < result.size(); ++index) {
-        result(index) = components[index]->get_enthalpy_liquid<AmountType::Mass>(pressure, temperature);
-    }
-    return result.dot(molar_fraction);
-}
 
 /// @brief Возвращает удельную внутренню энергию газа на заданную единицу вещества
 /// @tparam amount_type Используемые единицы количества вещества (мольные, массовые)
 /// @param pressure Давление
 /// @param temperature Температура
-template <AmountType amount_type>
-double fluid_composition_functions_t::get_inner_energy_as_vapor(double pressure, double temperature) const
-{
-    const auto& components = composition.get_components();
-    size_t components_count = composition.get_components_count();
-    auto molar_fraction = composition.get_molar_fraction();
-
-    Eigen::VectorXd result(components_count);
-    for (int index = 0; index < result.size(); ++index) {
-        result(index) = components[index]->get_inner_energy_gas<amount_type>(temperature);
-    }
-    if constexpr (amount_type == AmountType::Mass)
-            return result.dot(get_mass_fraction());
-    else
-    return result.dot(molar_fraction);
-}
 
 
 double fluid_composition_functions_t::get_max_antoine_bound() const
@@ -430,6 +485,74 @@ double fluid_composition_functions_t::get_max_antoine_bound() const
     // сколько бы ни было его в смеси
     double max = *std::min_element(max_antoine_bound.begin(), max_antoine_bound.end());
     return mean_max;
+}
+
+
+template <AmountType amount_type>
+double fluid_composition_functions_t::get_ideal_gas_enthalpy(double temperature) const
+{
+    const auto& components = composition.get_components();
+    size_t components_count = composition.get_components_count();
+    auto molar_fraction = composition.get_molar_fraction();
+
+    Eigen::VectorXd values(components_count);
+    for (int i = 0; i < values.size(); ++i) {
+        values(i) = components[i]->get_enthalpy_gas<amount_type>(temperature);
+    }
+    if constexpr (amount_type == AmountType::Mass)
+        return values.dot(get_mass_fraction());
+    else
+        return values.dot(molar_fraction);
+}
+
+
+template <AmountType amount_type>
+double fluid_composition_functions_t::get_ideal_gas_entropy(
+    double pressure, double temperature) const
+{
+    // S^0 = Σ y_i S_i(T) - R Σ y_i ln y_i - R ln(P/P°); Савельев (5.7)
+    const auto& components = composition.get_components();
+    size_t components_count = composition.get_components_count();
+    auto molar_fraction = composition.get_molar_fraction();
+
+    double s_temperature = 0.0;
+    for (int i = 0; i < static_cast<int>(components_count); ++i) {
+        s_temperature += molar_fraction(i)
+            * components[i]->get_entropy_gas_molar(temperature);
+    }
+    double s_mix = 0.0;
+    for (int i = 0; i < molar_fraction.size(); ++i) {
+        if (molar_fraction(i) > 0.0) {
+            s_mix -= M_R * molar_fraction(i) * std::log(molar_fraction(i));
+        }
+    }
+    double s_ln_p = -M_R * std::log(pressure / ATMOSPHERIC_PRESSURE);
+    double s_molar = s_temperature + s_mix + s_ln_p;
+    if constexpr (amount_type == AmountType::Mass) {
+        double result = s_molar / get_molar_mass();
+        return result;
+    }
+    else {
+        return s_molar;
+    }
+}
+
+
+template <AmountType amount_type>
+double fluid_composition_functions_t::get_ideal_gas_inner_energy(double temperature) const
+{
+    const auto& components = composition.get_components();
+    size_t components_count = composition.get_components_count();
+    auto molar_fraction = composition.get_molar_fraction();
+
+    Eigen::VectorXd values(components_count);
+    for (int i = 0; i < values.size(); ++i) {
+        values(i) = components[i]->get_inner_energy_gas<amount_type>(temperature);
+    }
+    if constexpr (amount_type == AmountType::Mass)
+        return values.dot(get_mass_fraction());
+    else
+        return values.dot(molar_fraction);
 }
 
 double fluid_composition_functions_t::get_min_antoine_bound() const
@@ -616,14 +739,77 @@ fluid_phase_criteria_t::fluid_phase_criteria_t(const fluid_fundamental_data_t& c
 
 }
 
-/// @brief Специализация get_inner_energy_as_vapor для AmountType::Mass
-template double
-fluid_composition_functions_t::get_inner_energy_as_vapor<AmountType::Mass>
-(double pressure, double temperature) const;
-/// @brief Специализация get_inner_energy_as_vapor для AmountType::Molar
-template double
-fluid_composition_functions_t::get_inner_energy_as_vapor<AmountType::Molar>
-(double pressure, double temperature) const;
+fluid_flash_functions_t::fluid_flash_functions_t(const fluid_fundamental_data_t& fluid_fundamental,
+                                                 const fluid_components_functions_t& components,
+                                                 const fluid_composition_functions_t& composition)
+    : fluid_fundamental(fluid_fundamental)
+    , components(components)
+    , composition(composition)
+{
+
+}
+
+double fluid_flash_functions_t::get_heat_vaporization_mass(double pressure, double temperature) const
+{
+    const auto& vle = fluid_fundamental.flash(pressure, temperature);
+
+    if (vle.is_gas_only()) {
+        return std::numeric_limits<double>::quiet_NaN();
+    }
+
+    Eigen::VectorXd frac = vle.fluid_liquid->get_mass_fraction();
+    Eigen::VectorXd dH = components.get_heat_vaporization_by_component(pressure, temperature);
+    double result = frac.dot(dH);
+    return result;
+}
+
+double fluid_flash_functions_t::get_heat_capacity_molar(double pressure, double temperature) const
+{
+    const flash_calculation_result_t calc = fluid_fundamental.flash(pressure, temperature);
+
+    Eigen::VectorXd Cp_vapor_vector = components.get_Cp_molar_vapor_by_components(pressure, temperature);
+    Eigen::VectorXd Cp_liquid_vector = components.get_Cp_molar_liquid_by_components(pressure, temperature);
+
+    if (calc.fluid_vapor.get() != nullptr && calc.fluid_liquid.get() != nullptr) {
+        double Cp_vapor = calc.fluid_vapor->get_molar_fraction().dot(Cp_vapor_vector);
+        double Cp_liquid = calc.fluid_liquid->get_molar_fraction().dot(Cp_liquid_vector);
+
+        double Cp = calc.flash * Cp_vapor + (1 - calc.flash) * Cp_liquid;
+        return Cp;
+    }
+    else if (calc.fluid_vapor.get() != nullptr) {
+        double Cp_vapor = calc.fluid_vapor->get_molar_fraction().dot(Cp_vapor_vector);
+        return Cp_vapor;
+    }
+    else {
+        double Cp_liquid = calc.fluid_liquid->get_molar_fraction().dot(Cp_liquid_vector);
+        return Cp_liquid;
+    }
+}
+
+double fluid_flash_functions_t::get_heat_capacity_mass(double pressure, double temperature) const
+{
+    double Cp_molar = get_heat_capacity_molar(pressure, temperature);
+    double M = composition.get_molar_mass();
+    return Cp_molar / M;
+}
+
+double fluid_flash_functions_t::get_heat_capacity_isochoric(double pressure, double temperature) const
+{
+    return get_heat_capacity_molar(pressure, temperature) - M_R;
+}
+
+double fluid_flash_functions_t::get_adiabatic_exponent(double pressure, double temperature) const
+{
+    return get_heat_capacity_molar(pressure, temperature) / get_heat_capacity_isochoric(pressure, temperature);
+}
+
+template double fluid_composition_functions_t::get_ideal_gas_enthalpy<AmountType::Molar>(double temperature) const;
+template double fluid_composition_functions_t::get_ideal_gas_enthalpy<AmountType::Mass>(double temperature) const;
+template double fluid_composition_functions_t::get_ideal_gas_entropy<AmountType::Molar>(double pressure, double temperature) const;
+template double fluid_composition_functions_t::get_ideal_gas_entropy<AmountType::Mass>(double pressure, double temperature) const;
+template double fluid_composition_functions_t::get_ideal_gas_inner_energy<AmountType::Molar>(double temperature) const;
+template double fluid_composition_functions_t::get_ideal_gas_inner_energy<AmountType::Mass>(double temperature) const;
 
 /// @brief Специализация fluid_components_functions_t::get_enthalpy_liquid_by_components для AmountType::Mass
 template Eigen::VectorXd
