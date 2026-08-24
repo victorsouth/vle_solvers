@@ -47,6 +47,59 @@ public:
 
 public:
 
+    /// @brief Создаёт флюид по уже разрешённым компонентам и явной матрице BIP (k_ij).
+    /// @tparam ExtraArgs Опциональный хвост конструктора Fluid (например, `peng_robinson_settings_t` для PR).
+    template <typename Fluid, typename... ExtraArgs>
+    inline std::unique_ptr<Fluid> create_fluid(
+        const std::vector<const component_properties_t*>& components,
+        const std::vector<double>& molar_fractions,
+        const Eigen::MatrixXd& binary_coeffs,
+        ExtraArgs&&... extra_args
+    ) const
+    {
+        static_assert(sizeof...(ExtraArgs) <= 1,
+            "thermo_db_t::create_fluid: at most one extra constructor argument is supported");
+
+        if (!molar_fractions.empty()) {
+            Eigen::VectorXd fractions = Eigen::VectorXd::Map(
+                molar_fractions.data(),
+                molar_fractions.size()
+            );
+            std::unique_ptr<Fluid> result = std::make_unique<Fluid>(
+                components,
+                fractions,
+                binary_coeffs,
+                std::forward<ExtraArgs>(extra_args)...);
+            return result;
+        }
+        else {
+            std::unique_ptr<Fluid> result = std::make_unique<Fluid>(
+                components,
+                Eigen::VectorXd(),
+                binary_coeffs,
+                std::forward<ExtraArgs>(extra_args)...);
+            return result;
+        }
+    }
+
+    /// @brief Создаёт флюид по формулам компонентов и явной матрице BIP (k_ij).
+    /// @tparam ExtraArgs Опциональный хвост конструктора Fluid (например, `peng_robinson_settings_t` для PR).
+    template <typename Fluid, typename... ExtraArgs>
+    inline std::unique_ptr<Fluid> create_fluid(
+        const std::vector<std::wstring>& component_list,
+        const std::vector<double>& molar_fractions,
+        const Eigen::MatrixXd& binary_coeffs,
+        ExtraArgs&&... extra_args
+    ) const
+    {
+        std::unique_ptr<Fluid> result = create_fluid<Fluid>(
+            get_components(component_list),
+            molar_fractions,
+            binary_coeffs,
+            std::forward<ExtraArgs>(extra_args)...);
+        return result;
+    }
+
     /// @brief Создаёт флюид с пересчётом матрицы бинарных коэффициентов взаимодействия.
     /// @tparam ExtraArgs Опциональный хвост конструктора Fluid (например, `peng_robinson_settings_t` для PR).
     template <typename Fluid, typename... ExtraArgs>
@@ -56,9 +109,6 @@ public:
         , ExtraArgs&&... extra_args
     ) const
     {
-        static_assert(sizeof...(ExtraArgs) <= 1,
-            "thermo_db_t::create_fluid: at most one extra constructor argument is supported");
-
         // Заложим на будущее
         // static_assert(
         //     std::is_same_v<Fluid, vlelib::fluid_peng_robinson_t>,
@@ -74,31 +124,18 @@ public:
         }
 
         Eigen::MatrixXd binary_coeffs_local;
-        if (!bip_recalc_plan.empty()) 
+        if (!bip_recalc_plan.empty())
         {
             binary_coeffs_local = estimate_bip_matrix(
                 components_casno_list, components_local, bip_db, bip_recalc_plan);
         }
 
-        if (!molar_fractions.empty()) {
-            Eigen::VectorXd fractions = Eigen::VectorXd::Map(
-                molar_fractions.data(),
-                molar_fractions.size()
-            );
-            return std::make_unique<Fluid>(
-                components_local,
-                fractions,
-                binary_coeffs_local,
-                std::forward<ExtraArgs>(extra_args)...);
-        }
-        else {
-            return std::make_unique<Fluid>(
-                components_local,
-                Eigen::VectorXd(),
-                binary_coeffs_local,
-                std::forward<ExtraArgs>(extra_args)...);
-        }
-
+        std::unique_ptr<Fluid> result = create_fluid<Fluid>(
+            components_local,
+            molar_fractions,
+            binary_coeffs_local,
+            std::forward<ExtraArgs>(extra_args)...);
+        return result;
     }
 
     /// @brief Создаёт флюид из ранее сохраненной стабдаты
