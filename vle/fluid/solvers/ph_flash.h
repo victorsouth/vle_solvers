@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #ifndef __vlelib_fluid_equations_h__
 #error "Do not include ph_flash.h directly. Use fluid_equations.h instead."
@@ -97,7 +97,9 @@ public:
             numerical_result = &res;
 
         fixed_bisectional_parameters_t p;
-        p.argument_limit_min = 10;
+        double T_critical = fluid->get_pseudocritical_temperature();
+        // Нижняя граница не ниже ~0.25 Tc: T=10 K ломает PR Michelsen (см. PH-flash PREOS).
+        p.argument_limit_min = std::max(10.0, 0.25 * T_critical);
         p.argument_limit_max = 5000;
         // correcting limits by estimation if applicable
         if (std::isfinite(initial_temperature)) {
@@ -105,7 +107,6 @@ public:
             if (enthalpy_at_initial_temperature < given_enthalpy)p.argument_limit_min = initial_temperature;
             if (enthalpy_at_initial_temperature > given_enthalpy)p.argument_limit_max = initial_temperature;
         }
-        double T_critical = fluid->get_pseudocritical_temperature();
         {
             double enthalpy_at_critical_temperature = fluid->flash(given_pressure, T_critical).td_functions.enthalpy.mass.mix;
             if (enthalpy_at_critical_temperature < given_enthalpy)p.argument_limit_min = T_critical;
