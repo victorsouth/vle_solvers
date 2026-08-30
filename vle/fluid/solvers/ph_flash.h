@@ -98,8 +98,13 @@ public:
 
         fixed_bisectional_parameters_t p;
         double T_critical = fluid->get_pseudocritical_temperature();
-        // Нижняя граница не ниже ~0.25 Tc: T=10 K ломает PR Michelsen (см. PH-flash PREOS).
-        p.argument_limit_min = std::max(10.0, 0.25 * T_critical);
+        if (fluid->is_ideal_gas()) {
+            p.argument_limit_min = 10.0;
+        }
+        else {
+            // PREOS / PR: T=10 K ломает Michelsen; не ниже ~0.25 Tc.
+            p.argument_limit_min = std::max(10.0, 0.25 * T_critical);
+        }
         p.argument_limit_max = 5000;
         // correcting limits by estimation if applicable
         if (std::isfinite(initial_temperature)) {
