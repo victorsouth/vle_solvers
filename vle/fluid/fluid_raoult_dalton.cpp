@@ -182,14 +182,14 @@ const vlelib::flash_calculation_result_t fluid_rault_dalton_t::flash_liquid_only
     result.fluid_vapor = nullptr;
 
     //flash_enthalpy(pressure, temperature);
-    result.enthalpy.molar = flash_function<AmountType::Molar>(
+    result.td_functions.enthalpy.molar = flash_function<AmountType::Molar>(
                                 get_enthalpy_gas<AmountType::Molar>, get_enthalpy_liq<AmountType::Molar>, result);
-    result.enthalpy.mass = flash_function<AmountType::Mass>(
+    result.td_functions.enthalpy.mass = flash_function<AmountType::Mass>(
                                get_enthalpy_gas<AmountType::Mass>, get_enthalpy_liq<AmountType::Mass>, result);
 
-    result.inner_energy.molar = flash_function<AmountType::Molar>(
+    result.td_functions.inner_energy.molar = flash_function<AmountType::Molar>(
                                     get_energy_gas<AmountType::Molar>, get_energy_liq<AmountType::Molar>, result);
-    result.inner_energy.mass = flash_function<AmountType::Mass>(
+    result.td_functions.inner_energy.mass = flash_function<AmountType::Mass>(
                                    get_energy_gas<AmountType::Mass>, get_energy_liq<AmountType::Mass>, result);
 
     /*
@@ -256,16 +256,16 @@ const vlelib::flash_calculation_result_t fluid_rault_dalton_t::flash_vapor_only(
 
     //flash_enthalpy(pressure, temperature);
 
-    result.enthalpy.molar = flash_function<AmountType::Molar>(
+    result.td_functions.enthalpy.molar = flash_function<AmountType::Molar>(
                                 get_enthalpy_gas<AmountType::Molar>, get_enthalpy_liq<AmountType::Molar>, result);
-    result.enthalpy.mass = flash_function<AmountType::Mass>(
+    result.td_functions.enthalpy.mass = flash_function<AmountType::Mass>(
                                get_enthalpy_gas<AmountType::Mass>, get_enthalpy_liq<AmountType::Mass>, result);
 
 
 
-    result.inner_energy.molar = flash_function<AmountType::Molar>(
+    result.td_functions.inner_energy.molar = flash_function<AmountType::Molar>(
                                     get_energy_gas<AmountType::Molar>, get_energy_liq<AmountType::Molar>, result);
-    result.inner_energy.mass = flash_function<AmountType::Mass>(
+    result.td_functions.inner_energy.mass = flash_function<AmountType::Mass>(
                                    get_energy_gas<AmountType::Mass>, get_energy_liq<AmountType::Mass>, result);
     /*
     // ВОТ ТУТ САМОЕ БОЛЬШОЕ ЗАБЛУЖДЕНИЕ. РЕЗАЛТ ТУТ НЕ СФОРМИРОВАН!!!!!!!!!!!!!!!
@@ -334,8 +334,8 @@ void two_phase_result_builder::build(double pressure, double temperature,
     std::tie(result.vapor_mass_fraction, result.vapor_volumetric_fraction) =
         get_vapor_fractions(rr_result.vapor_split, result.molar_mass, result.molar_volume);
 
-    result.enthalpy = get_enthalpies(result, flash_in);
-    result.inner_energy = get_inner_energies(result, flash_in);
+    result.td_functions.enthalpy = get_enthalpies(result, flash_in);
+    result.td_functions.inner_energy = get_inner_energies(result, flash_in);
     result.z_factor.vapor = 1.0;
 
     // по сравнению с fluid_rault_dalton_t::build_twophase_result
@@ -698,8 +698,7 @@ std::pair<double, double> fluid_rault_dalton_t::fill_volume_with_total_moles2(
         double initial_temp = std::isfinite(initial_temperature) ? initial_temperature : Tliq;
 
         double min_temperature = vlelib::get_min_antoine_bound(this);
-        double pressure = 1e5; // для идеального газа не зависит от давления, берем любое
-        if (get_inner_energy_as_vapor<AmountType::Molar>(pressure, min_temperature) < inner_energy_molar) {
+        if (get_ideal_gas_inner_energy<AmountType::Molar>(min_temperature) < inner_energy_molar) {
             /*double Tgas2 = estimate_temperature_for_inner_energy<AmountType::Molar>(
                 this, inner_energy_molar, initial_temp, 1e5);*/
 

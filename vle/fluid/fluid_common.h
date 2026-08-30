@@ -35,6 +35,15 @@ struct amounts_per_phase {
     double mix{ std::numeric_limits<double>::quiet_NaN() };
 };
 
+/// @brief Любые значения
+template <typename T>
+struct values_per_two_phases_t {
+    /// @brief Величина для жидкой фазы.
+    T liquid;
+    /// @brief Величина для паровой фазы.
+    T vapor;
+};
+
 /// @brief Скаляр по фазам (жидкость / пар): например Z или молярный объём, м^3/моль.
 struct amounts_per_two_phases_t {
     /// @brief Величина для жидкой фазы.
@@ -42,6 +51,7 @@ struct amounts_per_two_phases_t {
     /// @brief Величина для паровой фазы.
     double vapor{ std::numeric_limits<double>::quiet_NaN() };
 };
+
 
 /// @brief Псевдокритические свойства смеси (Kay): P, T, мольный объём.
 struct fluid_pseudocritical_properties_t {
@@ -60,6 +70,41 @@ struct amounts_molar_and_mass {
     amounts_per_phase molar;
     /// @brief Величина в массовом выражении
     amounts_per_phase mass;
+};
+
+/// @brief Термодинамические функции PR (моль / масса; liquid / vapor / mix).
+/// У теплоёмкостей mix всегда NaN.
+struct td_functions_t {
+    /// @brief Энтальпия пара, жидкости, смеси
+    amounts_molar_and_mass enthalpy;
+    /// @brief Внутренняя энергия пара, жидкости
+    amounts_molar_and_mass inner_energy;
+    /// @brief Энтропия пара, жидкости, смеси
+    amounts_molar_and_mass entropy;
+    /// @brief Изобарная теплоёмкость; mix (molar и mass) всегда NaN.
+    amounts_molar_and_mass heat_capacity_pressure;
+    /// @brief Изохорная теплоёмкость; mix (molar и mass) всегда NaN.
+    amounts_molar_and_mass heat_capacity_volume;
+};
+
+/// @brief Термические коэффициенты, скорость звука, показатель адиабаты PR (Савельев разд. 1 / 6).
+struct thermical_coefficients_t {
+    /// @brief Изотермический модуль всестороннего сжатия K_T, Па. Формула (6.14).
+    amounts_per_phase bulk_modulus_isothermal;
+    /// @brief Адиабатический модуль всестороннего сжатия K_S, Па. Формулы (1.33), (6.16).
+    amounts_per_phase bulk_modulus_isentropic;
+    /// @brief Изотермический коэффициент сжатия β_T, 1/Па. Формулы (1.34), (6.15).
+    amounts_per_phase compressibility_isothermal;
+    /// @brief Адиабатический коэффициент сжатия β_S, 1/Па. Формулы (1.35), (6.18).
+    amounts_per_phase compressibility_isentropic;
+    /// @brief Изобарный коэффициент термического расширения α_P, 1/K. Формулы (1.36), (6.24).
+    amounts_per_phase expansion_isobaric;
+    /// @brief Изохорный коэффициент давления γ_v, 1/K. Формулы (1.37), (6.12).
+    amounts_per_phase pressure_coefficient_isochoric;
+    /// @brief Показатель адиабаты γ, безразмерный. Формулы (1.38), (1.39).
+    amounts_per_phase isentropic_exponent;
+    /// @brief Скорость звука a, м/с. Формулы (1.40), (6.17).
+    amounts_per_phase sonic_speed;
 };
 
 /// @brief Плотность идеального газа по Менделееву-Клапейрону

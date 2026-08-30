@@ -162,7 +162,7 @@ uv_flash_over_RR::var_type uv_flash_over_RR::residuals(const var_type& w)
         r[0] /= specific_volume_molar;
     }
 
-    r[1] = inner_energy_molar - flash.inner_energy.molar.mix;
+    r[1] = inner_energy_molar - flash.td_functions.inner_energy.molar.mix;
     r[1] /= inner_energy_molar;
 
     return r;

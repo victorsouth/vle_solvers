@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #ifndef __vlelib_fluid_equations_h__
 #error "Do not include ph_flash.h directly. Use fluid_equations.h instead."
@@ -69,7 +69,7 @@ public:
     /// \return невязка
     virtual function_type residuals(const var_type& x) override
     {
-        return given_enthalpy - fluid->flash(given_pressure, x).enthalpy.mass.mix;
+        return given_enthalpy - fluid->flash(given_pressure, x).td_functions.enthalpy.mass.mix;
     }
     /// \brief
     /// конструктор desired_enthalpy
@@ -97,17 +97,24 @@ public:
             numerical_result = &res;
 
         fixed_bisectional_parameters_t p;
-        p.argument_limit_min = std::max(std::min(10.,initial_temperature/2.),2.);
+        double T_critical = fluid->get_pseudocritical_temperature();
+        if (fluid->is_ideal_gas()) {
+            //p.argument_limit_min = 10.0; // исходный вариант
+            p.argument_limit_min = std::max(std::min(10., initial_temperature / 2.), 2.); // вариант ЮП
+        }
+        else {
+            // PREOS / PR: T=10 K ломает Michelsen; не ниже ~0.25 Tc.
+            p.argument_limit_min = std::max(10.0, 0.25 * T_critical);
+        }
         p.argument_limit_max = 5000;
         // correcting limits by estimation if applicable
         if (std::isfinite(initial_temperature)) {
-            double enthalpy_at_initial_temperature = fluid->flash(given_pressure, initial_temperature).enthalpy.mass.mix;
+            double enthalpy_at_initial_temperature = fluid->flash(given_pressure, initial_temperature).td_functions.enthalpy.mass.mix;
             if (enthalpy_at_initial_temperature < given_enthalpy)p.argument_limit_min = initial_temperature;
             if (enthalpy_at_initial_temperature > given_enthalpy)p.argument_limit_max = initial_temperature;
         }
-        double T_critical = fluid->get_pseudocritical_temperature();
         {
-            double enthalpy_at_critical_temperature = fluid->flash(given_pressure, T_critical).enthalpy.mass.mix;
+            double enthalpy_at_critical_temperature = fluid->flash(given_pressure, T_critical).td_functions.enthalpy.mass.mix;
             if (enthalpy_at_critical_temperature < given_enthalpy)p.argument_limit_min = T_critical;
             if (enthalpy_at_critical_temperature > given_enthalpy)p.argument_limit_max = T_critical;
         }
@@ -199,7 +206,7 @@ public:
     virtual double residuals(const double& temperature) override
     {
         const auto vle = fluid->flash(pressure, temperature);
-        double r = vle.enthalpy.mass.mix - target_enthalpy;
+        double r = vle.td_functions.enthalpy.mass.mix - target_enthalpy;
         return r;
     }
 
@@ -208,10 +215,10 @@ public:
     {
         double e = epsilon * std::max(1.0, abs(temperature));
         const auto vle = fluid->flash(pressure, temperature);//= fluid->get_last_flash_result();//спорно
-        double mass_enthalpy_0 = vle.enthalpy.mass.mix;
+        double mass_enthalpy_0 = vle.td_functions.enthalpy.mass.mix;
 
         const auto vle2 = fluid->flash(pressure, temperature + e);
-        double mass_enthalpy_eps = vle2.enthalpy.mass.mix;
+        double mass_enthalpy_eps = vle2.td_functions.enthalpy.mass.mix;
 
         function_type J = (mass_enthalpy_eps - mass_enthalpy_0) / e;
         return J;
@@ -613,8 +620,8 @@ double estimate_temperature_for_inner_energy(
     double initial_temperature = std::numeric_limits<double>::quiet_NaN(),
     double pressure = 1e5)
 {
-    auto get_inner_energy = [pressure](const fluid_t* fluid, double T) -> double {
-        return fluid->get_inner_energy_as_vapor<amount_type>(pressure, T);
+    auto get_inner_energy = [](const fluid_t* fluid, double T) -> double {
+        return fluid->get_ideal_gas_inner_energy<amount_type>(T);
     };
     
     vle_desired_fluid_function_equation eq(fluid, target_inner_energy, get_inner_energy);
@@ -663,8 +670,7 @@ double estimate_temperature_for_inner_energy_fixed(
     double initial_temperature = std::numeric_limits<double>::quiet_NaN())
 {
     auto get_inner_energy = [](const fluid_t* fluid, double T) -> double {
-        double pressure = 1e5; // для идеального газа не зависит от давления, берем любое
-        return fluid->get_inner_energy_as_vapor<amount_type>(pressure, T);
+        return fluid->get_ideal_gas_inner_energy<amount_type>(T);
         };
 
     vle_desired_fluid_function_equation_fixed eq(fluid, target_inner_energy, get_inner_energy);
