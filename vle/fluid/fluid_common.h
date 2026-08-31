@@ -10,9 +10,12 @@ namespace vlelib {
 ;
 
 
-/// @brief Выбор типа алгоритма
+/// @brief Выбор типа алгоритма парожидкостного равновесия.
+/// Индексы согласованы с порядком типов в FluidTypes (vle_testing.h).
 enum class phase_equilibrium_algorithm_t {
-    RaoultDalton = 0, PengRobinson = 1
+    RaoultDalton = 0,
+    PengRobinsonOld = 1,
+    PengRobinson = 2
 };
 
 /// @brief Фаза флюида

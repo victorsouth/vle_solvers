@@ -434,11 +434,11 @@ amounts_molar_and_mass two_phase_result_builder::get_inner_energies(const flash_
 void fluid_rault_dalton_t::flash_unsafe(double pressure, double temperature, double initial_estimation, flash_calculation_result_t& result) const
 {
     if (temperature < 0)
-        throw std::logic_error("temperature < 0" + std::to_string(temperature));
+        throw std::runtime_error("temperature < 0" + std::to_string(temperature));
 
     if (result.was_calculated(pressure, temperature)) {
         if (!std::isfinite(result.density.mix))
-            throw std::logic_error("flash_result.density.mix is nan");
+            throw std::runtime_error("flash_result.density.mix is nan");
         //++cached;
         return;
     }
