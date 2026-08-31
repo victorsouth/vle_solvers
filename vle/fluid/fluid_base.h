@@ -539,16 +539,12 @@ public:
 
     /// @brief Расчет теплоты фазового перехода. Возвращает NaN, если смесь полностью газовая
     double get_heat_vaporization_mass(double pressure, double temperature) const;
-
     /// @brief Удельная мольная изобарная теплоемкость смеси
     virtual double get_heat_capacity_molar(double pressure, double temperature) const;
-
     /// @brief Удельная массовая изобарная теплоемкость смеси
     double get_heat_capacity_mass(double pressure, double temperature) const;
-
     /// @brief Изохорная теплоемкость смеси, мольная
     double get_heat_capacity_isochoric(double pressure, double temperature) const;
-
     /// @brief Показатель адиабаты
     double get_adiabatic_exponent(double pressure, double temperature) const;
 };
@@ -639,6 +635,9 @@ public:
 
     /// @brief Метод должен возврщать true для идеального газа и false для флюидов с другими EOS
     virtual bool is_ideal_gas() const = 0;
+
+    /// @brief Метод возвращает алгоритм парожидкостного равновесия, реализованный в данном флюиде
+    virtual phase_equilibrium_algorithm_t get_phase_equilibrium_algorithm() const = 0;
 
     virtual ~fluid_t() = default;
 };

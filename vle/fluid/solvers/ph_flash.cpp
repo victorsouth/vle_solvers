@@ -24,14 +24,15 @@ double ph_flash_bisection::solve(
 
     fixed_bisectional_parameters_t p;
     double T_critical = fluid->get_pseudocritical_temperature();
-    if (fluid->is_ideal_gas())
+    if (fluid->get_phase_equilibrium_algorithm() == phase_equilibrium_algorithm_t::PengRobinson)
     {
-        //p.argument_limit_min = 10.0; // исходный вариант
-        p.argument_limit_min = std::max(std::min(10., initial_temperature / 2.), 2.); // вариант ЮП
-    }
-    else {
         // PREOS / PR: T=10 K ломает Michelsen; не ниже ~0.25 Tc.
         p.argument_limit_min = std::max(10.0, 0.25 * T_critical);
+    }
+    else {
+        // Рауль-Дальтон и старый Пенг-Робинсон
+        //p.argument_limit_min = 10.0; // исходный вариант
+        p.argument_limit_min = std::max(std::min(10., initial_temperature / 2.), 2.); // вариант ЮП
     }
     p.argument_limit_max = 5000;
     // correcting limits by estimation if applicable

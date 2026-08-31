@@ -78,6 +78,12 @@ public:
     /// @brief Возврщает true - модель Рауля-Дальтона подразумевает идеальный газ
     virtual bool is_ideal_gas() const override { return true; }
 
+    /// @brief Возвращает алгоритм Рауля-Дальтона
+    virtual phase_equilibrium_algorithm_t get_phase_equilibrium_algorithm() const override
+    {
+        return phase_equilibrium_algorithm_t::RaoultDalton;
+    }
+
     /// @brief Вектор плотностей газа. Идеально-газовый расчет
     virtual Eigen::VectorXd get_densities_vapor(double pressure, double temperature) const override
     {
