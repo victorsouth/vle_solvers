@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #ifndef __vlelib_fluid_equations_h__
 #error "Do not include ph_flash.h directly. Use fluid_equations.h instead."
@@ -53,7 +53,7 @@ struct ph_flash_stub_data_t
 /// todo: необходимо проработать ситуацию, когда
 /// предельная искомая энтальпия ниже
 /// желаемого значения
-struct desired_enthalpy : public fixed_system_t<1> {
+struct ph_flash_bisection : public fixed_system_t<1> {
     /// \brief исследуемый флюид
     fluid_t* fluid;
     /// \brief энтальпия для которой необходимо найти температуру флюида
@@ -67,19 +67,14 @@ public:
     /// \brief функция вычисления невязки
     /// \param x - аргумент
     /// \return невязка
-    virtual function_type residuals(const var_type& x) override
-    {
-        return given_enthalpy - fluid->flash(given_pressure, x).td_functions.enthalpy.mass.mix;
-    }
+    virtual function_type residuals(const var_type& x) override;
     /// \brief
-    /// конструктор desired_enthalpy
+    /// конструктор ph_flash_bisection
     /// \param f исследуемый флюид
     /// \param de энтальпия для которой необходимо найти температуру флюида
     /// \param p заданное давление флюида
     /// \param t начальное приближение по температуре, в общем случае может быть не задано
-    desired_enthalpy(fluid_t* f, double de, double p, double t = std::numeric_limits<double>::quiet_NaN())
-        :fluid(f), given_enthalpy(de), given_pressure(p), initial_temperature(t)
-    {}
+    ph_flash_bisection(fluid_t* f, double de, double p, double t = std::numeric_limits<double>::quiet_NaN());
     /// \brief
     /// решить PH flash методом бисекции
     /// \param numerical_result - результат
@@ -90,47 +85,7 @@ public:
         double desired_precision = std::numeric_limits<float>::epsilon(),
         fixed_bisection_result_t<1>* numerical_result = nullptr,
         fixed_bisection_result_analysis_t<1>* analysis = nullptr
-    )
-    {
-        fixed_bisection_result_t<1> res;
-        if (numerical_result == nullptr)
-            numerical_result = &res;
-
-        fixed_bisectional_parameters_t p;
-        double T_critical = fluid->get_pseudocritical_temperature();
-        if (fluid->is_ideal_gas()) {
-            //p.argument_limit_min = 10.0; // исходный вариант
-            p.argument_limit_min = std::max(std::min(10., initial_temperature / 2.), 2.); // вариант ЮП
-        }
-        else {
-            // PREOS / PR: T=10 K ломает Michelsen; не ниже ~0.25 Tc.
-            p.argument_limit_min = std::max(10.0, 0.25 * T_critical);
-        }
-        p.argument_limit_max = 5000;
-        // correcting limits by estimation if applicable
-        if (std::isfinite(initial_temperature)) {
-            double enthalpy_at_initial_temperature = fluid->flash(given_pressure, initial_temperature).td_functions.enthalpy.mass.mix;
-            if (enthalpy_at_initial_temperature < given_enthalpy)p.argument_limit_min = initial_temperature;
-            if (enthalpy_at_initial_temperature > given_enthalpy)p.argument_limit_max = initial_temperature;
-        }
-        {
-            double enthalpy_at_critical_temperature = fluid->flash(given_pressure, T_critical).td_functions.enthalpy.mass.mix;
-            if (enthalpy_at_critical_temperature < given_enthalpy)p.argument_limit_min = T_critical;
-            if (enthalpy_at_critical_temperature > given_enthalpy)p.argument_limit_max = T_critical;
-        }
-        p.argument_precision = desired_precision;
-        p.residual_precision = desired_precision;
-        p.argument_history = true;
-        p.residual_history = true;
-        p.solution_type = fixed_bisectional_solution_type::Combined;
-        p.secant_treshhold_iterations=0;
-        //p.secant_treshhold_max = 10;
-        //p.secant_treshhold_min = 0.001;
-        p.verbose = false;
-        fixed_bisectional<1>::solve(p, *this, numerical_result, analysis);
-
-        return numerical_result->argument;
-    }
+    );
     /// \brief
     /// решить PH flash методом бисекции
     /// \param numerical_result - результат
@@ -140,22 +95,14 @@ public:
     double solve(
         fixed_bisection_result_t<1>* numerical_result = nullptr,
         fixed_bisection_result_analysis_t<1>* analysis = nullptr
-    ) {
-        return solve(std::numeric_limits<double>::epsilon() * 10000., numerical_result, analysis);
-    }
+    );
     /// @brief Возвращает данные для изолированного вызова
-    ph_flash_stub_data_t get_stub_data() const {
-        ph_flash_stub_data_t result;
-        result.pressure = given_pressure;
-        result.enthalpy_mass = given_enthalpy;
-        result.fluid = fluid->get_mock_data();
-        return result;
-    }
+    ph_flash_stub_data_t get_stub_data() const;
 };
 
 /// @brief Уравнение для поиска температуры по заданной энтальпии 
 /// с учетом фазовых переходов
-struct desired_enthalpy_fixed : fixed_system_t<1>
+struct ph_flash_newton : fixed_system_t<1>
 {
     /// @brief Флюид, для которого выполняется расчет
     const fluid_t* fluid;
@@ -173,108 +120,27 @@ struct desired_enthalpy_fixed : fixed_system_t<1>
     double desired_precission;
 public:
     /// @brief Энтальпия задаётся как целевой параметр
-    desired_enthalpy_fixed(const fluid_t* fluid, double pressure, double target_enthalpy_mass,
+    ph_flash_newton(const fluid_t* fluid, double pressure, double target_enthalpy_mass,
         double _temperature_initial = std::numeric_limits<double>::quiet_NaN(),
-        double _prec = std::numeric_limits<double>::epsilon() * 10000.)
-        : fluid(fluid)
-        , target_enthalpy(target_enthalpy_mass)
-        , pressure(pressure)
-        , temperature_initial(_temperature_initial)
-        , desired_precission(_prec)
-    {
-        if (!std::isfinite(temperature_initial))
-        {
-            auto fluid_rd = dynamic_cast<const fluid_rault_dalton_t*>(fluid);
-            if (fluid_rd == nullptr)
-                throw std::runtime_error("Can estimate min temperature only for Raoult-fluid Dalton");
-            double T_critical = fluid->get_pseudocritical_temperature();
-            double T_initial = T_critical;
-            double T_min = get_min_antoine_bound(fluid_rd);
-            temperature_initial = std::max(T_min, 0.5 * T_initial);
-
-        }
-    }
+        double _prec = std::numeric_limits<double>::epsilon() * 10000.);
     /// @brief Энтальпия расчитывается по начальной, подводимому теплу и вносу энтальпии расходом 
-    desired_enthalpy_fixed(const fluid_t* fluid, double p,
+    ph_flash_newton(const fluid_t* fluid, double p,
         double initial_entalpy, double Q, double mass_flow,
-        double temperature_initial)
-        : desired_enthalpy_fixed(fluid, p, initial_entalpy + Q / mass_flow, temperature_initial)
-    {
-
-    }
+        double temperature_initial);
     /// @brief Невязки уравнения
-    virtual double residuals(const double& temperature) override
-    {
-        const auto vle = fluid->flash(pressure, temperature);
-        double r = vle.td_functions.enthalpy.mass.mix - target_enthalpy;
-        return r;
-    }
-
+    virtual double residuals(const double& temperature) override;
     /// @brief Оптимизация расчета, учитывающая, что jacobian запускается после residuals
-    virtual double jacobian_dense(const double& temperature) override
-    {
-        double e = epsilon * std::max(1.0, abs(temperature));
-        const auto vle = fluid->flash(pressure, temperature);//= fluid->get_last_flash_result();//спорно
-        double mass_enthalpy_0 = vle.td_functions.enthalpy.mass.mix;
-
-        const auto vle2 = fluid->flash(pressure, temperature + e);
-        double mass_enthalpy_eps = vle2.td_functions.enthalpy.mass.mix;
-
-        function_type J = (mass_enthalpy_eps - mass_enthalpy_0) / e;
-        return J;
-    }
-
+    virtual double jacobian_dense(const double& temperature) override;
     /// @brief Возвращает начальное приближение по температуре
-    var_type estimation() const {
-        return temperature_initial;
-    }
-
+    var_type estimation() const;
     /// @brief Расчет PH-flash
     /// @param numerical_result 
     /// @param analysis_result 
     /// @return Искомая температура или NaN, если расчет не сошелся
     double solve(fixed_solver_result_t<1>* numerical_result = nullptr,
-        fixed_solver_result_analysis_t<1>* analysis_result = nullptr)
-    {
-        fixed_solver_result_t<1> solver_result_carrier;
-        if (numerical_result == nullptr)
-            numerical_result = &solver_result_carrier;
-
-
-        double T_initial = estimation();
-        fixed_solver_parameters_t<1, 0, golden_section_search> solver_parameters;
-        solver_parameters.line_search.function_decrement_factor = 10;
-        solver_parameters.line_search.iteration_count = 30;
-        solver_parameters.line_search_fail_action = line_search_fail_action_t::TreatAsFail;
-
-        solver_parameters.constraints.minimum = temperature_minimum;
-        solver_parameters.constraints.maximum = temperature_maximum;
-
-        solver_parameters.argument_increment_norm = desired_precission;
-        if (analysis_result != nullptr) {
-            solver_parameters.analysis.argument_history = true;
-            solver_parameters.analysis.steps = true;
-            solver_parameters.analysis.line_search_explore = true;
-        }
-
-        fixed_newton_raphson<1>::solve_dense(
-            *this, T_initial, solver_parameters, numerical_result, analysis_result);
-
-        if (numerical_result->result_code == numerical_result_code_t::Converged) {
-            return numerical_result->argument;
-        }
-        else {
-            return std::numeric_limits<double>::quiet_NaN();
-        }
-    }
+        fixed_solver_result_analysis_t<1>* analysis_result = nullptr);
     /// @brief Возвращает данные для изолированного вызова
-    ph_flash_stub_data_t get_stub_data() const {
-        ph_flash_stub_data_t result;
-        result.pressure = pressure;
-        result.enthalpy_mass = target_enthalpy;
-        result.fluid = fluid->get_mock_data();
-        return result;
-    }
+    ph_flash_stub_data_t get_stub_data() const;
 };
 
 /* НЕИСПОЛЬЗУЕМЫЙ КОД: Заменен на vle_desired_fluid_function_equation_fixed (на основе fixed_system_t)
@@ -731,7 +597,7 @@ double estimate_temperature_for_inner_energy_fixed(
 //            ? last_flash_result.temperature
 //            : KELVIN_OFFSET;
 //        //double initial_temperature = KELVIN_OFFSET;
-//        desired_enthalpy_fixed ph_flash(this, pressure, enthalpy_mass, initial_temperature);
+//        ph_flash_newton ph_flash(this, pressure, enthalpy_mass, initial_temperature);
 //        double ret = ph_flash.solve();
 //        if (!std::isfinite(ret)) {
 //            crashdump_and_throw("PH-flash_gtwem" + std::to_string(clock()), ph_flash.get_stub_data());
