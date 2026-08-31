@@ -30,9 +30,11 @@ double ph_flash_bisection::solve(
         p.argument_limit_min = std::max(10.0, 0.25 * T_critical);
     }
     else {
-        // Рауль-Дальтон и старый Пенг-Робинсон
-        //p.argument_limit_min = 10.0; // исходный вариант
-        p.argument_limit_min = std::max(std::min(10., initial_temperature / 2.), 2.); // вариант ЮП
+        // Рауль-Дальтон и старый Пенг-Робинсон. BUGS-118 (vlelib/doc/2026/BUGS-118):
+        // холодная T_init — интервал ниже 10 K, не ниже 2 K.
+        double default_temperature_limit = 10.0;
+        double alternative_temperature_limit = std::max(initial_temperature / 2, 2.0);
+        p.argument_limit_min = std::min(default_temperature_limit, alternative_temperature_limit);
     }
     p.argument_limit_max = 5000;
     // correcting limits by estimation if applicable
@@ -172,5 +174,141 @@ ph_flash_stub_data_t ph_flash_newton::get_stub_data() const
     result.fluid = fluid->get_mock_data();
     return result;
 }
+
+desired_liquid_vol_fraction_equation_fixed::desired_liquid_vol_fraction_equation_fixed(
+    double volume, double temperature, double liquid_volume, const fluid_t* fluid)
+    : volume(volume)
+    , temperature(temperature)
+    , liquid_volume(liquid_volume)
+    , fluid(fluid)
+{
+    if (liquid_volume > volume) {
+        throw std::logic_error("liquid volume must be less than total volume");
+    }
+    if (liquid_volume < 0) {
+        throw std::logic_error("liquid volume must be nonnegative");
+    }
+}
+
+double desired_liquid_vol_fraction_equation_fixed::residuals(const double& pressure)
+{
+    const auto flash = fluid->flash(pressure, temperature);
+    double liquid_frac = 1. - flash.vapor_volumetric_fraction;
+    return liquid_frac * volume - liquid_volume;
+}
+
+double desired_liquid_vol_fraction_equation_fixed::jacobian_dense(const double& pressure)
+{
+    double Pdew = fluid->get_dew_point_at_given_temperature(temperature);
+    double Pbubble = fluid->get_bubble_point_at_given_temperature(temperature);
+
+    constexpr double eps = 1e-6;
+    // Проверка на верхнюю границу
+    if (pressure > Pbubble * (1 - eps)) {
+        return fixed_system_t<1>::jacobian_dense(Pbubble * (1 - eps));
+    }
+    // Проверка на нижнюю границу
+    else if (pressure < Pdew * (1 + eps)) {
+        return fixed_system_t<1>::jacobian_dense(Pdew * (1 + eps));
+    }
+    // Нормальный, обычный расчет
+    return fixed_system_t<1>::jacobian_dense(pressure);
+}
+
+double desired_liquid_vol_fraction_equation_fixed::solve(fixed_solver_result_t<1>* solver_result)
+{
+    double Pdew = fluid->get_dew_point_at_given_temperature(temperature);
+    double Pbubble = fluid->get_bubble_point_at_given_temperature(temperature);
+
+    if (liquid_volume / volume < 4.65e-06)//уровень в тесте ~0.05 мм
+        return Pdew;
+    if ((1. - liquid_volume / volume) < 6.52e-06)//уровень в тесте ~9899.93 мм при высоте 9.9м
+        return Pbubble;
+
+    fixed_solver_result_t<1> solver_result_carrier;
+    if (solver_result == nullptr)
+        solver_result = &solver_result_carrier;
+
+    fixed_solver_parameters_t<1, 0, golden_section_search> solver_parameters;
+    solver_parameters.constraints.minimum = Pdew;
+    solver_parameters.constraints.maximum = Pbubble;
+    solver_parameters.argument_increment_norm = 1e-7;
+
+    double estimation = (Pdew + Pbubble) * liquid_volume / volume;// так поближе
+    double dp = Pbubble - Pdew;
+    estimation = std::max(Pdew + 1e-3 * dp, estimation);
+    estimation = std::min(Pbubble - 1e-3 * dp, estimation);
+
+    if (fabs(residuals(estimation)) < 1e-4)
+        return estimation;
+
+    fixed_newton_raphson<1>::solve_dense(
+        *this, estimation, solver_parameters, solver_result);
+
+    if (solver_result->result_code != numerical_result_code_t::Converged) {
+        throw std::runtime_error("desired_liquid_vol_fraction_equation_fixed not converged");
+    }
+    return solver_result->argument;
+}
+
+namespace {
+
+template <AmountType amount_type>
+struct ideal_gas_inner_energy_functor {
+    double operator()(const fluid_t* fluid, double T) const {
+        return fluid->get_ideal_gas_inner_energy<amount_type>(T);
+    }
+};
+
+}
+
+template <AmountType amount_type>
+double estimate_temperature_for_inner_energy_fixed(
+    const fluid_t* fluid,
+    double target_inner_energy,
+    double initial_temperature)
+{
+    ideal_gas_inner_energy_functor<amount_type> get_inner_energy;
+    vle_desired_fluid_function_equation_fixed<
+        ideal_gas_inner_energy_functor<amount_type>> eq(fluid, target_inner_energy, get_inner_energy);
+
+    double T_initial;
+    if (std::isfinite(initial_temperature)) {
+        T_initial = initial_temperature;
+    }
+    else {
+        double T_critical = fluid->get_pseudocritical_temperature();
+        T_initial = T_critical;
+    }
+
+    fixed_solver_parameters_t<1, 0, golden_section_search> solver_parameters;
+    solver_parameters.line_search.function_decrement_factor = 10;
+    solver_parameters.line_search.iteration_count = 30;
+    solver_parameters.line_search_fail_action = line_search_fail_action_t::TreatAsFail;
+
+    solver_parameters.constraints.minimum = get_min_antoine_bound(fluid);
+    solver_parameters.constraints.maximum = std::numeric_limits<double>::quiet_NaN();
+    solver_parameters.argument_increment_norm = 1e-8;
+
+    fixed_solver_result_t<1> solver_result;
+    fixed_newton_raphson<1>::solve_dense(
+        eq, T_initial, solver_parameters, &solver_result, nullptr);
+
+    if (solver_result.result_code == numerical_result_code_t::Converged) {
+        return solver_result.argument;
+    }
+    else {
+        return std::numeric_limits<double>::quiet_NaN();
+    }
+}
+
+template double estimate_temperature_for_inner_energy_fixed<AmountType::Molar>(
+    const fluid_t* fluid,
+    double target_inner_energy,
+    double initial_temperature);
+template double estimate_temperature_for_inner_energy_fixed<AmountType::Mass>(
+    const fluid_t* fluid,
+    double target_inner_energy,
+    double initial_temperature);
 
 }
