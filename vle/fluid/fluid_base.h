@@ -174,12 +174,10 @@ struct flash_calculation_result_t {
     /// @brief Коэффициенты равновесия по PR: K_i = phi_l,i / phi_v,i (фугитивности смеси при том же
     ///        мольном составе, что и у flash, Z жидкости и Z пара — минимальный и максимальный корни куба).
     std::vector<double> k_value;
-    /// @brief Энтальпия пара, жидкости, смеси (по массе и по молям)
-    amounts_molar_and_mass enthalpy;
-    /// @brief Внутренняя энергия для газа, жидкости (по массе и по молям)
-    amounts_molar_and_mass inner_energy;
-    /// @brief Энтропия пара, жидкости, смеси (по массе и по молям)
-    amounts_molar_and_mass entropy;
+    /// @brief Термодинамические функции PR.
+    td_functions_t td_functions;
+    /// @brief Термические коэффициенты, скорость звука, показатель адиабаты PR.
+    thermical_coefficients_t thermical;
     /// @brief Смесевой объёмный сдвиг жидкости sum_i x_i dv_i (м^3/моль): тот же состав x,
     ///        что при расчёте molar_volume.liquid в PR flash
     double liquid_volume_shift_mix{ std::numeric_limits<double>::quiet_NaN() };
@@ -466,6 +464,10 @@ public:
     /// @brief Идеально-газовая энтальпия смеси по текущему составу.
     template <AmountType amount_type>
     double get_ideal_gas_enthalpy(double temperature) const;
+    /// @brief Идеально-газовая теплоёмкость c_p^0 смеси по текущему составу:
+    /// Σ y_i c_{p,i}^{gas}(T). Всегда газовый полином (и для жидкой фазы flash).
+    template <AmountType amount_type>
+    double get_ideal_gas_heat_capacity(double temperature) const;
     /// @brief Идеально-газовая энтропия смеси S^0 по текущему составу (Савельев 5.7):
     ///     Σ y_i S_i(T) - R Σ y_i ln y_i - R ln(P/P°), P° = ATMOSPHERIC_PRESSURE.
     /// @param pressure Давление, Па.
@@ -538,16 +540,12 @@ public:
 
     /// @brief Расчет теплоты фазового перехода. Возвращает NaN, если смесь полностью газовая
     double get_heat_vaporization_mass(double pressure, double temperature) const;
-
     /// @brief Удельная мольная изобарная теплоемкость смеси
     virtual double get_heat_capacity_molar(double pressure, double temperature) const;
-
     /// @brief Удельная массовая изобарная теплоемкость смеси
     double get_heat_capacity_mass(double pressure, double temperature) const;
-
     /// @brief Изохорная теплоемкость смеси, мольная
     double get_heat_capacity_isochoric(double pressure, double temperature) const;
-
     /// @brief Показатель адиабаты
     double get_adiabatic_exponent(double pressure, double temperature) const;
 };
@@ -638,6 +636,9 @@ public:
 
     /// @brief Метод должен возврщать true для идеального газа и false для флюидов с другими EOS
     virtual bool is_ideal_gas() const = 0;
+
+    /// @brief Метод возвращает алгоритм парожидкостного равновесия, реализованный в данном флюиде
+    virtual phase_equilibrium_algorithm_t get_phase_equilibrium_algorithm() const = 0;
 
     virtual ~fluid_t() = default;
 };
