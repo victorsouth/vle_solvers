@@ -97,8 +97,8 @@ std::pair<double, double> rachford_rice2_t::get_omega_boundaries() const {
     if (K_min < 1 && K_max > 1) {
         // Полюса Речфорда по обе стороны от нуля
         // есть ограничение и сверху, и снизу
-        double omega_max = 1 / (1 - K_min) - std::numeric_limits<double>::epsilon();
-        double omega_min = 1 / (1 - K_max) + std::numeric_limits<double>::epsilon();
+        double omega_max = 1.0 / (1.0 - K_min) - std::numeric_limits<double>::epsilon();
+        double omega_min = 1.0 / (1.0 - K_max) + std::numeric_limits<double>::epsilon();
         return std::make_pair(omega_min, omega_max);
         /*solver_parameters.constraints.maximum = omega_max;
         solver_parameters.constraints.minimum = omega_min;
@@ -172,7 +172,10 @@ fixed_solver_result_t<1> rachford_rice2_t::solve(fixed_solver_result_analysis_t<
 {
     fixed_solver_parameters_t<1, 0, golden_section_search> solver_parameters;
     solver_parameters.constraints.relative_boundary = 1.0;
-    solver_parameters.argument_increment_norm = 1e-10;
+    // было 1e-10 - магическое число
+    // Повышение точности при низких температурах - следствие тестов HasEnoughAccuracyBubblePoint
+    // в остальном диапазоне "сарая точность" для сохранения производительности
+    solver_parameters.argument_increment_norm = (temperature<KELVIN_OFFSET/4.)?100.*std::numeric_limits<double>::epsilon():1.e-10;
     solver_parameters.line_search_fail_action = line_search_fail_action_t::TreatAsFail;
     solver_parameters.line_search.iteration_count = 100;
 
