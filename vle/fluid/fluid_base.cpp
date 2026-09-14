@@ -577,22 +577,22 @@ double fluid_composition_functions_t::get_ideal_gas_inner_energy(double temperat
         return values.dot(molar_fraction);
 }
 
-double fluid_composition_functions_t::get_min_antoine_bound() const
-{
-    const auto& comps = composition.get_components();
-
-    std::vector<double> min_antoine_bound;
-    std::transform(comps.begin(), comps.end(), std::back_inserter(min_antoine_bound),
-                   [](const component_properties_t* c) { return c->antoine_model.min_bound; }
-    );
-    // учитываем вес компонентов
-    double mean_min = composition.get_molar_fraction().dot(
-                          Eigen::VectorXd::Map(min_antoine_bound.data(), min_antoine_bound.size()));
-    // а тут не учитываем весь компонентов, просто берем минимум,
-    // сколько бы ни было его в смеси
-    double min = *std::min_element(min_antoine_bound.begin(), min_antoine_bound.end());
-    return mean_min;
-}
+//double fluid_composition_functions_t::get_min_antoine_bound() const
+//{
+//    const auto& comps = composition.get_components();
+//
+//    std::vector<double> min_antoine_bound;
+//    std::transform(comps.begin(), comps.end(), std::back_inserter(min_antoine_bound),
+//                   [](const component_properties_t* c) { return c->antoine_model.min_bound; }
+//    );
+//    // учитываем вес компонентов
+//    double mean_min = composition.get_molar_fraction().dot(
+//                          Eigen::VectorXd::Map(min_antoine_bound.data(), min_antoine_bound.size()));
+//    // а тут не учитываем весь компонентов, просто берем минимум,
+//    // сколько бы ни было его в смеси
+//    double min = *std::min_element(min_antoine_bound.begin(), min_antoine_bound.end());
+//    return mean_min;
+//}
 
 fluid_components_functions_t::fluid_components_functions_t(
         const std::vector<const component_properties_t*>& components)

@@ -773,6 +773,11 @@ double fluid_rault_dalton_t::find_liquid_temperature_with_inner_energy(double in
 /// границ по приведенной температуре.
 constexpr double temperature_constraint_coeff = 0.8;
 
+double get_min_antoine_bound_heuristic(const fluid_t* fluid)
+{
+    return get_min_antoine_bound(fluid) * temperature_constraint_coeff;
+}
+
 double get_min_antoine_bound(const fluid_t* fluid)
 {
     const auto& comps = fluid->get_components();
@@ -788,7 +793,7 @@ double get_min_antoine_bound(const fluid_t* fluid)
     // сколько бы ни было его в смеси
     double min = *std::min_element(min_antoine_bound.begin(), min_antoine_bound.end());
     
-    return mean_min * temperature_constraint_coeff;
+    return mean_min;
 }
 
 double get_max_antoine_bound(const fluid_rault_dalton_t* fluid)
