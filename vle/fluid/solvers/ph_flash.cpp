@@ -27,7 +27,8 @@ double ph_flash_bisection::solve(
     if (fluid->get_phase_equilibrium_algorithm() == phase_equilibrium_algorithm_t::PengRobinson)
     {
         // PREOS / PR: T=10 K ломает Michelsen; не ниже ~0.25 Tc.
-        p.argument_limit_min = std::max(10.0, 0.25 * T_critical);
+        //p.argument_limit_min = std::max(10.0, 0.25 * T_critical);
+        p.argument_limit_min = 46.0; // ниже минимума по всем смесям
     }
     else {
         // Рауль-Дальтон и старый Пенг-Робинсон. BUGS-118 (vlelib/doc/2026/BUGS-118):
@@ -37,17 +38,23 @@ double ph_flash_bisection::solve(
         p.argument_limit_min = std::min(default_temperature_limit, alternative_temperature_limit);
     }
     p.argument_limit_max = 5000;
+
     // correcting limits by estimation if applicable
-    if (std::isfinite(initial_temperature)) {
-        double enthalpy_at_initial_temperature = fluid->flash(given_pressure, initial_temperature).td_functions.enthalpy.mass.mix;
-        if (enthalpy_at_initial_temperature < given_enthalpy)p.argument_limit_min = initial_temperature;
-        if (enthalpy_at_initial_temperature > given_enthalpy)p.argument_limit_max = initial_temperature;
-    }
-    {
-        double enthalpy_at_critical_temperature = fluid->flash(given_pressure, T_critical).td_functions.enthalpy.mass.mix;
-        if (enthalpy_at_critical_temperature < given_enthalpy)p.argument_limit_min = T_critical;
-        if (enthalpy_at_critical_temperature > given_enthalpy)p.argument_limit_max = T_critical;
-    }
+    //if (std::isfinite(initial_temperature)) {
+    //    double enthalpy_at_initial_temperature = fluid->flash(given_pressure, initial_temperature).td_functions.enthalpy.mass.mix;
+    //    if (enthalpy_at_initial_temperature < given_enthalpy)
+    //        p.argument_limit_min = initial_temperature;
+    //    if (enthalpy_at_initial_temperature > given_enthalpy)
+    //        p.argument_limit_max = initial_temperature;
+    //}
+    //{
+    //    double enthalpy_at_critical_temperature = fluid->flash(given_pressure, T_critical).td_functions.enthalpy.mass.mix;
+    //    if (enthalpy_at_critical_temperature < given_enthalpy)
+    //        p.argument_limit_min = T_critical;
+    //    if (enthalpy_at_critical_temperature > given_enthalpy)
+    //        p.argument_limit_max = T_critical;
+    //}
+
     p.argument_precision = desired_precision;
     p.residual_precision = desired_precision;
     p.argument_history = true;
