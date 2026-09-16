@@ -38,7 +38,7 @@ public:
         double initial_estimation = 273.15;
         fixed_solver_parameters_t<1, 0> solver_parameters;
         solver_parameters.constraints.maximum = 2 * fluid->get_pseudocritical_temperature();
-        solver_parameters.constraints.minimum = get_min_antoine_bound_heuristic(fluid);
+        solver_parameters.constraints.minimum = fluid->get_min_antoine_bound_heuristic();
         solver_parameters.constraints.ensure_constraints(initial_estimation);
         solver_parameters.argument_increment_norm = 1e-7;
 
@@ -97,7 +97,7 @@ public:
         double initial_estimation = 273.15;
         fixed_solver_parameters_t<1, 0> solver_parameters;
         solver_parameters.constraints.maximum = 2 * fluid->get_pseudocritical_temperature();
-        solver_parameters.constraints.minimum = get_min_antoine_bound_heuristic(fluid);
+        solver_parameters.constraints.minimum = fluid->get_min_antoine_bound_heuristic();
         solver_parameters.constraints.ensure_constraints(initial_estimation);
         solver_parameters.argument_increment_norm = 1e-7;
 
