@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+﻿cmake_minimum_required(VERSION 3.10)
 if(POLICY CMP0091)
     cmake_policy(SET CMP0091 NEW)
 endif()
@@ -111,7 +111,7 @@ add_library(${PROJECT_NAME}
     ${SOURCE_FLUID}
     ${SOURCE_FLUID_SOLVERS}
 )
-
+target_compile_definitions(${PROJECT_NAME} PUBLIC VLELIB_SERIALIZATION_SUPPORT)
 # Линковка с требуемыми библиотеками
 target_link_libraries(${PROJECT_NAME} 
     PUBLIC 
