@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<!DOCTYPE boost_serialization>
+<boost_serialization signature="serialization::archive" version="20">
+<mock_data class_id="0" tracking_level="0" version="0">
+	<pressure>5.95236297532545752e+05</pressure>
+	<temperature>1.39001595291202648e+02</temperature>
+	<fluid class_id="1" tracking_level="0" version="0">
+		<component_list class_id="2" tracking_level="0" version="0">
+			<count>10</count>
+			<item_version>0</item_version>
+			<item>C2H6</item>
+			<item>C3H8</item>
+			<item>CH4</item>
+			<item>H2</item>
+			<item>N2</item>
+			<item>i_C4H10</item>
+			<item>i_C5H12</item>
+			<item>n_C4H10</item>
+			<item>n_C5H12</item>
+			<item>n_C6H14</item>
+		</component_list>
+		<molar_fraction>
+			<count>10</count>
+			<item_version>0</item_version>
+			<item>1.15586443719354500e-04</item>
+			<item>3.84658199773009133e-07</item>
+			<item>9.68418229725081070e-01</item>
+			<item>1.46116051395065702e-04</item>
+			<item>3.13196791348834755e-02</item>
+			<item>3.19660802614982570e-09</item>
+			<item>6.35994376675707756e-12</item>
+			<item>7.82460699454895649e-10</item>
+			<item>1.27222147454362092e-12</item>
+			<item>2.03053642131946728e-14</item>
+		</molar_fraction>
+	</fluid>
+</mock_data>
+</boost_serialization>
+
