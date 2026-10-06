@@ -180,6 +180,7 @@ const vlelib::flash_calculation_result_t fluid_rault_dalton_t::flash_liquid_only
     // Это потом попадет в мемоизацию fluid_liquid
     result.fluid_liquid = create_copy(false);
     result.fluid_vapor = nullptr;
+    result.z_factor.vapor = 1.0;
 
     //flash_enthalpy(pressure, temperature);
     result.td_functions.enthalpy.molar = flash_function<AmountType::Molar>(
