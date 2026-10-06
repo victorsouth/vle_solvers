@@ -176,6 +176,8 @@ fixed_solver_result_t<1> rachford_rice2_t::solve(fixed_solver_result_analysis_t<
     solver_parameters.argument_increment_norm = 50.*std::numeric_limits<double>::epsilon();
     solver_parameters.line_search_fail_action = line_search_fail_action_t::TreatAsFail;
     solver_parameters.line_search.iteration_count = 100;
+    solver_parameters.residuals_norm = 2.*std::numeric_limits<double>::epsilon();
+    solver_parameters.residuals_norm_allow_early_exit =true;
 
     double initial_value = 0.5;
     if (std::isfinite(vapor_fraction_initial))

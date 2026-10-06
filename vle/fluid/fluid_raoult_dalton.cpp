@@ -452,8 +452,8 @@ void fluid_rault_dalton_t::flash_unsafe(double pressure, double temperature, dou
     else {
 
         rachford_rice2_t rr(this, pressure, temperature);
-
-        fixed_solver_result_t<1> solver_result = rr.solve();
+        fixed_solver_result_analysis_t<1> analiz;
+        fixed_solver_result_t<1> solver_result = rr.solve(&analiz);
         if (solver_result.result_code != numerical_result_code_t::Converged) {
             pt_flash_stub_data_t data;
             data.fluid = get_mock_data();
