@@ -172,12 +172,14 @@ fixed_solver_result_t<1> rachford_rice2_t::solve(fixed_solver_result_analysis_t<
 {
     fixed_solver_parameters_t<1, 0, golden_section_search> solver_parameters;
     solver_parameters.constraints.relative_boundary = 1.0;
-//    solver_parameters.argument_increment_norm = (temperature<KELVIN_OFFSET/4.)?10.*std::numeric_limits<double>::epsilon():1.e-10;
-    solver_parameters.argument_increment_norm = 50.*std::numeric_limits<double>::epsilon();
+    solver_parameters.argument_increment_norm = (temperature<KELVIN_OFFSET/4.)?10.*std::numeric_limits<double>::epsilon():1.e-10;
+    //solver_parameters.argument_increment_norm = 10.*std::numeric_limits<double>::epsilon();
     solver_parameters.line_search_fail_action = line_search_fail_action_t::TreatAsFail;
     solver_parameters.line_search.iteration_count = 100;
-    solver_parameters.residuals_norm = 2.*std::numeric_limits<double>::epsilon();
-    solver_parameters.residuals_norm_allow_early_exit =true;
+    if(false && temperature>KELVIN_OFFSET/2.){
+        solver_parameters.residuals_norm = std::numeric_limits<double>::epsilon();
+        solver_parameters.residuals_norm_allow_early_exit =true;
+    }
 
     double initial_value = 0.5;
     if (std::isfinite(vapor_fraction_initial))
