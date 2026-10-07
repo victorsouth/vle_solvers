@@ -594,6 +594,17 @@ double fluid_composition_functions_t::get_min_antoine_bound() const
     return mean_min;
 }
 
+///// @brief Эмпирический коэффициент, на который домножается нижнее ограничение по приведенной
+///// температуре. Его значение было подобрано так, чтобы сошелся состав из задачи MM-260.
+///// дальнейшее снижение коэффициента нежелательно, требуется исследование обоснованного задания
+///// границ по приведенной температуре.
+constexpr double temperature_constraint_coeff = 0.4;
+
+double fluid_composition_functions_t::get_min_antoine_bound_heuristic() const
+{
+    return fluid_composition_functions_t::get_min_antoine_bound() * temperature_constraint_coeff;
+}
+
 fluid_components_functions_t::fluid_components_functions_t(
         const std::vector<const component_properties_t*>& components)
     : components_(components)
