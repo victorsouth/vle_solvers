@@ -100,7 +100,7 @@ ph_flash_newton::ph_flash_newton(const fluid_t* fluid, double pressure, double t
             throw std::runtime_error("Can estimate min temperature only for Raoult-fluid Dalton");
         double T_critical = fluid->get_pseudocritical_temperature();
         double T_initial = T_critical;
-        double T_min = get_min_antoine_bound(fluid_rd);
+        double T_min = fluid_rd->get_min_antoine_bound();
         temperature_initial = std::max(T_min, 0.5 * T_initial);
 
     }
@@ -293,7 +293,7 @@ double estimate_temperature_for_inner_energy_fixed(
     solver_parameters.line_search.iteration_count = 30;
     solver_parameters.line_search_fail_action = line_search_fail_action_t::TreatAsFail;
 
-    solver_parameters.constraints.minimum = get_min_antoine_bound(fluid);
+    solver_parameters.constraints.minimum = fluid->get_min_antoine_bound();
     solver_parameters.constraints.maximum = std::numeric_limits<double>::quiet_NaN();
     solver_parameters.argument_increment_norm = 1e-8;
 

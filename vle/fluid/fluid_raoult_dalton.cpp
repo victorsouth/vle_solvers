@@ -698,7 +698,7 @@ std::pair<double, double> fluid_rault_dalton_t::fill_volume_with_total_moles2(
         // Используем Tliq как начальное приближение, если initial_temperature не задана
         double initial_temp = std::isfinite(initial_temperature) ? initial_temperature : Tliq;
 
-        double min_temperature = vlelib::get_min_antoine_bound(this);
+        double min_temperature = this->get_min_antoine_bound();
         if (get_ideal_gas_inner_energy<AmountType::Molar>(min_temperature) < inner_energy_molar) {
             /*double Tgas2 = estimate_temperature_for_inner_energy<AmountType::Molar>(
                 this, inner_energy_molar, initial_temp, 1e5);*/
@@ -768,29 +768,34 @@ double fluid_rault_dalton_t::find_liquid_temperature_with_inner_energy(double in
     return result;
 }
 
-/// @brief Эмпирический коэффициент, на который домножается нижнее ограничение по приведенной
-/// температуре. Его значение было подобрано так, чтобы сошелся состав из задачи MM-260.
-/// дальнейшее снижение коэффициента нежелательно, требуется исследование обоснованного задания
-/// границ по приведенной температуре.
-constexpr double temperature_constraint_coeff = 0.8;
-
-double get_min_antoine_bound(const fluid_t* fluid)
-{
-    const auto& comps = fluid->get_components();
-
-    std::vector<double> min_antoine_bound;
-    std::transform(comps.begin(), comps.end(), std::back_inserter(min_antoine_bound),
-        [](const component_properties_t* c) { return c->antoine_model.min_bound; }
-    );
-    // учитываем вес компонентов
-    double mean_min = fluid->get_molar_fraction().dot(
-        Eigen::VectorXd::Map(min_antoine_bound.data(), min_antoine_bound.size()));
-    // а тут не учитываем весь компонентов, просто берем минимум,
-    // сколько бы ни было его в смеси
-    double min = *std::min_element(min_antoine_bound.begin(), min_antoine_bound.end());
-    
-    return mean_min * temperature_constraint_coeff;
-}
+///// @brief Эмпирический коэффициент, на который домножается нижнее ограничение по приведенной
+///// температуре. Его значение было подобрано так, чтобы сошелся состав из задачи MM-260.
+///// дальнейшее снижение коэффициента нежелательно, требуется исследование обоснованного задания
+///// границ по приведенной температуре.
+//constexpr double temperature_constraint_coeff = 0.8;
+//
+//double get_min_antoine_bound_heuristic(const fluid_t* fluid)
+//{
+//    return get_min_antoine_bound(fluid) * temperature_constraint_coeff;
+//}
+//
+//double get_min_antoine_bound(const fluid_t* fluid)
+//{
+//    const auto& comps = fluid->get_components();
+//
+//    std::vector<double> min_antoine_bound;
+//    std::transform(comps.begin(), comps.end(), std::back_inserter(min_antoine_bound),
+//        [](const component_properties_t* c) { return c->antoine_model.min_bound; }
+//    );
+//    // учитываем вес компонентов
+//    double mean_min = fluid->get_molar_fraction().dot(
+//        Eigen::VectorXd::Map(min_antoine_bound.data(), min_antoine_bound.size()));
+//    // а тут не учитываем весь компонентов, просто берем минимум,
+//    // сколько бы ни было его в смеси
+//    double min = *std::min_element(min_antoine_bound.begin(), min_antoine_bound.end());
+//    
+//    return mean_min;
+//}
 
 double get_max_antoine_bound(const fluid_rault_dalton_t* fluid)
 {
