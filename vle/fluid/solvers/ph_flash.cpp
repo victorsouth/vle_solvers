@@ -96,14 +96,15 @@ ph_flash_newton::ph_flash_newton(const fluid_t* fluid, double pressure, double t
     if (!std::isfinite(temperature_initial))
     {
         double T_critical = fluid->get_pseudocritical_temperature();
-        if (auto fluid_rd = dynamic_cast<const fluid_rault_dalton_t*>(fluid)) {
+        if (fluid->get_phase_equilibrium_algorithm() == phase_equilibrium_algorithm_t::RaoultDalton) {
             // Ниже границы Антуана для смеси модель давления насыщения не применима
-            temperature_initial = std::max(fluid_rd->get_min_antoine_bound(), 0.5 * T_critical);
+            temperature_initial = std::max(fluid->get_min_antoine_bound(), 0.5 * T_critical);
         }
         else if (fluid->get_phase_equilibrium_algorithm() == phase_equilibrium_algorithm_t::PengRobinson) {
             // Ниже 46 K расчёт по PREOS для принятых смесей неустойчив
-            constexpr double k_preos_temperature_floor = 46.0;
-            temperature_initial = std::max(k_preos_temperature_floor, 0.5 * T_critical);
+            // TODO: Отрефакторить. Допустимые диапазон параметров привязать к термодинамическому пакету.
+            double preos_temperature_limit_min = 46.0;
+            temperature_initial = std::max(preos_temperature_limit_min, 0.5 * T_critical);
         }
         else {
             throw std::runtime_error(
