@@ -104,31 +104,23 @@ bip_estimation_plan_t generate_bip_estimation_plan_with_correlation(const std::v
     return result;
 }
 
-bip_estimation_plan_t generate_bip_estimation_plan_use_db_only_by_cas(
-    const std::vector<std::wstring>& casno_list)
+bip_estimation_plan_t generate_bip_estimation_plan_use_db_only(
+    const std::vector<std::wstring>& component_list)
 {
     bip_estimation_plan_t result;
+    std::vector<const component_properties_t*> components =
+        components_database.get_components(component_list);
 
-    for (std::size_t i = 0; i < casno_list.size(); ++i) {
+    for (std::size_t i = 0; i < components.size(); ++i) {
         for (std::size_t j = 0; j < i; ++j) {
             bip_estimation_plan_entry_t entry;
-            entry.cas_pair = { casno_list[i], casno_list[j] };
+            entry.cas_pair = { components[i]->CASno, components[j]->CASno };
             entry.rule = bip_estimation_rule_t::use_db_only;
             entry.value = std::numeric_limits<double>::quiet_NaN();
             result.push_back(entry);
         }
     }
 
-    return result;
-}
-
-bip_estimation_plan_t generate_bip_estimation_plan_use_db_only(
-    const std::vector<std::wstring>& component_list)
-{
-    std::vector<std::wstring> casno_list =
-        components_database.get_casno_by_formulas(component_list);
-    bip_estimation_plan_t result =
-        generate_bip_estimation_plan_use_db_only_by_cas(casno_list);
     return result;
 }
 

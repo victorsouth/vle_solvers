@@ -98,11 +98,8 @@ double estimate_bip_Gao(
 bip_estimation_plan_t generate_bip_estimation_plan_with_correlation(
     const std::vector<std::wstring>& component_list, bip_correlation_t correlation);
 
-/// @brief Генерирует план BIP на основе CAS-номеров компонентов (по правилу use_db_only)
-bip_estimation_plan_t generate_bip_estimation_plan_use_db_only_by_cas(
-    const std::vector<std::wstring>& casno_list);
-
-/// @brief Генерирует план BIP на основе формул компонентов (по правилу use_db_only)
+/// @brief Генерирует план BIP (use_db_only) по списку формул или CAS-номеров.
+/// Идентификаторы резолвятся через глобальную components_database.
 bip_estimation_plan_t generate_bip_estimation_plan_use_db_only(
     const std::vector<std::wstring>& component_list);
 
