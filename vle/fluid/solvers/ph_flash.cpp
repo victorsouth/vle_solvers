@@ -95,14 +95,21 @@ ph_flash_newton::ph_flash_newton(const fluid_t* fluid, double pressure, double t
 {
     if (!std::isfinite(temperature_initial))
     {
-        auto fluid_rd = dynamic_cast<const fluid_rault_dalton_t*>(fluid);
-        if (fluid_rd == nullptr)
-            throw std::runtime_error("Can estimate min temperature only for Raoult-fluid Dalton");
         double T_critical = fluid->get_pseudocritical_temperature();
-        double T_initial = T_critical;
-        double T_min = get_min_antoine_bound(fluid_rd);
-        temperature_initial = std::max(T_min, 0.5 * T_initial);
-
+        if (fluid->get_phase_equilibrium_algorithm() == phase_equilibrium_algorithm_t::RaoultDalton) {
+            // Ниже границы Антуана для смеси модель давления насыщения не применима
+            temperature_initial = std::max(fluid->get_min_antoine_bound(), 0.5 * T_critical);
+        }
+        else if (fluid->get_phase_equilibrium_algorithm() == phase_equilibrium_algorithm_t::PengRobinson) {
+            // Ниже 46 K расчёт по PREOS для принятых смесей неустойчив
+            // TODO: Отрефакторить. Допустимые диапазон параметров привязать к термодинамическому пакету.
+            double preos_temperature_limit_min = 46.0;
+            temperature_initial = std::max(preos_temperature_limit_min, 0.5 * T_critical);
+        }
+        else {
+            throw std::runtime_error(
+                "Can estimate initial temperature only for Raoult-Dalton or Peng-Robinson");
+        }
     }
 }
 
@@ -293,7 +300,7 @@ double estimate_temperature_for_inner_energy_fixed(
     solver_parameters.line_search.iteration_count = 30;
     solver_parameters.line_search_fail_action = line_search_fail_action_t::TreatAsFail;
 
-    solver_parameters.constraints.minimum = get_min_antoine_bound(fluid);
+    solver_parameters.constraints.minimum = fluid->get_min_antoine_bound();
     solver_parameters.constraints.maximum = std::numeric_limits<double>::quiet_NaN();
     solver_parameters.argument_increment_norm = 1e-8;
 
