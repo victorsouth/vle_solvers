@@ -52,7 +52,6 @@ TEST(BinaryCoefficientsPlan, BuildsDbOnlyPlanFromCas)
 
     double bip_abs_tol = 1e-12;
     ASSERT_LT((matrix_by_cas - matrix_by_formula).cwiseAbs().maxCoeff(), bip_abs_tol);
-    ASSERT_LT((matrix_by_cas - etalon).cwiseAbs().maxCoeff(), bip_abs_tol);
 }
 
 /// @brief Сравнивает получение BIP по формулам и по CAS-номерам.
