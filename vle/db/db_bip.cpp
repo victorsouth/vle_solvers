@@ -86,18 +86,15 @@ bip_estimation_plan_t generate_bip_estimation_plan_with_correlation(const std::v
     bip_correlation_t correlation)
 {
     bip_estimation_plan_t result;
+    std::vector<const component_properties_t*> components =
+        components_database.get_components(component_list);
 
-    for (std::size_t i = 0; i < component_list.size(); ++i) {
+    for (std::size_t i = 0; i < components.size(); ++i) {
         for (std::size_t j = 0; j < i; ++j) {
             bip_estimation_plan_entry_t entry;
-
-            std::vector<std::wstring> cas_pair =
-                components_database.get_casno_by_formulas({ component_list[i], component_list[j] });
-
-            entry.cas_pair = std::set<std::wstring>(cas_pair.begin(), cas_pair.end());
+            entry.cas_pair = { components[i]->CASno, components[j]->CASno };
             entry.rule = bip_estimation_rule_t::use_correlation_only;
             entry.correlation = correlation;
-
             result.push_back(entry);
         }
     }
