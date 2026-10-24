@@ -507,6 +507,28 @@ double fluid_composition_functions_t::get_ideal_gas_enthalpy(double temperature)
 
 
 template <AmountType amount_type>
+double fluid_composition_functions_t::get_ideal_gas_heat_capacity(double temperature) const
+{
+    const std::vector<const component_properties_t*>& components =
+        composition.get_components();
+    size_t components_count = composition.get_components_count();
+    Eigen::VectorXd molar_fraction = composition.get_molar_fraction();
+
+    Eigen::VectorXd values(components_count);
+    for (int i = 0; i < values.size(); ++i) {
+        if constexpr (amount_type == AmountType::Mass)
+            values(i) = components[i]->get_Cp_gas_mass(temperature);
+        else
+            values(i) = components[i]->get_Cp_gas_molar(temperature);
+    }
+    if constexpr (amount_type == AmountType::Mass)
+        return values.dot(get_mass_fraction());
+    else
+        return values.dot(molar_fraction);
+}
+
+
+template <AmountType amount_type>
 double fluid_composition_functions_t::get_ideal_gas_entropy(
     double pressure, double temperature) const
 {
@@ -570,6 +592,17 @@ double fluid_composition_functions_t::get_min_antoine_bound() const
     // сколько бы ни было его в смеси
     double min = *std::min_element(min_antoine_bound.begin(), min_antoine_bound.end());
     return mean_min;
+}
+
+///// @brief Эмпирический коэффициент, на который домножается нижнее ограничение по приведенной
+///// температуре. Его значение было подобрано так, чтобы сошелся состав из задачи MM-260.
+///// дальнейшее снижение коэффициента нежелательно, требуется исследование обоснованного задания
+///// границ по приведенной температуре.
+constexpr double temperature_constraint_coeff = 0.4;
+
+double fluid_composition_functions_t::get_min_antoine_bound_heuristic() const
+{
+    return fluid_composition_functions_t::get_min_antoine_bound() * temperature_constraint_coeff;
 }
 
 fluid_components_functions_t::fluid_components_functions_t(
@@ -806,6 +839,8 @@ double fluid_flash_functions_t::get_adiabatic_exponent(double pressure, double t
 
 template double fluid_composition_functions_t::get_ideal_gas_enthalpy<AmountType::Molar>(double temperature) const;
 template double fluid_composition_functions_t::get_ideal_gas_enthalpy<AmountType::Mass>(double temperature) const;
+template double fluid_composition_functions_t::get_ideal_gas_heat_capacity<AmountType::Molar>(double temperature) const;
+template double fluid_composition_functions_t::get_ideal_gas_heat_capacity<AmountType::Mass>(double temperature) const;
 template double fluid_composition_functions_t::get_ideal_gas_entropy<AmountType::Molar>(double pressure, double temperature) const;
 template double fluid_composition_functions_t::get_ideal_gas_entropy<AmountType::Mass>(double pressure, double temperature) const;
 template double fluid_composition_functions_t::get_ideal_gas_inner_energy<AmountType::Molar>(double temperature) const;

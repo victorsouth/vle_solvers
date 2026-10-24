@@ -39,7 +39,7 @@ std::pair<std::vector<double>, std::vector<double>> plot_enthalpy(
     for (double t = Tfrom; t < Tto; t += Tstep)
     {
         const auto vle = fluid->flash(pressure, t);
-        double h = vle.enthalpy.mass.mix;
+        double h = vle.td_functions.enthalpy.mass.mix;
 
         T.push_back(t);
         H.push_back(h);

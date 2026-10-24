@@ -76,7 +76,7 @@ uv_flash_over_RR::uv_flash_over_RR(double volume, double molar_amount,
     , use_density(_use_density)
 {
     T_critical = fluid->get_pseudocritical_temperature();
-    T_min = get_min_antoine_bound(fluid);
+    T_min = fluid->get_min_antoine_bound();
     specific_volume_molar = volume / molar_amount;
     epsilon = 1e-6;
 
@@ -162,7 +162,7 @@ uv_flash_over_RR::var_type uv_flash_over_RR::residuals(const var_type& w)
         r[0] /= specific_volume_molar;
     }
 
-    r[1] = inner_energy_molar - flash.inner_energy.molar.mix;
+    r[1] = inner_energy_molar - flash.td_functions.inner_energy.molar.mix;
     r[1] /= inner_energy_molar;
 
     return r;

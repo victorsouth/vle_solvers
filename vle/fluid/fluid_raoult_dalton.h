@@ -78,6 +78,12 @@ public:
     /// @brief Возврщает true - модель Рауля-Дальтона подразумевает идеальный газ
     virtual bool is_ideal_gas() const override { return true; }
 
+    /// @brief Возвращает алгоритм Рауля-Дальтона
+    virtual phase_equilibrium_algorithm_t get_phase_equilibrium_algorithm() const override
+    {
+        return phase_equilibrium_algorithm_t::RaoultDalton;
+    }
+
     /// @brief Вектор плотностей газа. Идеально-газовый расчет
     virtual Eigen::VectorXd get_densities_vapor(double pressure, double temperature) const override
     {
@@ -305,12 +311,20 @@ private:
 
 };
 
-/// @brief Возвращает среднюю по составу минимальную температурную границу
-/// области определения модели давления насыщенных паров Антуана
-/// Средняя берется по коцентрациям компонентов в составе
-/// @param fluid Состав
-/// @return Минимальная граница T_min
-double get_min_antoine_bound(const fluid_t* fluid);
+///// @brief Возвращает среднюю по составу минимальную температурную границу
+///// области определения модели давления насыщенных паров Антуана
+///// Средняя берется по коцентрациям компонентов в составе
+///// @param fluid Состав
+///// @return Минимальная граница T_min
+//double get_min_antoine_bound(const fluid_t* fluid);
+//
+///// @brief Возвращает среднюю по составу минимальную температурную границу
+///// области определения модели давления насыщенных паров Антуана 
+///// умноженную на понижающий коэффициент temperature_constraint_coeff
+///// Средняя берется по коцентрациям компонентов в составе
+///// @param fluid Состав
+///// @return Минимальная граница T_min
+//double get_min_antoine_bound_heuristic(const fluid_t* fluid);
 
 /// @brief Возвращает среднюю по составу максимальную температурную границу
 /// области определения модели давления насыщенных паров Антуана
