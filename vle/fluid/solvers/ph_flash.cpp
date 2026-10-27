@@ -159,6 +159,10 @@ double ph_flash_newton::solve(fixed_solver_result_t<1>* numerical_result,
     solver_parameters.line_search.iteration_count = 30;
     solver_parameters.line_search_fail_action = line_search_fail_action_t::TreatAsFail;
 
+    if (fluid->get_phase_equilibrium_algorithm() == phase_equilibrium_algorithm_t::PengRobinson) {
+        // Для PREOS ниже 46 K расчёт неустойчив
+        temperature_minimum = std::max(46.0, temperature_minimum);
+    }
     solver_parameters.constraints.minimum = temperature_minimum;
     solver_parameters.constraints.maximum = temperature_maximum;
 
