@@ -255,6 +255,8 @@ public:
     void set_molar_fraction(const std::vector<double>& fraction);
     /// @brief (потокобезопасно) Задает состав смеси (потокобезопасно), версия Eigen::VectorXd
     void set_molar_fraction(const Eigen::VectorXd& fraction);
+    /// @brief (потокобезопасно) Задает состав смеси по массовым долям
+    void set_mass_fraction(const Eigen::VectorXd& mass_fraction);
     /// @brief (потокобезопасно) Возвращает последний результат расчета
     flash_calculation_result_t get_last_flash_result() const;
     /// @brief (потокобезопасно) Основная расчетная задача парожидкостного равновесия

@@ -298,6 +298,22 @@ void fluid_fundamental_data_t::set_molar_fraction(const Eigen::VectorXd& fractio
     }
 }
 
+void fluid_fundamental_data_t::set_mass_fraction(const Eigen::VectorXd& mass_fraction)
+{
+    if (components_.size() != (size_t)mass_fraction.size())
+        throw std::logic_error("Wrong fraction vector size");
+
+    Eigen::VectorXd molar_amount(mass_fraction.size());
+    for (Eigen::Index index = 0; index < mass_fraction.size(); ++index) {
+        molar_amount(index) = mass_fraction(index) / components_[index]->molar_mass;
+    }
+    double molar_amount_sum = molar_amount.sum();
+    if (!std::isfinite(molar_amount_sum) || molar_amount_sum <= 0.0)
+        throw std::logic_error("Zero or invalid mass fraction sum");
+
+    set_molar_fraction(molar_amount / molar_amount_sum);
+}
+
 flash_calculation_result_t fluid_fundamental_data_t::get_last_flash_result() const
 {
     if constexpr (debug_disable_locks == false) {
