@@ -119,27 +119,35 @@ std::vector<std::wstring> thermo_db_t::get_casno_by_formulas(const std::vector<s
     return casnos;
 }
 
+std::wstring thermo_db_t::resolve_cas_number(const std::wstring& component) const
+{
+    auto iter = cas_components_db.find(component);
+    if (iter != cas_components_db.end()) {
+        return iter->first;
+    }
+    return get_casno_by_formula(component);
+}
+
+std::vector<std::wstring> thermo_db_t::resolve_cas_numbers(
+    const std::vector<std::wstring>& component_list) const
+{
+    std::vector<std::wstring> casnos;
+    casnos.reserve(component_list.size());
+    for (const auto& component_id : component_list) {
+        casnos.push_back(resolve_cas_number(component_id));
+    }
+    return casnos;
+}
+
 std::vector<const component_properties_t*> thermo_db_t::get_components(
     const std::vector<std::wstring>& component_list) const
 {
     std::vector<const component_properties_t*> components;
     components.reserve(component_list.size());
-
     for (const auto& component_id : component_list) {
-        if (cas_components_db.count(component_id) == 1) {
-            // Трактуем component_id как CAS. Дублей CAS нет, поэтому проверяем только на count == 1
-            const component_properties_t& properties = cas_components_db.at(component_id);
-            components.emplace_back(&properties);
-        }
-        else {
-            // Не нашли component_id среди CAS-номеров,
-            // Трактуем component_id как формулу, по которой пробуем получить CAS
-            const std::wstring& cas = get_casno_by_formula(component_id);
-            const component_properties_t& properties = cas_components_db.at(cas); // здесь будет ошибка, если не найдем cas
-            components.emplace_back(&properties);
-        }
+        std::wstring cas = resolve_cas_number(component_id);
+        components.emplace_back(&cas_components_db.at(cas));
     }
-
     return components;
 }
 

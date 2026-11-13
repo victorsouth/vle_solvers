@@ -166,6 +166,13 @@ public:
     static std::unique_ptr<Fluid> duplicate_fluid(const Fluid* src_fluid_ptr
         , const std::vector<std::wstring>& dest_components_casno = {});
 private:
+    /// @brief Приводит идентификатор компонента к CAS (сначала CAS, иначе формула).
+    /// Если идентификатор не найден или формула неоднозначна, кидает исключение.
+    std::wstring resolve_cas_number(const std::wstring& component) const;
+    /// @brief Приводит список идентификаторов к CAS (порядок сохраняется).
+    /// Если хотя бы один идентификатор не найден или неоднозначен, кидает исключение.
+    std::vector<std::wstring> resolve_cas_numbers(
+        const std::vector<std::wstring>& component_list) const;
     /// @brief Расчёт коэффициента экстраполяции модели Антуана для всех компонентов.
     void init_extrapolation_coeff();
     /// @brief Инициализация бинарных коэффициентов взаимодействия из глобальной базы

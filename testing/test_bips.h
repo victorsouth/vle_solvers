@@ -20,6 +20,72 @@ TEST(BinaryCoefficients, BipsForUnknownCasPair_ReturnsNaN) {
 }
 
 
+/// @brief План BIP use_db_only одинаков при компонентов с помощью формул и через CAS-номера.
+TEST(BinaryCoefficientsPlan, BuildsDbOnlyPlanFromFormulasAndCas_ReturnsSameMatrix)
+{
+    // Arrange: смесь из трёх компонентов; CAS и формулы одной и той же смеси
+    std::vector<std::wstring> formulas{ L"CH4", L"C2H6", L"N2" };
+    std::vector<std::wstring> casno_list =
+        components_database.get_casno_by_formulas(formulas);
+    std::vector<const component_properties_t*> components =
+        components_database.get_components(casno_list);
+    const auto& bip_db = components_database.get_bip_db();
+
+    // Act: сборка плана сначала по формулам, затем по CAS
+    bip_estimation_plan_t plan_by_formula =
+        generate_bip_estimation_plan_use_db_only(formulas);
+    bip_estimation_plan_t plan_by_cas =
+        generate_bip_estimation_plan_use_db_only(casno_list);
+    Eigen::MatrixXd matrix_by_formula =
+        estimate_bip_matrix(casno_list, components, bip_db, plan_by_formula);
+    Eigen::MatrixXd matrix_by_cas =
+        estimate_bip_matrix(casno_list, components, bip_db, plan_by_cas);
+
+    // Assert: планы и матрицы совпадают
+    ASSERT_EQ(plan_by_formula.size(), plan_by_cas.size());
+    ASSERT_EQ(plan_by_formula.size(), 3u);
+    for (std::size_t i = 0; i < plan_by_formula.size(); ++i) {
+        EXPECT_EQ(plan_by_formula[i].cas_pair, plan_by_cas[i].cas_pair);
+        EXPECT_EQ(plan_by_formula[i].rule, bip_estimation_rule_t::use_db_only);
+    }
+    double bip_abs_tol = 1e-12;
+    ASSERT_LT((matrix_by_formula - matrix_by_cas).cwiseAbs().maxCoeff(), bip_abs_tol);
+}
+
+/// @brief План BIP одинаков при задании смеси формулами и CAS-номерами.
+TEST(BinaryCoefficientsPlan, BuildsCorrelationPlanFromFormulasAndCas_ReturnsSameMatrix)
+{
+    // Arrange: смесь из трёх компонентов; CAS и формулы одной и той же смеси
+    std::vector<std::wstring> formulas{ L"CH4", L"C2H6", L"N2" };
+    std::vector<std::wstring> casno_list =
+        components_database.get_casno_by_formulas(formulas);
+    std::vector<const component_properties_t*> components =
+        components_database.get_components(casno_list);
+    const auto& bip_db = components_database.get_bip_db();
+    bip_correlation_t correlation = bip_correlation_t::Gao;
+
+    // Act: сборка плана сначала по формулам, затем по CAS
+    bip_estimation_plan_t plan_by_formula =
+        generate_bip_estimation_plan_with_correlation(formulas, correlation);
+    bip_estimation_plan_t plan_by_cas =
+        generate_bip_estimation_plan_with_correlation(casno_list, correlation);
+    Eigen::MatrixXd matrix_by_formula =
+        estimate_bip_matrix(casno_list, components, bip_db, plan_by_formula);
+    Eigen::MatrixXd matrix_by_cas =
+        estimate_bip_matrix(casno_list, components, bip_db, plan_by_cas);
+
+    // Assert: планы и матрицы совпадают
+    ASSERT_EQ(plan_by_formula.size(), plan_by_cas.size());
+    ASSERT_EQ(plan_by_formula.size(), 3u);
+    for (std::size_t i = 0; i < plan_by_formula.size(); ++i) {
+        EXPECT_EQ(plan_by_formula[i].cas_pair, plan_by_cas[i].cas_pair);
+        EXPECT_EQ(plan_by_formula[i].rule, bip_estimation_rule_t::use_correlation_only);
+        EXPECT_EQ(plan_by_formula[i].correlation, correlation);
+    }
+    double bip_abs_tol = 1e-12;
+    ASSERT_LT((matrix_by_formula - matrix_by_cas).cwiseAbs().maxCoeff(), bip_abs_tol);
+}
+
 /// @brief Сравнивает получение BIP по формулам и по CAS-номерам.
 TEST(BinaryCoefficientsPlan, HandlesOptionDbOnly) {
     // Arrange
