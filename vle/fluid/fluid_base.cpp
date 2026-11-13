@@ -255,6 +255,19 @@ const Eigen::MatrixXd& fluid_fundamental_data_t::get_binary_coeffs_ref() const
     return *binary_coeffs_;
 }
 
+flash_conditions_t fluid_fundamental_data_t::make_flash_conditions(
+    double pressure, double temperature) const
+{
+    flash_conditions_t result{
+        pressure,
+        temperature,
+        concentration_,
+        get_components(),
+        get_binary_coeffs_ref(),
+    };
+    return result;
+}
+
 /// @brief Отладочный запуск мьютексов
 constexpr bool debug_disable_locks = false;
 

@@ -205,6 +205,28 @@ struct flash_calculation_result_t {
     void invalidate_calculation();
 };
 
+/// @brief Давление, температура, состав смеси и BIP для одного расчёта PT-flash;
+///     в ходе расчёта не меняются.
+/// @details По смыслу — снимок `fluid_fundamental_data_t` без кэша flash и без
+///     многопоточности; поля состава и BIP — ссылки. Коэффициенты распределения
+///     K_i на итерациях передаются отдельным аргументом. В `molar_fractions` —
+///     состав смеси z либо (во временных структурах) мольные доли жидкости или
+///     пара. Уравнение RR и проверки состава берут этот вектор вместе с P, T и BIP.
+struct flash_conditions_t {
+    /// @brief Давление.
+    double pressure;
+    /// @brief Температура.
+    double temperature;
+    /// @brief Мольные доли компонентов; порядок как у `components`.
+    ///     Для flash по смеси — состав z; при подготовке EOS по фазе —
+    ///     мольные доли жидкости или пара.
+    const Eigen::VectorXd& molar_fractions;
+    /// @brief Компоненты смеси в порядке состава.
+    const std::vector<const component_properties_t*>& components;
+    /// @brief Матрица бинарных коэффициентов взаимодействия k_ij.
+    const Eigen::MatrixXd& k_binary_ij;
+};
+
 /// @brief Класс для хранения и потокобезопасного доступа к данных флюида и результатам flash-расчета
 ///
 /// Класс намеренно объединяет несколько зон ответственности:
@@ -283,6 +305,9 @@ public:
     size_t get_components_count() const;
     /// @brief Возвращает бинарные коэффициенты компонентов
     const Eigen::MatrixXd& get_binary_coeffs_ref() const;
+    /// @brief Собирает flash_conditions_t из состава, компонентов и BIP этого объекта.
+    /// @warning Живёт, пока не изменён состав (`set_molar_fraction`) и пока жив объект.
+    flash_conditions_t make_flash_conditions(double pressure, double temperature) const;
 public:
     /// @brief (потокобезопасно)
     /// @return 
