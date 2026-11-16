@@ -205,6 +205,11 @@ if(VLE_SOLVERS_BUILD_TESTS)
     #target_precompile_headers(testing_vle_solvers REUSE_FROM ${PROJECT_NAME})
     install(TARGETS testing_vle_solvers DESTINATION bin)
 
+    enable_testing()
+    include(GoogleTest)
+    # PRE_TEST — для multi-config генератора Visual Studio
+    gtest_discover_tests(testing_vle_solvers DISCOVERY_MODE PRE_TEST)
+
 endif()
 
 
